@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FAQ | VortexBox Pro</title>
+    <meta name="description" content="FAQ VortexBox: garantie 2 ans, configurateur, livraison, option DLC et support." />
+    <link rel="canonical" href="https://vortexbox.onrender.com/faq.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="FAQ | VortexBox Pro" />
+    <meta property="og:description" content="Toutes les réponses sur les builds VortexBox, le configurateur et le support." />
+    <meta property="og:image" content="https://vortexbox.onrender.com/favicon-vb.svg" />
+    <meta property="og:url" content="https://vortexbox.onrender.com/faq.html" />
+    <link rel="icon" type="image/svg+xml" href="favicon-vb.svg" />
+    <link rel="shortcut icon" href="favicon-vb.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=20260308c" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Quelle est la garantie matérielle VortexBox ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Toutes les VortexBox sont couvertes par une garantie matérielle de 2 ans."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Puis-je personnaliser ma configuration avant achat ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Oui, le configurateur permet de choisir composants et services selon vos besoins."
+            }
+          }
+        ]
+      }
+    </script>
+    <style>
+      body.faq-theme {
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 12% 8%, rgba(129, 208, 255, 0.16), transparent 36%),
+          radial-gradient(circle at 90% 0%, rgba(93, 183, 255, 0.14), transparent 30%),
+          linear-gradient(180deg, #061428 0%, #041022 62%, #020914 100%);
+      }
+
+      .hero {
+        min-height: auto;
+        padding: 5.4rem 1.25rem 0.6rem;
+      }
+
+      .hero-glow {
+        display: none;
+      }
+
+      .faq-page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0.7rem 1.25rem 3.4rem;
+      }
+
+      .faq-hero {
+        margin-top: 1rem;
+        border: 1px solid rgba(127, 231, 255, 0.35);
+        border-radius: 1.1rem;
+        padding: 1.2rem;
+        background:
+          radial-gradient(circle at 90% 0%, rgba(127, 231, 255, 0.2), transparent 38%),
+          linear-gradient(155deg, rgba(20, 53, 90, 0.92), rgba(8, 25, 46, 0.92));
+      }
+
+      .faq-grid {
+        margin-top: 1rem;
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .faq-item {
+        border: 1px solid rgba(127, 231, 255, 0.28);
+        border-radius: 0.9rem;
+        background: linear-gradient(170deg, rgba(19, 50, 84, 0.9), rgba(9, 27, 49, 0.9));
+        overflow: hidden;
+      }
+
+      .faq-question {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: #e5f4ff;
+        text-align: left;
+        cursor: pointer;
+        padding: 0.95rem;
+        font-family: "Sora", sans-serif;
+        font-weight: 700;
+        font-size: 0.98rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+      }
+
+      .faq-question .faq-icon {
+        color: #9ddcff;
+        font-size: 1.1rem;
+        transition: transform 220ms ease;
+      }
+
+      .faq-item.open .faq-question .faq-icon {
+        transform: rotate(45deg);
+      }
+
+      .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        padding: 0 0.95rem;
+        color: #cde5f9;
+        transition: max-height 280ms ease, padding-bottom 280ms ease;
+      }
+
+      .faq-item.open .faq-answer {
+        max-height: 260px;
+        padding-bottom: 0.95rem;
+      }
+
+      .faq-empty {
+        border: 1px solid rgba(127, 231, 255, 0.28);
+        border-radius: 0.9rem;
+        padding: 1rem;
+        color: #d2e8fb;
+        background: rgba(10, 28, 49, 0.86);
+      }
+
+      @media (max-width: 900px) {
+        .faq-page {
+          padding-top: 0.55rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="site-locked faq-theme">
+    <div class="auth-gate" id="auth-gate">
+      <form class="auth-box" id="site-login-form">
+        <div class="auth-title">
+          <img class="auth-title-logo" src="favicon-vb.svg" alt="VortexBox Pro" />
+          <h2>Connexion</h2>
+        </div>
+        <p>Accès réservé aux adresses Outlook.</p>
+        <div class="auth-trust-row" aria-label="Indicateurs de sécurité">
+          <span class="auth-trust-pill">Connexion sécurisée</span>
+          <span class="auth-trust-pill">Aucune revente de données</span>
+          <span class="auth-trust-pill">Support VortexBox</span>
+        </div>
+        <div class="auth-mode-switch">
+          <button class="auth-mode-btn active" id="auth-mode-user" type="button">
+            <span class="auth-mode-title">Utilisateur</span>
+            <span class="auth-mode-subtitle">J'ai déjà un compte</span>
+          </button>
+          <button class="auth-mode-btn" id="auth-mode-new" type="button">
+            <span class="auth-mode-title">Nouveau utilisateur</span>
+            <span class="auth-mode-subtitle">Créer un compte sécurisé</span>
+          </button>
+        </div>
+        <label>
+          Adresse email
+          <input id="site-login-email" type="email" placeholder="exemple@outlook.com" required />
+        </label>
+        <label>
+          Mot de passe
+          <input id="site-login-password" type="password" placeholder="Votre mot de passe" required />
+        </label>
+        <div class="auth-password-strength hidden" id="auth-password-strength" aria-live="polite">
+          <div class="auth-password-strength-bar"><span></span></div>
+          <p id="auth-password-strength-label">Force du mot de passe</p>
+        </div>
+        <div class="auth-login-row">
+          <label class="auth-remember">
+            <input id="auth-remember" type="checkbox" />
+            <span>Rester connecté sur cet appareil</span>
+          </label>
+          <button class="auth-link-btn" id="auth-forgot-toggle" type="button">Mot de passe oublié ?</button>
+        </div>
+        <div class="auth-reset-step hidden" id="auth-reset-step">
+          <label>
+            Email du compte
+            <input id="auth-reset-email" type="email" placeholder="exemple@outlook.com" />
+          </label>
+          <label>
+            Nouveau mot de passe
+            <input id="auth-reset-password" type="password" placeholder="Nouveau mot de passe" />
+          </label>
+          <label>
+            Code de réinitialisation (6 chiffres)
+            <input id="auth-reset-code" type="password" inputmode="numeric" maxlength="6" placeholder="123456" />
+          </label>
+          <div class="auth-reset-actions">
+            <button class="auth-mode-btn" id="auth-reset-send-btn" type="button">Envoyer le code</button>
+            <button class="auth-mode-btn" id="auth-reset-confirm-btn" type="button">Valider la réinitialisation</button>
+          </div>
+          <p class="auth-feedback" id="auth-reset-feedback"></p>
+        </div>
+        <div class="activation-step hidden" id="activation-step">
+          <label>
+            Code d'activation (10 caractères)
+            <input id="site-activation-code" type="text" maxlength="10" placeholder="Ab3$k9!Q2z" />
+          </label>
+          <button class="auth-mode-btn" id="site-activate-btn" type="button">Activer mon compte</button>
+        </div>
+        <button class="cta" type="submit">Accéder au site</button>
+        <p class="auth-feedback" id="site-login-feedback"></p>
+      </form>
+    </div>
+
+    <header class="hero" id="top">
+      <nav class="nav">
+        <a class="logo" href="index.html" aria-label="VortexBox accueil">
+          <img src="favicon-vb.svg" alt="VortexBox Pro" />
+          <span class="logo-text">VortexBox <strong>PRO</strong></span>
+        </a>
+        <button class="nav-menu-toggle" id="nav-menu-toggle" type="button" aria-expanded="false" aria-label="Ouvrir le menu">
+          Menu
+        </button>
+        <div class="nav-links">
+          <div class="nav-row nav-row-primary">
+            <a href="index.html#machines" data-icon="🚀" data-menu-key="machines">Top Build</a>
+            <div class="nav-link-item has-mega">
+              <a class="nav-link-priority" href="index.html#configurateur" data-icon="🧩" data-menu-key="configurateur">Configurateur</a>
+              <div class="nav-mega">
+                <a href="index.html#configurateur">Configurer ma VortexBox</a>
+                <a href="index.html#guides-fps">Voir les guides FPS</a>
+                <a href="support-sav.html">Besoin d'aide SAV</a>
+              </div>
+            </div>
+            <a class="nav-link-priority" href="support-sav.html" data-icon="🛟" data-menu-key="support">Support & SAV</a>
+          </div>
+          <div class="nav-row nav-row-secondary">
+            <a href="index.html#fiches-techniques" data-icon="📄" data-menu-key="fiches">Fiches Techniques</a>
+            <a href="index.html#guides-fps" data-icon="🎯" data-menu-key="guides">Guides FPS</a>
+            <a href="about.html" data-icon="ℹ️" data-menu-key="about">A propos</a>
+            <a href="faq.html" data-icon="❓" data-menu-key="faq">FAQ</a>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <div class="nav-smart-wrap" data-search-hint="Tapez 2 lettres pour trouver une page du menu.">
+            <input id="nav-smart-search" class="nav-smart-search" type="search" placeholder="Recherche menu..." aria-label="Recherche intelligente dans le menu" title="Tapez 2 lettres pour trouver une page du menu" autocomplete="off" name="menu-search" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="search" />
+            <div id="nav-smart-results" class="nav-smart-results hidden"></div>
+          </div>
+          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/vortexboxpro','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
+          <button class="logout-btn nav-icon-btn nav-profile-btn hidden" id="user-profile-toggle" type="button" aria-label="Mon profil" title="Mon profil"><img src="nav-profile-premium.svg" alt="" aria-hidden="true" /></button>
+          <button class="admin-btn nav-icon-btn nav-admin-btn hidden" id="admin-toggle" type="button" aria-label="Administrateur" title="Administrateur"><img src="nav-admin-premium.svg" alt="" aria-hidden="true" /></button>
+          <button class="admin-live-exit hidden" id="admin-live-exit" type="button" aria-label="Sortir du mode admin">×</button>
+        </div>
+      </nav>
+      <div class="premium-breadcrumb" id="premium-breadcrumb" aria-label="Fil d'ariane"></div>
+    </header>
+
+    <main class="faq-page">
+      <section class="faq-hero">
+        <p class="badge">Support & Informations</p>
+        <h1>Foire Aux Questions VortexBox</h1>
+        <p class="lead">Retrouvez ici les réponses rapides sur nos build, notre configurateur et nos services.</p>
+      </section>
+
+      <section class="faq-grid" id="faq-list"></section>
+    </main>
+
+    <footer id="contact" class="site-footer">
+      <p>VortexBox - Paris - <span id="footer-contact-email">VortexCore@outlook.Fr</span></p>
+      <div class="footer-legal-links">
+        <button class="footer-legal-btn" id="footer-legal-mentions-btn" type="button">Mentions légales</button>
+        <button class="footer-legal-btn" id="footer-legal-cgv-btn" type="button">Conditions générales de vente</button>
+        <button class="footer-legal-btn" id="footer-legal-rgpd-btn" type="button">Politique de confidentialité RGPD</button>
+        <button class="footer-legal-btn" id="footer-legal-cookies-btn" type="button">Gestion des cookies</button>
+      </div>
+    </footer>
+
+    <div class="legal-modal hidden" id="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
+      <div class="legal-modal-card">
+        <button class="legal-modal-close" id="legal-modal-close" type="button" aria-label="Fermer">×</button>
+        <div class="legal-modal-header">
+          <img class="legal-modal-logo" src="favicon-vb.svg" alt="VortexBox" />
+          <div class="legal-modal-title-wrap">
+            <p class="legal-modal-kicker">Informations légales VortexBox</p>
+            <h3 id="legal-modal-title"></h3>
+          </div>
+        </div>
+        <div class="legal-modal-content" id="legal-modal-content"></div>
+      </div>
+    </div>
+
+    <section class="vortexbot" id="vortexbot" aria-label="Assistant VortexBot">
+      <button class="vortexbot-toggle" id="vortexbot-toggle" type="button" aria-expanded="false" aria-controls="vortexbot-panel">
+        <span class="vortexbot-icon" aria-hidden="true"><img src="favicon-vb.svg" alt="" /></span>
+        <span>VortexBot</span>
+      </button>
+      <div class="vortexbot-panel hidden" id="vortexbot-panel">
+        <div class="vortexbot-head">
+          <div class="vortexbot-head-title">
+            <h3>VortexBot</h3>
+            <p>Assistant build gaming</p>
+          </div>
+          <button class="vortexbot-close" id="vortexbot-close" type="button" aria-label="Fermer">×</button>
+        </div>
+        <div class="vortexbot-messages" id="vortexbot-messages">
+          <p class="vortexbot-msg bot">Bienvenue chez VortexBox. Je peux vous guider vers le meilleur build.</p>
+          <p class="vortexbot-msg bot">Choisissez une action rapide ci-dessous.</p>
+        </div>
+        <div class="vortexbot-actions">
+          <button type="button" data-bot-action="go-configurator">Ouvrir le configurateur</button>
+          <button type="button" data-bot-action="go-telegram">Contacter sur Telegram</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="bg-music-control hidden" id="bg-music-control">
+      <button class="bg-music-toggle" id="bg-music-toggle" type="button" aria-pressed="false" aria-label="Activer la musique" title="Activer la musique">
+        <span class="bg-music-icon" aria-hidden="true">♪</span>
+      </button>
+      <audio id="bg-music" loop preload="auto">
+        <source src="vortexbox-bg.mp3" type="audio/mpeg" />
+      </audio>
+    </div>
+
+    <section class="cookie-banner hidden" id="cookie-banner" aria-label="Gestion des cookies">
+      <div class="cookie-banner-inner">
+        <div>
+          <h4>Votre confidentialité sur VortexBox</h4>
+          <p>Nous utilisons des cookies pour améliorer votre expérience. Vous pouvez accepter, refuser ou personnaliser.</p>
+        </div>
+        <div class="cookie-actions">
+          <button class="cookie-btn" id="cookie-open-customize" type="button">Personnaliser</button>
+          <button class="cookie-btn" id="cookie-reject-all" type="button">Refuser</button>
+          <button class="cookie-btn primary" id="cookie-accept-all" type="button">Accepter</button>
+        </div>
+      </div>
+      <div class="cookie-customize hidden" id="cookie-customize-panel">
+        <label class="cookie-option">
+          <span><strong>Cookies nécessaires</strong><span>Indispensables au fonctionnement du site.</span></span>
+          <input type="checkbox" checked disabled />
+        </label>
+        <label class="cookie-option">
+          <span><strong>Préférences</strong><span>Mémorise vos choix d'interface.</span></span>
+          <input id="cookie-consent-preferences" type="checkbox" checked />
+        </label>
+        <label class="cookie-option">
+          <span><strong>Mesure d'audience</strong><span>Nous aide à améliorer les pages les plus visitées.</span></span>
+          <input id="cookie-consent-analytics" type="checkbox" />
+        </label>
+        <div class="cookie-customize-actions">
+          <button class="cookie-btn" id="cookie-cancel-custom" type="button">Annuler</button>
+          <button class="cookie-btn primary" id="cookie-save-custom" type="button">Enregistrer</button>
+        </div>
+      </div>
+    </section>
+
+    <script src="faq.js?v=20260308c"></script>
+  </body>
+</html>

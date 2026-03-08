@@ -1,0 +1,23 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="8" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#54D8FF"/>
+      <stop offset="0.55" stop-color="#1CA8FF"/>
+      <stop offset="1" stop-color="#0B5EC8"/>
+    </linearGradient>
+    <linearGradient id="inner" x1="24" y1="24" x2="104" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0D3D66"/>
+      <stop offset="1" stop-color="#082341"/>
+    </linearGradient>
+    <linearGradient id="letters" x1="38" y1="32" x2="88" y2="92" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4FDFF"/>
+      <stop offset="1" stop-color="#A7E7FF"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="6" y="6" width="116" height="116" rx="30" fill="url(#bg)"/>
+  <rect x="20" y="20" width="88" height="88" rx="22" fill="url(#inner)"/>
+
+  <path d="M34 39L50 93H58L74 39H63L54 73L45 39H34Z" fill="url(#letters)"/>
+  <path d="M65 39H82C90 39 95 44 95 50C95 55 92 58 88 60C93 62 97 66 97 73C97 81 91 87 81 87H65V39ZM74 47V56H81C84 56 86 54 86 52C86 49 84 47 81 47H74ZM74 64V79H81C86 79 88 76 88 72C88 67 86 64 81 64H74Z" fill="url(#letters)"/>
+</svg>

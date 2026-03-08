@@ -1,0 +1,22 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="100" y1="90" x2="1060" y2="680" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12406E"/>
+      <stop offset="1" stop-color="#06182F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg2)"/>
+  <path d="M0 530C230 460 430 610 620 530C850 432 956 514 1200 450V700H0V530Z" fill="#2F83DD" fill-opacity="0.26"/>
+  <path d="M0 590C210 530 430 650 620 590C840 520 985 598 1200 560V700H0V590Z" fill="#74D6FF" fill-opacity="0.22"/>
+  <rect x="150" y="110" width="900" height="470" rx="34" fill="#0B2745" fill-opacity="0.86" stroke="#8DDFFF" stroke-opacity="0.35"/>
+  <rect x="220" y="180" width="340" height="300" rx="20" fill="#133A61"/>
+  <circle cx="390" cy="330" r="94" fill="#7EDBFF" fill-opacity="0.34"/>
+  <path d="M390 250L420 325H360L390 250Z" fill="#DFF4FF"/>
+  <path d="M390 410L360 335H420L390 410Z" fill="#DFF4FF"/>
+  <rect x="610" y="198" width="360" height="24" rx="12" fill="#9EE4FF" fill-opacity="0.58"/>
+  <rect x="610" y="248" width="310" height="18" rx="9" fill="#9EE4FF" fill-opacity="0.35"/>
+  <rect x="610" y="292" width="330" height="18" rx="9" fill="#9EE4FF" fill-opacity="0.35"/>
+  <rect x="610" y="336" width="280" height="18" rx="9" fill="#9EE4FF" fill-opacity="0.35"/>
+  <rect x="610" y="392" width="210" height="54" rx="14" fill="#52BFFF" fill-opacity="0.55"/>
+  <text x="250" y="530" fill="#E8F8FF" font-family="Sora, Arial" font-size="42" font-weight="700">AEROFLOW PRO</text>
+</svg>

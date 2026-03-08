@@ -1,0 +1,8 @@
+.DS_Store
+.env
+uploads/about-videos/
+uploads/machine-videos/
+uploads/**/*.mov
+uploads/**/*.mp4
+uploads/**/*.m4v
+uploads/**/*.webm

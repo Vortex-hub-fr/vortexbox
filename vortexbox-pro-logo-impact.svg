@@ -1,0 +1,45 @@
+<svg width="590" height="108" viewBox="0 0 590 108" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">VortexBox Pro Impact</title>
+  <desc id="logoDesc">Logo VortexBox Pro marquant avec emblème hexagonal et monogramme VB.</desc>
+
+  <defs>
+    <linearGradient id="hexOuter" x1="14" y1="9" x2="114" y2="102" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9AE8FF"/>
+      <stop offset="0.5" stop-color="#3FB7FF"/>
+      <stop offset="1" stop-color="#0F4EBC"/>
+    </linearGradient>
+    <linearGradient id="hexInner" x1="24" y1="20" x2="106" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123D67"/>
+      <stop offset="1" stop-color="#081C35"/>
+    </linearGradient>
+    <linearGradient id="vbGrad" x1="40" y1="30" x2="92" y2="84" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3FCFF"/>
+      <stop offset="1" stop-color="#9EDFFF"/>
+    </linearGradient>
+    <linearGradient id="wordGrad" x1="132" y1="20" x2="468" y2="86" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FCFF"/>
+      <stop offset="0.55" stop-color="#C9E9FF"/>
+      <stop offset="1" stop-color="#7DC9FF"/>
+    </linearGradient>
+    <linearGradient id="proGrad" x1="478" y1="22" x2="572" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#63C6FF"/>
+      <stop offset="1" stop-color="#AEE4FF"/>
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="136" height="108" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.22 0 0 0 0 0.7 0 0 0 0 1 0 0 0 0.55 0"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#glow)">
+    <rect x="12" y="8" width="104" height="92" rx="36" fill="#2F8BEA" fill-opacity="0.45"/>
+  </g>
+
+  <rect x="12" y="8" width="104" height="92" rx="36" fill="url(#hexOuter)"/>
+  <rect x="22" y="18" width="84" height="72" rx="30" fill="url(#hexInner)"/>
+  <path d="M38 31L53 81H61L76 31H66L57 62L48 31H38Z" fill="url(#vbGrad)"/>
+  <path d="M67 31H83C90 31 94 35 94 40C94 44 92 46 89 48C93 49 96 52 96 58C96 65 91 70 82 70H67V31ZM76 38V45H82C84 45 86 44 86 41C86 39 85 38 82 38H76ZM76 52V63H82C86 63 88 61 88 58C88 54 86 52 82 52H76Z" fill="url(#vbGrad)"/>
+
+  <text x="132" y="76" fill="url(#wordGrad)" font-family="Space Grotesk, Sora, Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="0.6">VORTEXBOX</text>
+  <text x="486" y="76" fill="url(#proGrad)" font-family="Sora, Arial, sans-serif" font-size="30" font-weight="800" letter-spacing="1.6">PRO</text>
+</svg>

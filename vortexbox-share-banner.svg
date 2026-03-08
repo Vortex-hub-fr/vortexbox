@@ -1,0 +1,24 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="40" x2="1120" y2="590" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123A63"/>
+      <stop offset="1" stop-color="#040D1C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 120) rotate(120) scale(360 220)">
+      <stop stop-color="#8FE2FF" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#8FE2FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="64" y="56" width="1072" height="518" rx="30" fill="#071A31" fill-opacity="0.72" stroke="#8ADFFF" stroke-opacity="0.35"/>
+
+  <image href="vortexbox-pro-logo-impact.svg" x="112" y="188" width="560" height="110"/>
+
+  <text x="116" y="355" fill="#DDF4FF" font-family="Sora, Arial" font-size="42" font-weight="700">La puissance au coeur du jeu</text>
+  <text x="116" y="412" fill="#AED5F5" font-family="Sora, Arial" font-size="28" font-weight="500">Machines gaming premium • Configurateur sur-mesure • Support expert</text>
+
+  <rect x="116" y="462" width="390" height="62" rx="16" fill="#4FC1FF" fill-opacity="0.5"/>
+  <text x="142" y="503" fill="#F1FBFF" font-family="Sora, Arial" font-size="30" font-weight="700">VORTEXBOX PRO</text>
+</svg>

@@ -1,0 +1,39 @@
+<svg width="500" height="96" viewBox="0 0 500 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">VortexBox Pro Gaming Logo</title>
+  <desc id="desc">Logo gaming VortexBox Pro avec symbole vortex neon et eclair central.</desc>
+
+  <defs>
+    <linearGradient id="ring" x1="18" y1="16" x2="88" y2="86" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#71D5FF"/>
+      <stop offset="0.5" stop-color="#27A8FF"/>
+      <stop offset="1" stop-color="#0A5ED7"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="46" y1="27" x2="63" y2="68" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FCFF"/>
+      <stop offset="1" stop-color="#A7DDFF"/>
+    </linearGradient>
+    <linearGradient id="textMain" x1="104" y1="21" x2="332" y2="79" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FBFF"/>
+      <stop offset="0.55" stop-color="#C9E8FF"/>
+      <stop offset="1" stop-color="#7FC6FF"/>
+    </linearGradient>
+    <linearGradient id="textPro" x1="360" y1="38" x2="470" y2="72" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#58BCFF"/>
+      <stop offset="1" stop-color="#9EDBFF"/>
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="120" height="100" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.25 0 0 0 0 0.68 0 0 0 0 1 0 0 0 0.5 0"/>
+    </filter>
+  </defs>
+
+  <circle cx="52" cy="48" r="33" stroke="url(#ring)" stroke-width="9"/>
+  <circle cx="52" cy="48" r="33" stroke="#79D3FF" stroke-opacity="0.45" stroke-width="2" stroke-dasharray="4 7"/>
+  <g filter="url(#glow)">
+    <circle cx="52" cy="48" r="23" fill="#1A68D9" fill-opacity="0.35"/>
+  </g>
+  <path d="M54 24L37 52H50L45 72L67 42H54L54 24Z" fill="url(#bolt)"/>
+
+  <text x="104" y="58" fill="url(#textMain)" font-family="Space Grotesk, Sora, Arial, sans-serif" font-size="40" font-weight="700" letter-spacing="0.4">VORTEXBOX</text>
+  <text x="386" y="58" fill="url(#textPro)" font-family="Sora, Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="1.6">PRO</text>
+</svg>

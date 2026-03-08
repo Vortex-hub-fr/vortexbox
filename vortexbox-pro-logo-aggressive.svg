@@ -1,0 +1,27 @@
+<svg width="420" height="96" viewBox="0 0 420 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">VortexBox Pro Aggressive Logo</title>
+  <desc id="desc">Logo VortexBox Pro style e-sport avec bouclier V neon.</desc>
+  <defs>
+    <linearGradient id="shield" x1="10" y1="9" x2="96" y2="89" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#89D7FF"/>
+      <stop offset="0.6" stop-color="#2FA8FF"/>
+      <stop offset="1" stop-color="#0D4EB8"/>
+    </linearGradient>
+    <linearGradient id="v" x1="23" y1="23" x2="70" y2="70" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FCFF"/>
+      <stop offset="1" stop-color="#A8DCFF"/>
+    </linearGradient>
+    <linearGradient id="word" x1="108" y1="20" x2="350" y2="80" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EFF9FF"/>
+      <stop offset="0.55" stop-color="#C3E3FF"/>
+      <stop offset="1" stop-color="#79C4FF"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M52 6L90 22V50C90 68 75 84 52 90C29 84 14 68 14 50V22L52 6Z" fill="url(#shield)"/>
+  <path d="M27 24L43 70H52L68 24H56L48 52L40 24H27Z" fill="url(#v)"/>
+  <path d="M20 20L52 8L84 20" stroke="#DDF1FF" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>
+
+  <text x="108" y="50" fill="url(#word)" font-family="Space Grotesk, Sora, Arial, sans-serif" font-size="40" font-weight="700" letter-spacing="0.8">VORTEXBOX</text>
+  <text x="303" y="81" fill="#9AD8FF" font-family="Sora, Arial, sans-serif" font-size="24" font-weight="800" letter-spacing="2.4">PRO</text>
+</svg>

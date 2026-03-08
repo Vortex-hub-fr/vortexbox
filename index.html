@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VortexBox | Build gaming et configurateur PC</title>
+    <meta name="description" content="VortexBox: build gaming premium, configurateur sur mesure, option DLC promo et support expert." />
+    <link rel="canonical" href="https://vortexbox.onrender.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VortexBox | Build gaming et configurateur PC" />
+    <meta property="og:description" content="Des build gaming prêts à dominer vos jeux avec configurateur premium." />
+    <meta property="og:image" content="https://vortexbox.onrender.com/favicon-vb.svg" />
+    <meta property="og:url" content="https://vortexbox.onrender.com/" />
+    <link rel="icon" type="image/svg+xml" href="favicon-vb.svg" />
+    <link rel="shortcut icon" href="favicon-vb.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=20260308c" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "VortexBox",
+        "url": "https://vortexbox.onrender.com/",
+        "logo": "https://vortexbox.onrender.com/favicon-vb.svg",
+        "email": "VortexCore@outlook.fr"
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "VortexBox Build Gaming",
+        "brand": "VortexBox",
+        "description": "Build gaming premium configurable, assemblé et testé par VortexBox.",
+        "offers": {
+          "@type": "Offer",
+          "priceCurrency": "EUR",
+          "price": "499",
+          "availability": "https://schema.org/InStock"
+        }
+      }
+    </script>
+  </head>
+  <body class="site-locked">
+    <a class="skip-link" href="#main-content">Aller au contenu principal</a>
+    <div class="auth-gate" id="auth-gate">
+      <form class="auth-box" id="site-login-form">
+        <div class="auth-title">
+          <img class="auth-title-logo" src="favicon-vb.svg" alt="VortexBox Pro" />
+          <h2>Connexion VortexBox</h2>
+        </div>
+        <p>Accès réservé aux adresses Outlook.</p>
+        <div class="auth-trust-row" aria-label="Indicateurs de sécurité">
+          <span class="auth-trust-pill">Connexion sécurisée</span>
+          <span class="auth-trust-pill">Aucune revente de données</span>
+          <span class="auth-trust-pill">Support VortexBox</span>
+        </div>
+        <div class="auth-mode-switch">
+          <button class="auth-mode-btn active" id="auth-mode-user" type="button">
+            <span class="auth-mode-title">Utilisateur</span>
+            <span class="auth-mode-subtitle">J'ai déjà un compte</span>
+          </button>
+          <button class="auth-mode-btn" id="auth-mode-new" type="button">
+            <span class="auth-mode-title">Nouveau utilisateur</span>
+            <span class="auth-mode-subtitle">Créer un compte sécurisé</span>
+          </button>
+        </div>
+        <label>
+          Adresse email
+          <input id="site-login-email" type="email" placeholder="exemple@outlook.com" required />
+        </label>
+        <label>
+          Mot de passe
+          <input id="site-login-password" type="password" placeholder="Votre mot de passe" required />
+        </label>
+        <div class="auth-password-strength hidden" id="auth-password-strength" aria-live="polite">
+          <div class="auth-password-strength-bar"><span></span></div>
+          <p id="auth-password-strength-label">Force du mot de passe</p>
+        </div>
+        <div class="auth-login-row">
+          <label class="auth-remember">
+            <input id="auth-remember" type="checkbox" />
+            <span>Rester connecté sur cet appareil</span>
+          </label>
+          <button class="auth-link-btn" id="auth-forgot-toggle" type="button">Mot de passe oublié ?</button>
+        </div>
+        <div class="auth-reset-step hidden" id="auth-reset-step">
+          <label>
+            Email du compte
+            <input id="auth-reset-email" type="email" placeholder="exemple@outlook.com" />
+          </label>
+          <label>
+            Nouveau mot de passe
+            <input id="auth-reset-password" type="password" placeholder="Nouveau mot de passe" />
+          </label>
+          <label>
+            Code de réinitialisation (6 chiffres)
+            <input id="auth-reset-code" type="password" inputmode="numeric" maxlength="6" placeholder="123456" />
+          </label>
+          <div class="auth-reset-actions">
+            <button class="auth-mode-btn" id="auth-reset-send-btn" type="button">Envoyer le code</button>
+            <button class="auth-mode-btn" id="auth-reset-confirm-btn" type="button">Valider la réinitialisation</button>
+          </div>
+          <p class="auth-feedback" id="auth-reset-feedback"></p>
+        </div>
+        <div class="activation-step hidden" id="activation-step">
+          <label>
+            Code d'activation (10 caractères)
+            <input id="site-activation-code" type="text" maxlength="10" placeholder="Ab3$k9!Q2z" />
+          </label>
+          <button class="auth-mode-btn" id="site-activate-btn" type="button">Activer mon compte</button>
+        </div>
+        <button class="cta" type="submit">Accéder au site</button>
+        <p class="auth-feedback" id="site-login-feedback"></p>
+      </form>
+    </div>
+
+    <header class="hero" id="top">
+      <div class="hero-video-wrap" aria-hidden="true"></div>
+      <nav class="nav">
+        <a class="logo" href="index.html" aria-label="VortexBox accueil">
+          <img src="favicon-vb.svg" alt="VortexBox Pro" />
+          <span class="logo-text">VortexBox <strong>PRO</strong></span>
+        </a>
+        <button class="nav-menu-toggle" id="nav-menu-toggle" type="button" aria-expanded="false" aria-label="Ouvrir le menu">
+          Menu
+        </button>
+        <div class="nav-links">
+          <div class="nav-row nav-row-primary">
+            <a id="nav-machines-link" href="#machines" data-icon="🚀" data-menu-key="machines">Top Build</a>
+            <div class="nav-link-item has-mega">
+              <a
+                id="open-configurator-link"
+                class="nav-link-priority"
+                href="#configurateur"
+                data-icon="🧩"
+                data-menu-key="configurateur"
+              >Configurateur</a>
+              <div class="nav-mega">
+                <a href="#configurateur">Configurer ma VortexBox</a>
+                <a href="#guides-fps">Voir les guides FPS</a>
+                <a href="support-sav.html">Besoin d'aide SAV</a>
+              </div>
+            </div>
+            <a class="nav-link-priority" href="support-sav.html" data-icon="🛟" data-menu-key="support">Support & SAV</a>
+          </div>
+          <div class="nav-row nav-row-secondary">
+            <a id="nav-fiches-link" href="#fiches-techniques" data-icon="📄" data-menu-key="fiches">Fiches Techniques</a>
+            <a href="#guides-fps" data-icon="🎯" data-menu-key="guides">Guides FPS</a>
+            <a href="about.html" data-icon="ℹ️" data-menu-key="about">A propos</a>
+            <a href="faq.html" data-icon="❓" data-menu-key="faq">FAQ</a>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <div class="nav-smart-wrap" data-search-hint="Tapez 2 lettres pour trouver une page du menu.">
+            <input
+              id="nav-smart-search"
+              class="nav-smart-search"
+              type="search"
+              placeholder="Recherche menu..."
+              aria-label="Recherche intelligente dans le menu"
+              title="Tapez 2 lettres pour trouver une page du menu"
+              autocomplete="off"
+              name="menu-search"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+              inputmode="search"
+            />
+            <div id="nav-smart-results" class="nav-smart-results hidden"></div>
+          </div>
+          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/vortexboxpro','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
+          <button class="logout-btn nav-icon-btn nav-profile-btn hidden" id="user-profile-toggle" type="button" aria-label="Mon profil" title="Mon profil">
+            <img src="nav-profile-premium.svg" alt="" aria-hidden="true" />
+          </button>
+          <button class="admin-btn nav-icon-btn nav-admin-btn hidden" id="admin-toggle" type="button" aria-label="Administrateur" title="Administrateur">
+            <img src="nav-admin-premium.svg" alt="" aria-hidden="true" />
+          </button>
+          <button class="admin-live-exit hidden" id="admin-live-exit" type="button" aria-label="Sortir du mode admin">×</button>
+        </div>
+      </nav>
+      <div class="premium-breadcrumb" id="premium-breadcrumb" aria-label="Fil d'ariane"></div>
+
+      <div class="hero-content">
+        <p class="badge">Performance premium prête à jouer</p>
+        <h1 id="hero-title">VortexBox – La puissance au cœur du jeu.</h1>
+        <p class="lead">
+          Choisissez un build VortexBox calibré pour vos jeux ou créez une configuration
+          sur mesure en quelques clics.
+        </p>
+        <div class="hero-cta-row">
+          <a class="cta" id="open-configurator-cta" href="#configurateur">Configurer ma VortexBox</a>
+        </div>
+        <div class="hero-showcase" id="hero-showcase" aria-label="VortexBox highlights"></div>
+        <p class="hero-tagline-secondary">Une VortexBox achetée, option DLC disponible selon offre promo.</p>
+      </div>
+      <div class="hero-glow"></div>
+    </header>
+
+    <main id="main-content">
+      <section class="section trust-strip" id="trust-strip">
+        <article class="trust-badge">
+          <strong>Garantie 2 ans incluse</strong>
+          <span>SAV rapide et suivi personnalisé.</span>
+        </article>
+        <article class="trust-badge">
+          <strong>Validation intensive</strong>
+          <span>Chaque build est testé en charge.</span>
+        </article>
+        <article class="trust-badge">
+          <strong>Support expert gaming</strong>
+          <span>Conseil setup et optimisation FPS.</span>
+        </article>
+        <article class="trust-badge">
+          <strong>Livraison ultra sécurisée</strong>
+          <span>Packaging renforcé, prêt à performer.</span>
+        </article>
+      </section>
+
+      <section class="section why-vortex" id="pourquoi-vortexbox">
+        <div class="section-head">
+          <p class="eyebrow">Pourquoi VortexBox</p>
+          <h2>Une machine fiable, performante et prête à dominer</h2>
+        </div>
+        <div class="why-grid">
+          <article class="why-card">
+            <h3>Performances orientées résultats</h3>
+            <p>Composants sélectionnés pour des FPS élevés, une fluidité constante et une vraie sensation premium en jeu.</p>
+          </article>
+          <article class="why-card">
+            <h3>Fiabilité validée atelier</h3>
+            <p>Montage soigné, airflow optimisé et contrôle thermique rigoureux avant expédition.</p>
+          </article>
+          <article class="why-card">
+            <h3>Accompagnement premium</h3>
+            <p>Conseil avant achat, suivi après livraison et assistance rapide pour garder votre build au meilleur niveau.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="machines">
+        <div class="section-head">
+          <p class="eyebrow">Sélection 2026</p>
+          <h2 id="machines-title">Nos builds les plus demandés</h2>
+        </div>
+
+        <div class="cards" id="machines-cards"></div>
+      </section>
+
+      <section class="section build-timeline" id="timeline-fabrication">
+        <div class="section-head">
+          <p class="eyebrow">Process premium</p>
+          <h2>Votre build VortexBox, étape par étape</h2>
+        </div>
+        <div class="timeline-grid">
+          <article class="timeline-step">
+            <span class="timeline-index">01</span>
+            <h3>Validation de commande</h3>
+            <p>Vérification de votre sélection pour garantir la meilleure cohérence performance/prix.</p>
+          </article>
+          <article class="timeline-step">
+            <span class="timeline-index">02</span>
+            <h3>Montage expert</h3>
+            <p>Assemblage professionnel, gestion thermique optimisée et câblage premium.</p>
+          </article>
+          <article class="timeline-step">
+            <span class="timeline-index">03</span>
+            <h3>Stress tests</h3>
+            <p>Tests en charge, stabilité longue durée et contrôle final des performances.</p>
+          </article>
+          <article class="timeline-step">
+            <span class="timeline-index">04</span>
+            <h3>Expédition protégée</h3>
+            <p>Emballage renforcé et envoi sécurisé pour une réception prête à jouer immédiatement.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="fiches-techniques">
+        <div class="section-head">
+          <p class="eyebrow">Documentation</p>
+          <h2>Fiches techniques</h2>
+        </div>
+        <div class="technical-grid" id="technical-sheets-grid"></div>
+      </section>
+
+      <section class="section promo-highlight" id="promo-dlc-offer">
+        <div class="promo-highlight-head">
+          <p class="promo-highlight-badge">Offre promotionnelle</p>
+          <h2>Code promo Option DLC - Valeur 180 €</h2>
+          <p>
+            Option DLC gratuite avec votre code promo personnel sur Telegram.
+          </p>
+        </div>
+        <a class="cta promo-highlight-cta" href="https://t.me/vortexboxpro" target="_blank" rel="noopener noreferrer">
+          Obtenir mon code promo sur Telegram
+        </a>
+      </section>
+
+      <section class="section configurator configurator-locked" id="configurateur">
+        <div class="section-head">
+          <p class="eyebrow">Build your rig</p>
+          <h2>Configurez votre build VortexBox</h2>
+        </div>
+        <div class="configurator-visual" id="configurator-visual"></div>
+        <div class="configurator-pitch">
+          <article class="pitch-item">
+            <h3>FPS optimisés</h3>
+            <p>Des composants choisis pour libérer la performance réelle en jeu.</p>
+          </article>
+          <article class="pitch-item">
+            <h3>Setup évolutif</h3>
+            <p>Une base solide qui reste performante et simple à faire évoluer.</p>
+          </article>
+          <article class="pitch-item">
+            <h3>Montage certifié</h3>
+            <p>Assemblage atelier, tests thermiques et stabilité validés avant envoi.</p>
+          </article>
+        </div>
+        <p class="configurator-helper">
+          Choisissez simplement un produit par catégorie, puis ajoutez vos services en option.
+        </p>
+        <div class="promo-offer-banner">
+          Option DLC uniquement: gratuite avec votre code promo personnel sur Telegram.
+        </div>
+        <div class="promo-code-box">
+          <label for="promo-code-input">Code promo DLC</label>
+          <div class="promo-code-row">
+            <input id="promo-code-input" type="text" placeholder="Ex: VB-DLC-2026" />
+            <button class="admin-secondary" id="promo-apply-btn" type="button">Appliquer</button>
+          </div>
+          <p class="promo-code-feedback" id="promo-feedback"></p>
+        </div>
+        <form id="builder" class="builder-grid">
+          <div id="builder-fields" class="builder-fields"></div>
+        </form>
+
+        <aside class="summary" role="status" aria-live="polite" aria-atomic="true">
+          <h3>Résumé de votre configuration</h3>
+          <ul id="summary-list" aria-label="Éléments sélectionnés"></ul>
+          <p class="total">Total estimé: <strong id="total-price">0 €</strong></p>
+          <button class="summary-save-btn" id="summary-save-config" type="button">Sauvegarder dans mon profil</button>
+          <p class="summary-save-feedback" id="summary-save-feedback"></p>
+          <div class="fps-estimator" id="fps-estimator">
+            <h4>Estimateur FPS</h4>
+            <p class="fps-note">Estimation dynamique (qualité élevée, 1440p) basée sur vos composants sélectionnés.</p>
+            <ul>
+              <li><span>Call of Duty Warzone</span><strong id="fps-fortnite">-</strong></li>
+              <li><span>Cyberpunk 2077</span><strong id="fps-warzone">-</strong></li>
+              <li><span>Black Myth: Wukong</span><strong id="fps-gta">-</strong></li>
+            </ul>
+          </div>
+          <a
+            class="cta"
+            href="https://t.me/vortexboxpro"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Finaliser ma commande sur Telegram
+          </a>
+          <div class="summary-telegram-image" id="summary-telegram-image"></div>
+        </aside>
+      </section>
+
+      <section class="section" id="guides-fps">
+        <div class="section-head">
+          <p class="eyebrow">Performance</p>
+          <h2>Guides FPS</h2>
+        </div>
+        <div class="why-grid">
+          <article class="why-card">
+            <h3>1080p compétitif</h3>
+            <p>Objectif: 144 à 240 FPS sur jeux e-sport. Priorité CPU + optimisation RAM/latence.</p>
+          </article>
+          <article class="why-card">
+            <h3>1440p premium</h3>
+            <p>Objectif: 100 à 165 FPS sur AAA récents. Priorité GPU, puis équilibre avec un CPU solide.</p>
+          </article>
+          <article class="why-card">
+            <h3>4K haute fidélité</h3>
+            <p>Objectif: 60 à 120 FPS selon les jeux. Priorité GPU haut de gamme + refroidissement performant.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="support-sav">
+        <div class="section-head">
+          <p class="eyebrow">Assistance</p>
+          <h2>Support & SAV</h2>
+        </div>
+        <div class="why-grid">
+          <article class="why-card">
+            <h3>Diagnostic rapide</h3>
+            <p>Analyse de panne, vérification des composants et plan d’action clair en priorité.</p>
+          </article>
+          <article class="why-card">
+            <h3>Garantie 2 ans</h3>
+            <p>Prise en charge matérielle selon conditions, suivi transparent et statut d’avancement.</p>
+          </article>
+          <article class="why-card">
+            <h3>Contact direct</h3>
+            <p>Échange immédiat avec l’équipe VortexBox via Telegram pour accélérer la résolution.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="avis-clients">
+        <div class="section-head">
+          <p class="eyebrow">Ils nous font confiance</p>
+          <h2>Avis clients vérifiés</h2>
+        </div>
+        <div class="verified-premium-strip" aria-label="Confiance clients VortexBox">
+          <article class="verified-premium-item">
+            <strong>Clients vérifiés</strong>
+            <span>Avis contrôlés par l'administrateur avant publication.</span>
+          </article>
+          <article class="verified-premium-item">
+            <strong>Preuve d'achat</strong>
+            <span>Chaque retour visible provient d'un compte utilisateur authentifié.</span>
+          </article>
+          <article class="verified-premium-item">
+            <strong>Qualité suivie</strong>
+            <span>Suivi SAV, montage validé et retours clients centralisés.</span>
+          </article>
+        </div>
+        <div class="proof-kpis" id="proof-kpis">
+          <article class="proof-kpi">
+            <p class="proof-label">Avis validés admin</p>
+            <p class="proof-value" id="proof-reviews-count">0</p>
+          </article>
+          <article class="proof-kpi">
+            <p class="proof-label">Note moyenne clients</p>
+            <p class="proof-value" id="proof-average-rating">0.0 / 5</p>
+          </article>
+          <article class="proof-kpi">
+            <p class="proof-label">Satisfaction 4★ et +</p>
+            <p class="proof-value" id="proof-satisfaction-rate">0%</p>
+          </article>
+          <article class="proof-kpi">
+            <p class="proof-label">SAV premium</p>
+            <p class="proof-value">Réponse sous 24h</p>
+          </article>
+        </div>
+        <div class="reviews-grid" id="reviews-grid" aria-label="Avis clients validés"></div>
+      </section>
+
+    </main>
+
+    <section class="vortexbot" id="vortexbot" aria-label="Assistant VortexBot">
+      <button class="vortexbot-toggle" id="vortexbot-toggle" type="button" aria-expanded="false" aria-controls="vortexbot-panel">
+        <span class="vortexbot-icon" aria-hidden="true"><span class="vortexbot-icon-text">VB</span></span>
+        <span>VortexBot</span>
+      </button>
+      <div class="vortexbot-panel hidden" id="vortexbot-panel">
+        <div class="vortexbot-head">
+          <div class="vortexbot-head-title">
+            <h3>VortexBot</h3>
+            <p>Assistant premium VortexBox</p>
+          </div>
+          <button class="vortexbot-close" id="vortexbot-close" type="button" aria-label="Fermer">×</button>
+        </div>
+        <div class="vortexbot-messages" id="vortexbot-messages">
+          <p class="vortexbot-msg bot">Bienvenue chez VortexBox. Je vous guide vers le build le plus adapté à vos jeux et à votre budget.</p>
+          <p class="vortexbot-msg bot">Choisissez une action rapide ci-dessous.</p>
+        </div>
+        <div class="vortexbot-actions">
+          <button type="button" data-bot-intent="advisor">Trouver mon build idéal</button>
+          <button type="button" data-bot-intent="compare">Comparer 2 configs</button>
+          <button type="button" data-bot-intent="services">Services recommandés</button>
+          <button type="button" data-bot-intent="promo">Option DLC promo</button>
+          <button type="button" data-bot-intent="objection">Lever mes doutes</button>
+          <button type="button" data-bot-intent="human">Parler à un expert</button>
+          <button type="button" data-bot-intent="configure">Configurer mon build</button>
+          <button type="button" data-bot-intent="top">Voir les builds stars</button>
+          <button type="button" data-bot-intent="budget">Conseil budget</button>
+          <button type="button" data-bot-intent="garantie">Garantie matériel</button>
+          <button type="button" data-bot-intent="livraison">Délais livraison</button>
+          <button type="button" data-bot-intent="telegram">Finaliser sur Telegram</button>
+          <button type="button" data-bot-intent="faq">Ouvrir la FAQ</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-panel hidden" id="admin-panel">
+      <div class="admin-box">
+        <h3>Administration VortexBox</h3>
+        <p>Modifiez le contenu du site.</p>
+
+        <div id="admin-login">
+          <label>
+            Email administrateur
+            <input id="admin-email" type="email" placeholder="admin@outlook.fr" />
+          </label>
+          <label>
+            Mot de passe administrateur
+            <input id="admin-password" type="password" placeholder="Entrez le mot de passe" />
+          </label>
+          <button class="cta" id="admin-login-btn" type="button">Se connecter</button>
+        </div>
+
+        <section id="admin-kpi-gate" class="admin-kpi-gate hidden">
+          <div class="admin-kpi-gate-head">
+            <h4>Tableau de pilotage premium</h4>
+            <p>Vue instantanée des performances avant d'accéder à l'administration complète.</p>
+          </div>
+          <div class="admin-kpi-gate-cards">
+            <article class="admin-kpi-gate-card">
+              <p>Utilisateurs actifs</p>
+              <strong id="admin-gate-users-active">0</strong>
+            </article>
+            <article class="admin-kpi-gate-card">
+              <p>Connexions 7 jours</p>
+              <strong id="admin-gate-logins-7d">0</strong>
+            </article>
+            <article class="admin-kpi-gate-card">
+              <p>Note moyenne avis</p>
+              <strong id="admin-gate-rating">0.0 / 5</strong>
+            </article>
+            <article class="admin-kpi-gate-card">
+              <p>Conversion promo DLC</p>
+              <strong id="admin-gate-promo-conv">0%</strong>
+            </article>
+          </div>
+          <div class="admin-kpi-gate-charts">
+            <article class="admin-kpi-chart-card">
+              <h5>Tendance connexions (7 jours)</h5>
+              <canvas id="admin-kpi-line-chart" width="680" height="220"></canvas>
+            </article>
+            <article class="admin-kpi-chart-card">
+              <h5>Niveau de préparation du site</h5>
+              <div id="admin-kpi-bars"></div>
+            </article>
+          </div>
+          <article class="admin-kpi-reco-card">
+            <h5>Recommandations prioritaires</h5>
+            <ul id="admin-kpi-recommendations"></ul>
+          </article>
+          <div class="admin-kpi-gate-actions">
+            <button class="admin-secondary" id="admin-kpi-refresh" type="button">Rafraîchir les KPI</button>
+            <button class="cta" id="admin-kpi-proceed" type="button">Accéder à l'administration complète</button>
+          </div>
+        </section>
+
+        <form id="admin-editor" class="hidden">
+          <div class="admin-ux-row">
+            <label class="admin-density-control" for="admin-density-toggle">
+              Densité admin
+              <select id="admin-density-toggle">
+                <option value="comfort">Confort</option>
+                <option value="compact">Compact</option>
+              </select>
+            </label>
+            <label class="admin-global-search-label" for="admin-global-search">
+              Recherche globale
+              <input id="admin-global-search" type="search" placeholder="Rechercher dans l'administration..." />
+            </label>
+          </div>
+          <div class="admin-search-results hidden" id="admin-search-results"></div>
+
+          <div class="admin-tabs" role="tablist" aria-label="Sections administrateur">
+            <button class="admin-tab active" id="admin-tab-general" type="button" data-tab="general" data-icon="⚙">
+              Administration
+            </button>
+            <button class="admin-tab" id="admin-tab-users" type="button" data-tab="users" data-icon="👥">
+              Utilisateurs
+            </button>
+            <button class="admin-tab" id="admin-tab-promos" type="button" data-tab="promos" data-icon="🎟">
+              Promos DLC
+            </button>
+            <button class="admin-tab" id="admin-tab-machines" type="button" data-tab="machines" data-icon="🖥">
+              Build
+            </button>
+            <button class="admin-tab" id="admin-tab-images" type="button" data-tab="images" data-icon="🖼">
+              Images
+            </button>
+            <button class="admin-tab" id="admin-tab-fiches" type="button" data-tab="fiches" data-icon="📄">
+              Fiches Techniques
+            </button>
+            <button class="admin-tab" id="admin-tab-configurateur" type="button" data-tab="configurateur" data-icon="🧩">
+              Configurateur
+            </button>
+            <button class="admin-tab" id="admin-tab-about-videos" type="button" data-tab="about-videos" data-icon="🎬">
+              A propos vidéos
+            </button>
+            <button class="admin-tab" id="admin-tab-faq" type="button" data-tab="faq" data-icon="❓">
+              FAQ
+            </button>
+            <button class="admin-tab" id="admin-tab-support-sav" type="button" data-tab="support-sav" data-icon="🛟">
+              Support & SAV
+            </button>
+            <button class="admin-tab" id="admin-tab-reviews" type="button" data-tab="reviews" data-icon="⭐">
+              Avis clients
+            </button>
+            <button class="admin-tab" id="admin-tab-legal" type="button" data-tab="legal" data-icon="📜">
+              Légal
+            </button>
+            <button class="admin-tab" id="admin-tab-processus" type="button" data-tab="processus" data-icon="🔒">
+              Processus
+            </button>
+            <button class="admin-tab" id="admin-tab-backup" type="button" data-tab="backup" data-icon="💾">
+              Sauvegarde
+            </button>
+          </div>
+
+          <section class="admin-content-panel" id="admin-content-general" data-tab-content="general">
+            <h4>Paramètres généraux</h4>
+            <div class="admin-overview-kpis" id="admin-overview-kpis">
+              <article class="admin-overview-card">
+                <p>Utilisateurs actifs</p>
+                <strong id="admin-kpi-users">0</strong>
+              </article>
+              <article class="admin-overview-card">
+                <p>Avis en attente</p>
+                <strong id="admin-kpi-reviews-pending">0</strong>
+              </article>
+              <article class="admin-overview-card">
+                <p>Promos actives</p>
+                <strong id="admin-kpi-promos-active">0</strong>
+              </article>
+              <article class="admin-overview-card">
+                <p>Dernière sauvegarde</p>
+                <strong id="admin-kpi-last-save">--:--</strong>
+              </article>
+            </div>
+            <label>
+              Titre principal (hero)
+              <input id="admin-hero-title" type="text" />
+            </label>
+            <label>
+              Titre section build
+              <input id="admin-machines-title" type="text" />
+            </label>
+            <label>
+              Thème premium de la navbar
+              <select id="admin-nav-theme">
+                <option value="aurora">Aurora premium</option>
+                <option value="frost">Frost glass</option>
+                <option value="obsidian">Obsidian pro</option>
+              </select>
+            </label>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Badges dynamiques du menu</h5>
+              <div class="admin-config-images-grid">
+                <label>Top Build<select id="admin-menu-badge-machines"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+                <label>Configurateur<select id="admin-menu-badge-configurateur"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+                <label>Support & SAV<select id="admin-menu-badge-support"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+                <label>Fiches Techniques<select id="admin-menu-badge-fiches"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+                <label>Guides FPS<select id="admin-menu-badge-guides"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+                <label>A propos<select id="admin-menu-badge-about"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+                <label>FAQ<select id="admin-menu-badge-faq"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+              </div>
+            </div>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Utilisateurs connectés</h5>
+              <ul id="admin-user-log-list"></ul>
+            </div>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Utilisateurs inscrits</h5>
+              <div id="admin-users-list"></div>
+            </div>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Historique VortexBot</h5>
+              <div id="admin-vortexbot-history"></div>
+            </div>
+            <aside class="admin-live-preview-card" id="admin-live-preview-card">
+              <h5 class="admin-subtitle">Aperçu live</h5>
+              <p id="admin-live-preview-title">Titre principal</p>
+              <p id="admin-live-preview-subtitle">Titre section build</p>
+              <img id="admin-live-preview-image" class="admin-live-preview-image" alt="Aperçu image du site" />
+            </aside>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-machines" data-tab-content="machines">
+            <h4>Catalogue build</h4>
+            <div class="admin-machine-toolbar">
+              <button class="admin-secondary" id="admin-add-machine" type="button">Ajouter un build</button>
+            </div>
+            <div id="admin-machines-list" class="admin-machines-list"></div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-users" data-tab-content="users">
+            <h4>Gestion des utilisateurs</h4>
+            <div class="admin-tech-card">
+              <label>
+                Rechercher un utilisateur
+                <input id="admin-users-search" type="search" placeholder="email@outlook.com" />
+              </label>
+              <h5 class="admin-subtitle">Utilisateurs inscrits</h5>
+              <div id="admin-users-list-panel"></div>
+            </div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-promos" data-tab-content="promos">
+            <h4>Offres promo DLC par utilisateur</h4>
+            <div class="admin-tech-card">
+              <label>
+                Email utilisateur (Outlook)
+                <input id="admin-promo-email" type="email" placeholder="utilisateur@outlook.com" />
+              </label>
+              <button class="admin-secondary" id="admin-generate-promo-btn" type="button">
+                Générer un code promo
+              </button>
+              <p class="admin-feedback info" id="admin-promo-feedback"></p>
+              <p class="admin-promo-generated" id="admin-generated-promo-code"></p>
+            </div>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Codes promo sauvegardés</h5>
+              <div id="admin-promo-codes-list"></div>
+            </div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-images" data-tab-content="images">
+            <h4>Images sous “Créer mon build” (3 blocs)</h4>
+            <div class="admin-showcase-grid">
+              <div class="admin-showcase-item">
+                <label>
+                  Titre image 1
+                  <input id="admin-showcase-title-0" type="text" />
+                </label>
+                <label>
+                  Slogan image 1
+                  <input id="admin-showcase-slogan-0" type="text" />
+                </label>
+                <label>
+                  Fichier image 1 (IMG)
+                  <div class="admin-file-field">
+                    <input id="admin-showcase-file-0" class="admin-file-input" type="file" accept="image/*" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-showcase-file-0">
+                        Choisir un fichier
+                      </button>
+                    </div>
+                    <span id="admin-showcase-file-name-0" class="admin-file-name">Aucun fichier choisi</span>
+                  </div>
+                </label>
+                <img id="admin-showcase-preview-0" class="admin-preview" alt="Aperçu image 1" />
+              </div>
+
+              <div class="admin-showcase-item">
+                <label>
+                  Titre image 2
+                  <input id="admin-showcase-title-1" type="text" />
+                </label>
+                <label>
+                  Slogan image 2
+                  <input id="admin-showcase-slogan-1" type="text" />
+                </label>
+                <label>
+                  Fichier image 2 (IMG)
+                  <div class="admin-file-field">
+                    <input id="admin-showcase-file-1" class="admin-file-input" type="file" accept="image/*" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-showcase-file-1">
+                        Choisir un fichier
+                      </button>
+                    </div>
+                    <span id="admin-showcase-file-name-1" class="admin-file-name">Aucun fichier choisi</span>
+                  </div>
+                </label>
+                <img id="admin-showcase-preview-1" class="admin-preview" alt="Aperçu image 2" />
+              </div>
+
+              <div class="admin-showcase-item">
+                <label>
+                  Titre image 3
+                  <input id="admin-showcase-title-2" type="text" />
+                </label>
+                <label>
+                  Slogan image 3
+                  <input id="admin-showcase-slogan-2" type="text" />
+                </label>
+                <label>
+                  Fichier image 3 (IMG)
+                  <div class="admin-file-field">
+                    <input id="admin-showcase-file-2" class="admin-file-input" type="file" accept="image/*" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-showcase-file-2">
+                        Choisir un fichier
+                      </button>
+                    </div>
+                    <span id="admin-showcase-file-name-2" class="admin-file-name">Aucun fichier choisi</span>
+                  </div>
+                </label>
+                <img id="admin-showcase-preview-2" class="admin-preview" alt="Aperçu image 3" />
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-fiches" data-tab-content="fiches">
+            <h4>Fiches techniques (max 15)</h4>
+            <div class="admin-machine-toolbar">
+              <button class="admin-secondary" id="admin-add-technical-sheet" type="button">
+                Ajouter une fiche technique
+              </button>
+            </div>
+            <div id="admin-technical-sheets-list" class="admin-machines-list"></div>
+          </section>
+
+          <section
+            class="admin-content-panel hidden"
+            id="admin-content-configurateur"
+            data-tab-content="configurateur"
+          >
+            <h4>Configurer les références, produits et prix</h4>
+            <div class="admin-machine-toolbar">
+              <select id="admin-component-select" aria-label="Choisir une catégorie composant"></select>
+              <button class="admin-secondary" id="admin-component-move-up" type="button">
+                Monter catégorie
+              </button>
+              <button class="admin-secondary" id="admin-component-move-down" type="button">
+                Descendre catégorie
+              </button>
+              <button class="admin-secondary" id="admin-add-component-inline" type="button" aria-label="Ajouter catégorie">+ Catégorie</button>
+              <button class="admin-secondary" id="admin-add-component-product" type="button">+ Produit</button>
+              <button class="admin-danger" id="admin-remove-component-category" type="button">
+                Supprimer catégorie sélectionnée
+              </button>
+              <button class="admin-secondary" id="admin-add-service-option" type="button">
+                Ajouter option service
+              </button>
+            </div>
+
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Images du configurateur (3)</h5>
+              <div class="admin-config-images-grid">
+                <div class="admin-config-image-item">
+                  <label>
+                    Image configurateur 1
+                    <div class="admin-file-field">
+                      <input id="admin-config-image-file-0" class="admin-file-input" type="file" accept="image/*" />
+                      <div class="admin-file-picker">
+                        <button class="admin-file-button" type="button" data-file-target="admin-config-image-file-0">
+                          Choisir une image
+                        </button>
+                      </div>
+                      <span id="admin-config-image-name-0" class="admin-file-name">Aucune image</span>
+                    </div>
+                  </label>
+                  <img id="admin-config-image-preview-0" class="admin-preview" alt="Aperçu configurateur 1" />
+                  <button class="admin-secondary" id="admin-config-image-remove-0" type="button">Supprimer</button>
+                </div>
+
+                <div class="admin-config-image-item">
+                  <label>
+                    Image configurateur 2
+                    <div class="admin-file-field">
+                      <input id="admin-config-image-file-1" class="admin-file-input" type="file" accept="image/*" />
+                      <div class="admin-file-picker">
+                        <button class="admin-file-button" type="button" data-file-target="admin-config-image-file-1">
+                          Choisir une image
+                        </button>
+                      </div>
+                      <span id="admin-config-image-name-1" class="admin-file-name">Aucune image</span>
+                    </div>
+                  </label>
+                  <img id="admin-config-image-preview-1" class="admin-preview" alt="Aperçu configurateur 2" />
+                  <button class="admin-secondary" id="admin-config-image-remove-1" type="button">Supprimer</button>
+                </div>
+
+                <div class="admin-config-image-item">
+                  <label>
+                    Image configurateur 3
+                    <div class="admin-file-field">
+                      <input id="admin-config-image-file-2" class="admin-file-input" type="file" accept="image/*" />
+                      <div class="admin-file-picker">
+                        <button class="admin-file-button" type="button" data-file-target="admin-config-image-file-2">
+                          Choisir une image
+                        </button>
+                      </div>
+                      <span id="admin-config-image-name-2" class="admin-file-name">Aucune image</span>
+                    </div>
+                  </label>
+                  <img id="admin-config-image-preview-2" class="admin-preview" alt="Aperçu configurateur 3" />
+                  <button class="admin-secondary" id="admin-config-image-remove-2" type="button">Supprimer</button>
+                </div>
+              </div>
+            </div>
+
+            <h5 class="admin-subtitle">Configurer les références, produits et prix (menus déroulants)</h5>
+            <div id="admin-components-list" class="admin-machines-list"></div>
+
+            <h5 class="admin-subtitle">Options services (cases à cocher)</h5>
+            <div id="admin-services-list" class="admin-machines-list"></div>
+          </section>
+
+          <section
+            class="admin-content-panel hidden"
+            id="admin-content-about-videos"
+            data-tab-content="about-videos"
+          >
+            <h4>Vidéos page A propos (6)</h4>
+            <div class="admin-config-images-grid">
+              <div class="admin-config-image-item">
+                <label>
+                  Titre vidéo 1
+                  <input id="admin-about-video-title-0" type="text" />
+                </label>
+                <label>
+                  Fichier vidéo 1
+                  <div class="admin-file-field">
+                    <input id="admin-about-video-file-0" class="admin-file-input" type="file" accept="video/*,video/quicktime,video/mp4,video/x-m4v,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.qt,.QT" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-about-video-file-0">
+                        Choisir une vidéo
+                      </button>
+                    </div>
+                    <span id="admin-about-video-name-0" class="admin-file-name">Aucune vidéo</span>
+                  </div>
+                </label>
+                <video id="admin-about-video-preview-0" class="admin-preview" controls muted playsinline></video>
+                <button class="admin-secondary" id="admin-about-video-remove-0" type="button">Supprimer</button>
+              </div>
+
+              <div class="admin-config-image-item">
+                <label>
+                  Titre vidéo 2
+                  <input id="admin-about-video-title-1" type="text" />
+                </label>
+                <label>
+                  Fichier vidéo 2
+                  <div class="admin-file-field">
+                    <input id="admin-about-video-file-1" class="admin-file-input" type="file" accept="video/*,video/quicktime,video/mp4,video/x-m4v,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.qt,.QT" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-about-video-file-1">
+                        Choisir une vidéo
+                      </button>
+                    </div>
+                    <span id="admin-about-video-name-1" class="admin-file-name">Aucune vidéo</span>
+                  </div>
+                </label>
+                <video id="admin-about-video-preview-1" class="admin-preview" controls muted playsinline></video>
+                <button class="admin-secondary" id="admin-about-video-remove-1" type="button">Supprimer</button>
+              </div>
+
+              <div class="admin-config-image-item">
+                <label>
+                  Titre vidéo 3
+                  <input id="admin-about-video-title-2" type="text" />
+                </label>
+                <label>
+                  Fichier vidéo 3
+                  <div class="admin-file-field">
+                    <input id="admin-about-video-file-2" class="admin-file-input" type="file" accept="video/*,video/quicktime,video/mp4,video/x-m4v,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.qt,.QT" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-about-video-file-2">
+                        Choisir une vidéo
+                      </button>
+                    </div>
+                    <span id="admin-about-video-name-2" class="admin-file-name">Aucune vidéo</span>
+                  </div>
+                </label>
+                <video id="admin-about-video-preview-2" class="admin-preview" controls muted playsinline></video>
+                <button class="admin-secondary" id="admin-about-video-remove-2" type="button">Supprimer</button>
+              </div>
+
+              <div class="admin-config-image-item">
+                <label>
+                  Titre vidéo 4
+                  <input id="admin-about-video-title-3" type="text" />
+                </label>
+                <label>
+                  Fichier vidéo 4
+                  <div class="admin-file-field">
+                    <input id="admin-about-video-file-3" class="admin-file-input" type="file" accept="video/*,video/quicktime,video/mp4,video/x-m4v,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.qt,.QT" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-about-video-file-3">
+                        Choisir une vidéo
+                      </button>
+                    </div>
+                    <span id="admin-about-video-name-3" class="admin-file-name">Aucune vidéo</span>
+                  </div>
+                </label>
+                <video id="admin-about-video-preview-3" class="admin-preview" controls muted playsinline></video>
+                <button class="admin-secondary" id="admin-about-video-remove-3" type="button">Supprimer</button>
+              </div>
+
+              <div class="admin-config-image-item">
+                <label>
+                  Titre vidéo 5
+                  <input id="admin-about-video-title-4" type="text" />
+                </label>
+                <label>
+                  Fichier vidéo 5
+                  <div class="admin-file-field">
+                    <input id="admin-about-video-file-4" class="admin-file-input" type="file" accept="video/*,video/quicktime,video/mp4,video/x-m4v,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.qt,.QT" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-about-video-file-4">
+                        Choisir une vidéo
+                      </button>
+                    </div>
+                    <span id="admin-about-video-name-4" class="admin-file-name">Aucune vidéo</span>
+                  </div>
+                </label>
+                <video id="admin-about-video-preview-4" class="admin-preview" controls muted playsinline></video>
+                <button class="admin-secondary" id="admin-about-video-remove-4" type="button">Supprimer</button>
+              </div>
+
+              <div class="admin-config-image-item">
+                <label>
+                  Titre vidéo 6
+                  <input id="admin-about-video-title-5" type="text" />
+                </label>
+                <label>
+                  Fichier vidéo 6
+                  <div class="admin-file-field">
+                    <input id="admin-about-video-file-5" class="admin-file-input" type="file" accept="video/*,video/quicktime,video/mp4,video/x-m4v,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.qt,.QT" />
+                    <div class="admin-file-picker">
+                      <button class="admin-file-button" type="button" data-file-target="admin-about-video-file-5">
+                        Choisir une vidéo
+                      </button>
+                    </div>
+                    <span id="admin-about-video-name-5" class="admin-file-name">Aucune vidéo</span>
+                  </div>
+                </label>
+                <video id="admin-about-video-preview-5" class="admin-preview" controls muted playsinline></video>
+                <button class="admin-secondary" id="admin-about-video-remove-5" type="button">Supprimer</button>
+              </div>
+            </div>
+
+            <h4>Photos défilantes en bas de A propos</h4>
+            <div class="admin-machine-toolbar">
+              <label>
+                Vitesse du défilement (secondes)
+                <input id="admin-about-gallery-speed" type="number" min="8" max="80" step="1" />
+              </label>
+              <label>
+                Direction
+                <select id="admin-about-gallery-direction">
+                  <option value="left">Vers la gauche</option>
+                  <option value="right">Vers la droite</option>
+                </select>
+              </label>
+              <label>
+                Logo watermark (vidéos + images)
+                <select id="admin-about-watermark-enabled">
+                  <option value="1">Activé</option>
+                  <option value="0">Désactivé</option>
+                </select>
+              </label>
+              <button class="admin-secondary" id="admin-add-about-gallery-photo" type="button">
+                Ajouter une photo
+              </button>
+            </div>
+            <div id="admin-about-gallery-list" class="admin-config-images-grid"></div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-faq" data-tab-content="faq">
+            <h4>FAQ du site</h4>
+            <div class="admin-machine-toolbar">
+              <button class="admin-secondary" id="admin-add-faq-item" type="button">Ajouter une question</button>
+            </div>
+            <div id="admin-faq-list" class="admin-machines-list"></div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-support-sav" data-tab-content="support-sav">
+            <h4>Page Support & SAV</h4>
+            <div class="admin-tech-card">
+              <label>
+                Badge
+                <input id="admin-support-badge" type="text" />
+              </label>
+              <label>
+                Titre
+                <input id="admin-support-title" type="text" />
+              </label>
+              <label>
+                Sous-titre
+                <textarea id="admin-support-subtitle" rows="3"></textarea>
+              </label>
+              <label>
+                URL Telegram (CTA principal)
+                <input id="admin-support-telegram-url" type="url" placeholder="https://t.me/vortexboxpro" />
+              </label>
+            </div>
+
+            <div class="admin-tech-card">
+              <div class="admin-machine-toolbar">
+                <h5 class="admin-subtitle">Blocs services</h5>
+                <button class="admin-secondary" id="admin-add-support-card" type="button">Ajouter un bloc</button>
+              </div>
+              <div id="admin-support-cards-list" class="admin-machines-list"></div>
+            </div>
+
+            <div class="admin-tech-card">
+              <div class="admin-machine-toolbar">
+                <h5 class="admin-subtitle">Étapes SAV</h5>
+                <button class="admin-secondary" id="admin-add-support-step" type="button">Ajouter une étape</button>
+              </div>
+              <div id="admin-support-steps-list" class="admin-machines-list"></div>
+            </div>
+
+            <div class="admin-tech-card">
+              <div class="admin-machine-toolbar">
+                <h5 class="admin-subtitle">FAQ Support</h5>
+                <button class="admin-secondary" id="admin-add-support-faq-item" type="button">Ajouter une question</button>
+              </div>
+              <div id="admin-support-faq-list" class="admin-machines-list"></div>
+            </div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-reviews" data-tab-content="reviews">
+            <h4>Avis clients</h4>
+            <div class="admin-machine-toolbar">
+              <button class="admin-secondary" id="admin-add-review-item" type="button">Ajouter un avis</button>
+            </div>
+            <div id="admin-reviews-list" class="admin-machines-list"></div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-legal" data-tab-content="legal">
+            <h4>Mentions légales, CGV, RGPD et cookies</h4>
+            <div class="admin-tech-card">
+              <label>
+                Email affiché en bas de site
+                <input id="admin-footer-email" type="email" placeholder="vortexcore@outlook.fr" />
+              </label>
+            </div>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Mentions légales</h5>
+              <label>
+                Libellé bouton
+                <input id="admin-legal-mentions-label" type="text" />
+              </label>
+              <label>
+                Titre de la fenêtre
+                <input id="admin-legal-mentions-title" type="text" />
+              </label>
+              <label>
+                Contenu
+                <textarea id="admin-legal-mentions-content" rows="6"></textarea>
+              </label>
+            </div>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Conditions générales de vente</h5>
+              <label>
+                Libellé bouton
+                <input id="admin-legal-cgv-label" type="text" />
+              </label>
+              <label>
+                Titre de la fenêtre
+                <input id="admin-legal-cgv-title" type="text" />
+              </label>
+              <label>
+                Contenu
+                <textarea id="admin-legal-cgv-content" rows="6"></textarea>
+              </label>
+            </div>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Politique de confidentialité RGPD</h5>
+              <label>
+                Libellé bouton
+                <input id="admin-legal-rgpd-label" type="text" />
+              </label>
+              <label>
+                Titre de la fenêtre
+                <input id="admin-legal-rgpd-title" type="text" />
+              </label>
+              <label>
+                Contenu
+                <textarea id="admin-legal-rgpd-content" rows="6"></textarea>
+              </label>
+            </div>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Gestion des cookies</h5>
+              <label>
+                Libellé bouton
+                <input id="admin-legal-cookies-label" type="text" />
+              </label>
+              <label>
+                Titre de la fenêtre
+                <input id="admin-legal-cookies-title" type="text" />
+              </label>
+              <label>
+                Contenu
+                <textarea id="admin-legal-cookies-content" rows="6"></textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-processus" data-tab-content="processus">
+            <h4>Processus - Dossiers confidentiels (PDF)</h4>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Accès protégé</h5>
+              <label>
+                Mot de passe Processus
+                <input
+                  id="admin-process-password"
+                  type="password"
+                  placeholder="Entrez le mot de passe"
+                  autocomplete="new-password"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  spellcheck="false"
+                  data-lpignore="true"
+                />
+              </label>
+              <p id="admin-process-feedback" class="admin-feedback"></p>
+            </div>
+
+            <div id="admin-process-editor" class="hidden">
+              <div class="admin-machine-toolbar" id="admin-process-quicklinks">
+                <a class="admin-secondary" href="./index.html?openAdmin=1&adminTab=processus&processSubtab=docs" data-process-link-key="installation">Installation VB</a>
+                <a class="admin-secondary" href="./index.html?openAdmin=1&adminTab=processus&processSubtab=achats" data-process-link-key="fournisseurs">Fournisseurs</a>
+                <a class="admin-secondary" href="./index.html?openAdmin=1&adminTab=processus&processSubtab=crm" data-process-link-key="crm">CRM</a>
+              </div>
+              <div class="admin-process-subtabs">
+                <button class="admin-tab" id="admin-process-subtab-docs" type="button" data-process-subtab="docs" draggable="true">Installation VB</button>
+                <button class="admin-tab" id="admin-process-subtab-achats" type="button" data-process-subtab="achats" draggable="true">Fournisseurs</button>
+                <button class="admin-tab active" id="admin-process-subtab-crm" type="button" data-process-subtab="crm" draggable="true">CRM</button>
+              </div>
+              <div id="admin-process-docs-panel" class="hidden" data-process-section-panel="docs">
+                <div class="admin-machine-toolbar">
+                  <button class="admin-secondary" id="admin-open-process-install-modal" type="button">Nouveau PDF Installation VB</button>
+                </div>
+                <div id="admin-process-list" class="admin-machines-list"></div>
+              </div>
+              <div id="admin-process-achats-panel" class="hidden" data-process-section-panel="achats">
+                <div class="admin-machine-toolbar">
+                  <button class="admin-secondary admin-add-process-link-btn" id="admin-add-process-link" type="button" data-section="achats">Ajouter un lien fournisseur</button>
+                </div>
+                <div id="admin-process-links-list" class="admin-machines-list admin-process-links-list" data-section="achats"></div>
+              </div>
+              <div id="admin-process-crm-panel" data-process-section-panel="crm">
+                <div class="admin-machine-toolbar">
+                  <button class="admin-secondary" id="admin-add-crm-lead" type="button">+ Prospect CRM</button>
+                  <input id="admin-crm-search" type="text" placeholder="Rechercher un prospect..." />
+                  <select id="admin-crm-filter-status">
+                    <option value="all">Tous les statuts</option>
+                    <option value="Nouveau">Nouveau</option>
+                    <option value="Qualifié">Qualifié</option>
+                    <option value="Devis">Devis</option>
+                    <option value="Négociation">Négociation</option>
+                    <option value="Gagné">Gagné</option>
+                    <option value="Perdu">Perdu</option>
+                  </select>
+                </div>
+                <div id="admin-process-crm-summary" class="admin-stock-summary"></div>
+                <div id="admin-process-crm-list" class="admin-machines-list"></div>
+              </div>
+
+              <section id="admin-process-link-modal" class="admin-process-link-modal hidden" aria-label="Ajouter un lien fournisseur">
+                <article class="admin-process-link-modal-card">
+                  <button class="admin-process-link-modal-close" id="admin-process-link-modal-close" type="button" aria-label="Fermer">×</button>
+                  <h5 class="admin-subtitle">Nouveau lien fournisseur</h5>
+                  <label>
+                    Titre du site
+                    <input id="admin-process-link-title-input" type="text" placeholder="Ex: Amazon - RTX 4070" />
+                  </label>
+                  <label>
+                    Adresse web
+                    <input id="admin-process-link-url-input" type="text" placeholder="https://..." />
+                  </label>
+                  <div class="admin-option-actions">
+                    <button class="admin-secondary" id="admin-process-link-cancel" type="button">Annuler</button>
+                    <button class="cta" id="admin-process-link-save" type="button">Enregistrer le lien</button>
+                  </div>
+                </article>
+              </section>
+
+              <section id="admin-process-file-modal" class="admin-process-link-modal hidden" aria-label="Installation VB PDF">
+                <article class="admin-process-link-modal-card">
+                  <button class="admin-process-link-modal-close" id="admin-process-file-modal-close" type="button" aria-label="Fermer">×</button>
+                  <h5 class="admin-subtitle">Installation VB - PDF</h5>
+                  <label>
+                    Titre du document
+                    <input id="admin-process-file-title-input" type="text" placeholder="Ex: Installation VortexBox v1" />
+                  </label>
+                  <label>
+                    PDF
+                    <div class="admin-file-field">
+                      <input id="admin-process-file-input-modal" class="admin-file-input" type="file" accept="application/pdf,.pdf" />
+                      <div class="admin-file-picker">
+                        <button class="admin-file-button" id="admin-process-file-pick-modal" type="button">Choisir un PDF</button>
+                      </div>
+                      <span id="admin-process-file-name-modal" class="admin-file-name">Aucun fichier choisi</span>
+                    </div>
+                  </label>
+                  <div class="admin-option-actions">
+                    <button class="admin-secondary" id="admin-process-file-cancel" type="button">Annuler</button>
+                    <button class="cta" id="admin-process-file-save" type="button">Enregistrer le PDF</button>
+                  </div>
+                </article>
+              </section>
+            </div>
+          </section>
+
+          <section class="admin-content-panel hidden" id="admin-content-backup" data-tab-content="backup">
+            <h4>Sauvegarde complète du site</h4>
+            <div class="admin-tech-card">
+              <p>
+                Téléchargez une archive ZIP complète du site (pages, scripts, styles, données, uploads et ressources).
+              </p>
+              <button class="cta" id="admin-backup-zip-btn" type="button">Télécharger la sauvegarde ZIP</button>
+              <p id="admin-backup-last-state" class="admin-file-name">Dernière sauvegarde: aucune</p>
+              <p id="admin-backup-feedback" class="admin-feedback"></p>
+            </div>
+          </section>
+
+          <div class="admin-actions">
+            <button class="cta" id="admin-save" type="submit">Enregistrer</button>
+            <button class="admin-secondary" id="admin-reset" type="button">Réinitialiser</button>
+            <button class="admin-secondary" id="admin-logout" type="button">Déconnexion</button>
+          </div>
+          <div class="admin-ops-row">
+            <p id="admin-autosave-status" class="admin-feedback info"></p>
+            <select id="admin-history-select" aria-label="Historique des versions"></select>
+            <button class="admin-secondary" id="admin-restore-history" type="button">Restaurer la version</button>
+          </div>
+          <div id="admin-upload-progress-wrap" class="admin-upload-progress hidden" aria-live="polite">
+            <div class="admin-upload-progress-head">
+              <span id="admin-upload-progress-label">Upload média</span>
+              <span id="admin-upload-progress-value">0%</span>
+            </div>
+            <div class="admin-upload-progress-track">
+              <div id="admin-upload-progress-bar" class="admin-upload-progress-bar"></div>
+            </div>
+          </div>
+          <p id="admin-feedback" class="admin-feedback"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="admin-panel hidden" id="user-profile-panel">
+      <div class="admin-box user-profile-box">
+        <div class="profile-premium-head">
+          <div class="profile-identity-row">
+            <div class="profile-avatar-uploader">
+              <img
+                id="profile-avatar-img"
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+                alt="Photo utilisateur"
+              />
+              <input id="profile-avatar-file" class="admin-file-input" type="file" accept="image/*" />
+              <button class="admin-file-button" id="profile-avatar-pick" type="button">Ajouter une photo</button>
+            </div>
+            <div class="profile-identity-info">
+              <p class="profile-premium-badge">Espace client premium</p>
+              <h3>Mon profil</h3>
+              <p>Gérez votre profil, suivez vos avis et retrouvez vos configurations enregistrées.</p>
+            </div>
+          </div>
+          <p id="profile-avatar-feedback" class="admin-feedback"></p>
+        </div>
+        <div class="user-profile-grid">
+          <article class="admin-tech-card profile-card profile-card-account">
+            <h5 class="admin-subtitle">Informations</h5>
+            <label>
+              Adresse email
+              <input id="profile-email" type="email" readonly />
+            </label>
+            <label>
+              Nom affiché
+              <input id="profile-display-name" type="text" maxlength="50" placeholder="Votre nom ou pseudo" />
+            </label>
+            <p class="admin-file-name">Temps de connexion cumulé: <strong id="profile-connection-time">00:00:00</strong></p>
+            <button class="admin-secondary" id="profile-save-name" type="button">Enregistrer mon profil</button>
+            <h5 class="admin-subtitle">Modifier le mot de passe</h5>
+            <label>
+              Mot de passe actuel
+              <input id="profile-current-password" type="password" placeholder="Entrez votre mot de passe actuel" />
+            </label>
+            <label>
+              Nouveau mot de passe
+              <input id="profile-new-password" type="password" placeholder="Nouveau mot de passe" />
+            </label>
+            <label>
+              Confirmer le nouveau mot de passe
+              <input id="profile-confirm-password" type="password" placeholder="Confirmez le nouveau mot de passe" />
+            </label>
+            <button class="admin-secondary" id="profile-change-password-btn" type="button">Modifier le mot de passe</button>
+            <p id="profile-password-feedback" class="admin-feedback"></p>
+          </article>
+
+          <article class="admin-tech-card profile-card profile-card-review">
+            <h5 class="admin-subtitle">Laisser un avis</h5>
+            <label>
+              Note
+              <select id="profile-review-rating">
+                <option value="5">5 / 5</option>
+                <option value="4">4 / 5</option>
+                <option value="3">3 / 5</option>
+                <option value="2">2 / 5</option>
+                <option value="1">1 / 5</option>
+              </select>
+            </label>
+            <label>
+              Votre avis
+              <textarea id="profile-review-text" rows="4" placeholder="Partagez votre expérience VortexBox..."></textarea>
+            </label>
+            <button class="cta" id="profile-submit-review" type="button">Envoyer mon avis</button>
+            <p id="profile-feedback" class="admin-feedback"></p>
+            <div id="profile-admin-photo-tools" class="hidden">
+              <div class="profile-admin-photo-slot">
+                <img
+                  id="profile-admin-photo-preview"
+                  src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+                  alt="Prévisualisation photo admin"
+                />
+                <input id="profile-admin-photo-file" class="admin-file-input" type="file" accept="image/*" />
+                <div class="profile-admin-photo-actions">
+                  <button class="profile-admin-photo-icon-btn" id="profile-admin-photo-pick" type="button" aria-label="Choisir une photo">
+                    Upload
+                  </button>
+                  <button class="profile-admin-photo-icon-btn" id="profile-admin-photo-upload-btn" type="button" aria-label="Valider l'ajout de la photo">
+                    Save
+                  </button>
+                </div>
+                <p id="profile-admin-photo-name" class="admin-file-name">Aucune image</p>
+              </div>
+              <p id="profile-admin-photo-feedback" class="admin-feedback"></p>
+            </div>
+          </article>
+        </div>
+
+        <article class="admin-tech-card profile-card">
+          <h5 class="admin-subtitle">Mes avis</h5>
+          <div id="profile-reviews-list"></div>
+        </article>
+
+        <article class="admin-tech-card profile-card">
+          <h5 class="admin-subtitle">Mes configurations</h5>
+          <div id="profile-configs-list"></div>
+        </article>
+
+        <article class="admin-tech-card profile-card">
+          <h5 class="admin-subtitle">Mes favoris</h5>
+          <div id="profile-favorites-list"></div>
+        </article>
+
+        <article class="admin-tech-card profile-card">
+          <h5 class="admin-subtitle">Mon activité</h5>
+          <div id="profile-activity-list"></div>
+        </article>
+
+        <div class="admin-actions profile-actions">
+          <button class="admin-secondary hidden" id="user-logout" type="button">Se déconnecter</button>
+          <button class="admin-secondary" id="profile-close" type="button">Fermer</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="image-modal hidden" id="image-modal" role="dialog" aria-modal="true" aria-label="Agrandissement image">
+      <button class="image-modal-close" id="image-modal-close" type="button" aria-label="Fermer">×</button>
+      <img id="image-modal-img" alt="Image agrandie" />
+      <p id="image-modal-caption"></p>
+    </div>
+
+    <div class="image-modal hidden" id="machine-modal" role="dialog" aria-modal="true" aria-label="Détail machine">
+      <button class="image-modal-close" id="machine-modal-close" type="button" aria-label="Fermer">×</button>
+      <div id="machine-modal-content"></div>
+    </div>
+
+    <div class="image-modal hidden" id="config-info-modal" role="dialog" aria-modal="true" aria-label="Informations produit">
+      <button class="image-modal-close" id="config-info-modal-close" type="button" aria-label="Fermer">×</button>
+      <article class="config-info-modal-card">
+        <div class="config-info-modal-head">
+          <img src="favicon-vb.svg" alt="Logo VortexBox" />
+          <h3 id="config-info-modal-title">INFO PRODUIT</h3>
+        </div>
+        <div class="config-info-modal-content" id="config-info-modal-content"></div>
+      </article>
+    </div>
+
+    <footer id="contact" class="site-footer">
+      <p>VortexBox - Paris - <span id="footer-contact-email">VortexCore@outlook.Fr</span></p>
+      <div class="footer-legal-links">
+        <button class="footer-legal-btn" id="footer-legal-mentions-btn" type="button">Mentions légales</button>
+        <button class="footer-legal-btn" id="footer-legal-cgv-btn" type="button">Conditions générales de vente</button>
+        <button class="footer-legal-btn" id="footer-legal-rgpd-btn" type="button">Politique de confidentialité RGPD</button>
+        <button class="footer-legal-btn" id="footer-legal-cookies-btn" type="button">Gestion des cookies</button>
+      </div>
+    </footer>
+
+    <div class="legal-modal hidden" id="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
+      <div class="legal-modal-card">
+        <button class="legal-modal-close" id="legal-modal-close" type="button" aria-label="Fermer">×</button>
+        <div class="legal-modal-header">
+          <img class="legal-modal-logo" src="favicon-vb.svg" alt="VortexBox" />
+          <div class="legal-modal-title-wrap">
+            <p class="legal-modal-kicker">Informations légales VortexBox</p>
+            <h3 id="legal-modal-title"></h3>
+          </div>
+        </div>
+        <div class="legal-modal-content" id="legal-modal-content"></div>
+      </div>
+    </div>
+
+    <div class="mobile-sticky-cta" id="mobile-sticky-cta">
+      <a class="mobile-sticky-btn mobile-sticky-config" id="mobile-open-configurator" href="#configurateur">
+        Configurer ma VortexBox
+      </a>
+      <a
+        class="mobile-sticky-btn mobile-sticky-telegram"
+        href="https://t.me/vortexboxpro"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Parler à un expert
+      </a>
+    </div>
+
+    <div class="bg-music-control hidden" id="bg-music-control">
+      <button class="bg-music-toggle" id="bg-music-toggle" type="button" aria-pressed="false" aria-label="Activer la musique" title="Activer la musique">
+        <span class="bg-music-icon" aria-hidden="true">♪</span>
+      </button>
+      <audio id="bg-music" loop preload="auto">
+        <source src="vortexbox-bg.mp3" type="audio/mpeg" />
+      </audio>
+    </div>
+
+    <section class="cookie-banner hidden" id="cookie-banner" aria-label="Gestion des cookies">
+      <div class="cookie-banner-inner">
+        <div>
+          <h4>Votre confidentialité sur VortexBox</h4>
+          <p>Nous utilisons des cookies pour améliorer votre expérience. Vous pouvez accepter, refuser ou personnaliser.</p>
+        </div>
+        <div class="cookie-actions">
+          <button class="cookie-btn" id="cookie-open-customize" type="button">Personnaliser</button>
+          <button class="cookie-btn" id="cookie-reject-all" type="button">Refuser</button>
+          <button class="cookie-btn primary" id="cookie-accept-all" type="button">Accepter</button>
+        </div>
+      </div>
+      <div class="cookie-customize hidden" id="cookie-customize-panel">
+        <label class="cookie-option">
+          <span><strong>Cookies nécessaires</strong><span>Indispensables au fonctionnement du site.</span></span>
+          <input type="checkbox" checked disabled />
+        </label>
+        <label class="cookie-option">
+          <span><strong>Préférences</strong><span>Mémorise vos choix d'interface.</span></span>
+          <input id="cookie-consent-preferences" type="checkbox" checked />
+        </label>
+        <label class="cookie-option">
+          <span><strong>Mesure d'audience</strong><span>Nous aide à améliorer les pages les plus visitées.</span></span>
+          <input id="cookie-consent-analytics" type="checkbox" />
+        </label>
+        <div class="cookie-customize-actions">
+          <button class="cookie-btn" id="cookie-cancel-custom" type="button">Annuler</button>
+          <button class="cookie-btn primary" id="cookie-save-custom" type="button">Enregistrer</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="admin-toast-stack" id="admin-toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="script.js?v=20260308c"></script>
+  </body>
+</html>

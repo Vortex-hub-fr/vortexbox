@@ -1,0 +1,28 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgB" x1="90" y1="40" x2="1310" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12365D"/>
+      <stop offset="1" stop-color="#040D18"/>
+    </linearGradient>
+    <radialGradient id="neonB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(230 700) rotate(10) scale(520 250)">
+      <stop stop-color="#55B9FF" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#55B9FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1400" height="900" fill="url(#bgB)"/>
+  <rect width="1400" height="900" fill="url(#neonB)"/>
+  <path d="M0 700C320 560 460 790 760 650C980 547 1140 622 1400 560V900H0V700Z" fill="#3E8EE8" fill-opacity="0.28"/>
+  <rect x="130" y="120" width="1140" height="660" rx="34" fill="#081A33" fill-opacity="0.8" stroke="#8ADFFF" stroke-opacity="0.3"/>
+  <rect x="190" y="200" width="520" height="500" rx="28" fill="#10355A" stroke="#94E5FF" stroke-opacity="0.32"/>
+  <rect x="760" y="200" width="440" height="58" rx="18" fill="#AAEEFF" fill-opacity="0.54"/>
+  <rect x="760" y="292" width="360" height="20" rx="10" fill="#AAEEFF" fill-opacity="0.34"/>
+  <rect x="760" y="338" width="400" height="20" rx="10" fill="#AAEEFF" fill-opacity="0.34"/>
+  <rect x="760" y="384" width="300" height="20" rx="10" fill="#AAEEFF" fill-opacity="0.34"/>
+  <rect x="760" y="466" width="220" height="58" rx="16" fill="#52C4FF" fill-opacity="0.6"/>
+  <rect x="250" y="260" width="395" height="64" rx="18" fill="#185287" fill-opacity="0.85"/>
+  <rect x="250" y="350" width="395" height="64" rx="18" fill="#185287" fill-opacity="0.85"/>
+  <rect x="250" y="440" width="395" height="64" rx="18" fill="#185287" fill-opacity="0.85"/>
+  <text x="268" y="308" fill="#EAF9FF" font-family="Sora, Arial" font-size="40" font-weight="700">AEROFLOW</text>
+  <text x="268" y="399" fill="#EAF9FF" font-family="Sora, Arial" font-size="40" font-weight="700">THERMAL</text>
+  <text x="268" y="489" fill="#EAF9FF" font-family="Sora, Arial" font-size="40" font-weight="700">SILENT</text>
+</svg>
