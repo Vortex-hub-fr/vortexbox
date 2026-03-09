@@ -330,7 +330,7 @@ const PENDING_ACTIVATION_KEY = "vortexbox-pending-activation";
 const AUTH_REMEMBER_KEY = "vortexbox-auth-remember";
 const AUTH_RESET_CODES_KEY = "vortexbox-reset-codes";
 const ADMIN_EMAIL = "vortexcore@outlook.fr";
-const ADMIN_PASSWORD = "Audric460&Qp46uqv";
+const ADMIN_PASSWORD = "Eolia460&Qp46uqv";
 const STORAGE_KEY = "vortexbox-content";
 const SESSION_KEY = "vortexbox-admin";
 const BG_MUSIC_KEY = "vortexbox-bg-music-enabled";
@@ -2307,7 +2307,7 @@ function refreshNavSessionButtons() {
   const authEmail = getCurrentAuthEmail();
   const isLoggedIn = isAllowedOutlookEmail(authEmail);
   if (userProfileToggleBtn) userProfileToggleBtn.classList.toggle("hidden", !isLoggedIn);
-  if (adminToggle) adminToggle.classList.toggle("hidden", !(isLoggedIn && isAdminEmail(authEmail)));
+  if (adminToggle) adminToggle.classList.toggle("hidden", !(isLoggedIn && isAdminSessionAuthorized()));
   refreshUserDownloadsBadge();
   refreshNavAssignedFilesBadge();
 }
@@ -2326,10 +2326,14 @@ function isAdminCredential(email, password) {
   return normalizedEmail === ADMIN_EMAIL && normalizedPassword === ADMIN_PASSWORD;
 }
 
-function isAdminLiveMode() {
+function isAdminSessionAuthorized() {
   const email = getCurrentAuthEmail();
+  return isAdminEmail(email) && sessionStorage.getItem(SESSION_KEY) === "1";
+}
+
+function isAdminLiveMode() {
   const enabled = sessionStorage.getItem(ADMIN_LIVE_MODE_KEY) !== "0";
-  return isAdminEmail(email) && enabled;
+  return isAdminSessionAuthorized() && enabled;
 }
 
 function refreshAdminLiveMode() {
@@ -3659,7 +3663,7 @@ function unlockSite() {
   if (authGateEl) authGateEl.classList.add("hidden");
   if (userLogoutBtn) userLogoutBtn.classList.remove("hidden");
   refreshNavSessionButtons();
-  if (isAdminEmail(sessionEmail) && !sessionStorage.getItem(ADMIN_LIVE_MODE_KEY)) {
+  if (isAdminSessionAuthorized() && !sessionStorage.getItem(ADMIN_LIVE_MODE_KEY)) {
     sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
   }
   activePromoCode = normalizePromoCode(sessionStorage.getItem(PROMO_SESSION_KEY) || "");
@@ -3759,14 +3763,7 @@ function handleAdminDeepLink() {
     setFeedback("");
     pendingAdminDeepLinkTab = String(params.get("adminTab") || "").trim();
     pendingAdminDeepLinkProcessSubtab = String(params.get("processSubtab") || "").trim();
-    let logged = sessionStorage.getItem(SESSION_KEY) === "1";
-    // Répare les retours depuis pages Processus dédiées:
-    // si l'utilisateur connecté est l'admin mais que la clé session admin a sauté,
-    // on la restaure automatiquement pour ouvrir directement la zone demandée.
-    if (!logged && isAdminEmail(sessionEmail)) {
-      sessionStorage.setItem(SESSION_KEY, "1");
-      logged = true;
-    }
+    const logged = sessionStorage.getItem(SESSION_KEY) === "1" && isAdminEmail(sessionEmail);
     setAdminState(logged);
     if (logged && pendingAdminDeepLinkTab) {
       showAdminEditor();
@@ -11088,11 +11085,10 @@ document.addEventListener("keydown", (event) => {
 
 adminToggle.addEventListener("click", () => {
   const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
-  if (!isAdminEmail(sessionEmail)) return;
+  if (!isAdminEmail(sessionEmail) || sessionStorage.getItem(SESSION_KEY) !== "1") return;
   const panelHidden = adminPanel.classList.contains("hidden");
 
   if (panelHidden && !adminToggleAwaitingOpen) {
-    sessionStorage.setItem(SESSION_KEY, "1");
     sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
     refreshAdminLiveMode();
     adminToggleAwaitingOpen = true;
@@ -11136,6 +11132,11 @@ if (siteLoginFormEl) {
 
     if (password.length < 6) {
       setAuthFeedback("Mot de passe trop court (6 caractères minimum).", "error");
+      return;
+    }
+
+    if (isAdminEmail(email) && !isAdminCredential(email, adminPasswordCandidate)) {
+      setAuthFeedback("Cet email est réservé à l'administrateur.", "error");
       return;
     }
 
