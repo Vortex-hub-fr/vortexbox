@@ -227,6 +227,14 @@ const adminProcessFilePickModalBtn = document.getElementById("admin-process-file
 const adminProcessFileNameModalEl = document.getElementById("admin-process-file-name-modal");
 const adminProcessFileCancelBtn = document.getElementById("admin-process-file-cancel");
 const adminProcessFileSaveBtn = document.getElementById("admin-process-file-save");
+const adminOpenRailwayUpdateModalBtn = document.getElementById("admin-open-railway-update-modal");
+const adminRailwayUpdateModalEl = document.getElementById("admin-railway-update-modal");
+const adminRailwayUpdateModalCloseBtn = document.getElementById("admin-railway-update-modal-close");
+const adminRailwayUpdateCommandEl = document.getElementById("admin-railway-update-command");
+const adminRailwayUpdateFeedbackEl = document.getElementById("admin-railway-update-feedback");
+const adminRailwayUpdateCopyBtn = document.getElementById("admin-railway-update-copy");
+const adminRailwayUpdateDownloadBtn = document.getElementById("admin-railway-update-download");
+const adminRailwayUpdateRunTerminalBtn = document.getElementById("admin-railway-update-run-terminal");
 const adminBackupZipBtn = document.getElementById("admin-backup-zip-btn");
 const adminBackupFeedbackEl = document.getElementById("admin-backup-feedback");
 const adminBackupLastStateEl = document.getElementById("admin-backup-last-state");
@@ -6936,6 +6944,56 @@ function setAdminProcessFeedback(message, tone = "") {
   }
 }
 
+function setAdminRailwayUpdateFeedback(message, tone = "") {
+  if (!adminRailwayUpdateFeedbackEl) return;
+  const text = String(message || "");
+  adminRailwayUpdateFeedbackEl.textContent = text;
+  adminRailwayUpdateFeedbackEl.classList.remove("success", "error", "info");
+  if (!text) return;
+  const safeTone = tone === "success" || tone === "error" || tone === "info" ? tone : "info";
+  adminRailwayUpdateFeedbackEl.classList.add(safeTone);
+}
+
+function getRailwayUpdateCommand() {
+  return [
+    'cd "/Users/brunosoler/Documents/Playground"',
+    "git add .",
+    'git commit -m "MAJ VortexBox" || echo "Aucun changement a commit"',
+    "git push origin main",
+  ].join("\n");
+}
+
+function isLocalRuntimeForTerminalLaunch() {
+  const host = String(window.location.hostname || "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
+function openAdminRailwayUpdateModal() {
+  if (!adminRailwayUpdateModalEl) return;
+  if (adminRailwayUpdateCommandEl) adminRailwayUpdateCommandEl.value = getRailwayUpdateCommand();
+  if (adminRailwayUpdateRunTerminalBtn) {
+    const canLaunch = isLocalRuntimeForTerminalLaunch();
+    adminRailwayUpdateRunTerminalBtn.disabled = !canLaunch;
+    adminRailwayUpdateRunTerminalBtn.title = canLaunch
+      ? "Lancer la commande dans Terminal"
+      : "Disponible uniquement en local sur votre Mac (localhost)";
+  }
+  if (isLocalRuntimeForTerminalLaunch()) {
+    setAdminRailwayUpdateFeedback("");
+  } else {
+    setAdminRailwayUpdateFeedback(
+      "Mode en ligne: utilisez 'Copier la commande' ou 'Télécharger .command'. Le lancement direct Terminal fonctionne uniquement en local.",
+      "info"
+    );
+  }
+  adminRailwayUpdateModalEl.classList.remove("hidden");
+}
+
+function closeAdminRailwayUpdateModal() {
+  if (!adminRailwayUpdateModalEl) return;
+  adminRailwayUpdateModalEl.classList.add("hidden");
+}
+
 function setAdminBackupFeedback(message, tone = "") {
   if (!adminBackupFeedbackEl) return;
   const text = String(message || "");
@@ -9513,6 +9571,88 @@ if (adminProcessFileModalEl) {
   });
 }
 
+if (adminOpenRailwayUpdateModalBtn) {
+  adminOpenRailwayUpdateModalBtn.addEventListener("click", () => {
+    if (!adminProcessUnlocked) {
+      setAdminProcessFeedback("Déverrouillez l'accès Processus d'abord.");
+      return;
+    }
+    openAdminRailwayUpdateModal();
+  });
+}
+
+if (adminRailwayUpdateModalCloseBtn) {
+  adminRailwayUpdateModalCloseBtn.addEventListener("click", closeAdminRailwayUpdateModal);
+}
+
+if (adminRailwayUpdateModalEl) {
+  adminRailwayUpdateModalEl.addEventListener("click", (event) => {
+    if (event.target === adminRailwayUpdateModalEl) closeAdminRailwayUpdateModal();
+  });
+}
+
+if (adminRailwayUpdateCopyBtn) {
+  adminRailwayUpdateCopyBtn.addEventListener("click", async () => {
+    const command = getRailwayUpdateCommand();
+    try {
+      await navigator.clipboard.writeText(command);
+      setAdminRailwayUpdateFeedback("Commande copiée. Collez-la dans Terminal.", "success");
+    } catch (error) {
+      if (adminRailwayUpdateCommandEl) {
+        adminRailwayUpdateCommandEl.focus();
+        adminRailwayUpdateCommandEl.select();
+      }
+      setAdminRailwayUpdateFeedback("Copie auto indisponible. Copiez la commande manuellement.", "info");
+    }
+  });
+}
+
+if (adminRailwayUpdateDownloadBtn) {
+  adminRailwayUpdateDownloadBtn.addEventListener("click", () => {
+    const command = `#!/bin/zsh\n${getRailwayUpdateCommand()}\necho \"\\nMise a jour Railway terminee.\"\n`;
+    const blob = new Blob([command], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "MAJ_Railway.command";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setAdminRailwayUpdateFeedback("Fichier .command téléchargé. Double-cliquez dessus sur Mac.", "success");
+  });
+}
+
+if (adminRailwayUpdateRunTerminalBtn) {
+  adminRailwayUpdateRunTerminalBtn.addEventListener("click", async () => {
+    if (!isLocalRuntimeForTerminalLaunch()) {
+      setAdminRailwayUpdateFeedback(
+        "Lancement direct indisponible ici. Utilisez 'Copier la commande' ou '.command'.",
+        "info"
+      );
+      return;
+    }
+    adminRailwayUpdateRunTerminalBtn.disabled = true;
+    setAdminRailwayUpdateFeedback("Ouverture de Terminal en cours...", "info");
+    try {
+      const response = await fetch("/api/run-railway-update-terminal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ launch: true }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Impossible de lancer Terminal.");
+      }
+      setAdminRailwayUpdateFeedback("Terminal lancé. La commande de mise à jour s'exécute.", "success");
+    } catch (error) {
+      setAdminRailwayUpdateFeedback(String(error.message || "Lancement Terminal impossible."), "error");
+    } finally {
+      adminRailwayUpdateRunTerminalBtn.disabled = false;
+    }
+  });
+}
+
 if (adminBackupZipBtn) {
   adminBackupZipBtn.addEventListener("click", async () => {
     if (adminBackupZipBtn.disabled) return;
@@ -11062,6 +11202,9 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Escape" && adminProcessFileModalEl && !adminProcessFileModalEl.classList.contains("hidden")) {
     closeAdminProcessFileModal();
+  }
+  if (event.key === "Escape" && adminRailwayUpdateModalEl && !adminRailwayUpdateModalEl.classList.contains("hidden")) {
+    closeAdminRailwayUpdateModal();
   }
 });
 
