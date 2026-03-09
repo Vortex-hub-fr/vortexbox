@@ -353,6 +353,29 @@ async function runCommandCandidates(candidates, args) {
   throw lastError || new Error("Commande indisponible.");
 }
 
+function shellQuote(value) {
+  const source = String(value || "");
+  return `'${source.replace(/'/g, `'\"'\"'`)}'`;
+}
+
+function buildRailwayUpdateShellCommand() {
+  return [
+    `cd ${shellQuote(ROOT_DIR)}`,
+    "git add .",
+    '(git commit -m "MAJ VortexBox" || echo "Aucun changement a commit")',
+    "git push origin main",
+  ].join(" && ");
+}
+
+function isRailwayRuntime() {
+  return Boolean(
+    process.env.RAILWAY_ENVIRONMENT ||
+      process.env.RAILWAY_ENVIRONMENT_NAME ||
+      process.env.RAILWAY_PROJECT_ID ||
+      process.env.RAILWAY_SERVICE_ID
+  );
+}
+
 async function walkDirRecursive(dirPath) {
   const output = [];
   let entries = [];
@@ -1227,6 +1250,121 @@ async function handleBackupSiteZip(res) {
   stream.pipe(res);
 }
 
+async function handleRunRailwayUpdateTerminal(req, res) {
+  if (!hasJsonContentType(req)) {
+    sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+    return;
+  }
+  if (!isTrustedOrigin(req)) {
+    sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+    return;
+  }
+  await readJsonBody(req).catch(() => ({}));
+
+  if (isRailwayRuntime()) {
+    sendJson(res, 400, {
+      ok: false,
+      error: "Lancement Terminal indisponible sur Railway. Utilisez la commande locale.",
+    });
+    return;
+  }
+  if (process.platform !== "darwin") {
+    sendJson(res, 400, {
+      ok: false,
+      error: "Lancement automatique disponible uniquement sur macOS.",
+    });
+    return;
+  }
+
+  const shellCommand = buildRailwayUpdateShellCommand();
+  const appleScriptLines = [
+    'tell application "Terminal"',
+    "activate",
+    `do script "${shellCommand.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`,
+    "end tell",
+  ];
+
+  try {
+    await new Promise((resolve, reject) => {
+      const args = [];
+      appleScriptLines.forEach((line) => {
+        args.push("-e", line);
+      });
+      const child = spawn("/usr/bin/osascript", args, {
+        cwd: ROOT_DIR,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      let stderr = "";
+      let stdout = "";
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk.toString("utf8");
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk.toString("utf8");
+      });
+      child.on("error", (error) => reject(new Error(error.message || "Impossible d'ouvrir Terminal.")));
+      child.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+          return;
+        }
+        const details = String(stderr || stdout || "").trim();
+        reject(new Error(details || `osascript a échoué (code ${code}).`));
+      });
+    });
+
+    sendJson(res, 200, {
+      ok: true,
+      message: "Terminal lancé. La commande de mise à jour est en cours.",
+      command: shellCommand,
+      mode: "applescript",
+    });
+    return;
+  } catch (primaryError) {
+    try {
+      const tmpCommandPath = path.join(os.tmpdir(), `vortexbox-railway-update-${Date.now()}.command`);
+      const fileContent = `#!/bin/zsh\n${shellCommand}\necho \"\\nMise a jour Railway terminee.\"\n`;
+      await fsp.writeFile(tmpCommandPath, fileContent, "utf8");
+      await fsp.chmod(tmpCommandPath, 0o755);
+
+      await new Promise((resolve, reject) => {
+        const child = spawn("open", ["-a", "Terminal", tmpCommandPath], {
+          cwd: ROOT_DIR,
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+        let stderr = "";
+        child.stderr.on("data", (chunk) => {
+          stderr += chunk.toString("utf8");
+        });
+        child.on("error", (error) => reject(new Error(error.message || "Impossible d'ouvrir Terminal.")));
+        child.on("close", (code) => {
+          if (code === 0) {
+            resolve();
+            return;
+          }
+          reject(new Error(String(stderr || "").trim() || `open a échoué (code ${code}).`));
+        });
+      });
+
+      sendJson(res, 200, {
+        ok: true,
+        message: "Terminal lancé via fallback .command.",
+        command: shellCommand,
+        mode: "command-file",
+      });
+      return;
+    } catch (fallbackError) {
+      sendJson(res, 500, {
+        ok: false,
+        error: `Impossible de lancer Terminal. Détail: ${String(primaryError?.message || "unknown")} / fallback: ${String(
+          fallbackError?.message || "unknown"
+        )}`,
+      });
+      return;
+    }
+  }
+}
+
 function serveStatic(req, res) {
   const safePath = resolveSafePath(new URL(req.url, `http://${req.headers.host}`).pathname);
   if (!safePath) {
@@ -1824,6 +1962,14 @@ async function requestListener(req, res) {
         return;
       }
       await handleBackupSiteZip(res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/run-railway-update-terminal") {
+      if (isRateLimited(req, "run-railway-update-terminal", 6, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de tentatives. Réessayez dans 1 minute." });
+        return;
+      }
+      await handleRunRailwayUpdateTerminal(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/send-auth-code") {

@@ -2128,6 +2128,8 @@ if (siteLoginFormEl) {
     event.preventDefault();
     const email = String(siteLoginEmailEl.value || "").trim().toLowerCase();
     const password = String(siteLoginPasswordEl.value || "");
+    const adminPasswordCandidate = String(password || "").trim();
+    const adminPasswordExpected = String(ADMIN_PASSWORD || "").trim();
 
     if (!isAllowedOutlookEmail(email)) {
       setAuthFeedback("Adresse non autorisée. Utilisez une adresse Outlook.", "error");
@@ -2139,12 +2141,12 @@ if (siteLoginFormEl) {
       return;
     }
 
-    if (isAdminEmail(email) && !(email === ADMIN_EMAIL && password === ADMIN_PASSWORD)) {
+    if (isAdminEmail(email) && adminPasswordCandidate !== adminPasswordExpected) {
       setAuthFeedback("Cet email est réservé à l'administrateur.", "error");
       return;
     }
 
-    if (isAdminEmail(email) && password === ADMIN_PASSWORD) {
+    if (isAdminEmail(email) && adminPasswordCandidate === adminPasswordExpected) {
       setPendingActivation("");
       showActivationStep(false);
       sessionStorage.setItem(AUTH_SESSION_KEY, email);

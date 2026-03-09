@@ -1221,6 +1221,7 @@
               <div id="admin-process-docs-panel" class="hidden" data-process-section-panel="docs">
                 <div class="admin-machine-toolbar">
                   <button class="admin-secondary" id="admin-open-process-install-modal" type="button">Nouveau PDF Installation VB</button>
+                  <button class="cta admin-railway-update-btn" id="admin-open-railway-update-modal" type="button">MAJ Railway</button>
                 </div>
                 <div id="admin-process-list" class="admin-machines-list"></div>
               </div>
@@ -1324,6 +1325,24 @@
                   <div class="admin-option-actions">
                     <button class="admin-secondary" id="admin-process-file-cancel" type="button">Annuler</button>
                     <button class="cta" id="admin-process-file-save" type="button">Enregistrer le PDF</button>
+                  </div>
+                </article>
+              </section>
+
+              <section id="admin-railway-update-modal" class="admin-process-link-modal hidden" aria-label="Mise à jour Railway">
+                <article class="admin-process-link-modal-card admin-railway-update-modal-card">
+                  <button class="admin-process-link-modal-close" id="admin-railway-update-modal-close" type="button" aria-label="Fermer">×</button>
+                  <h5 class="admin-subtitle">MAJ Railway - Commande complète</h5>
+                  <p class="admin-file-name">Exécutez cette commande pour publier vos dernières modifications.</p>
+                  <label>
+                    Commande Terminal
+                    <textarea id="admin-railway-update-command" rows="6" readonly></textarea>
+                  </label>
+                  <p id="admin-railway-update-feedback" class="admin-feedback"></p>
+                  <div class="admin-option-actions">
+                    <button class="admin-secondary" id="admin-railway-update-copy" type="button">Copier la commande</button>
+                    <button class="admin-secondary" id="admin-railway-update-download" type="button">Télécharger .command</button>
+                    <button class="cta" id="admin-railway-update-run-terminal" type="button">Lancer dans Terminal (Mac)</button>
                   </div>
                 </article>
               </section>
