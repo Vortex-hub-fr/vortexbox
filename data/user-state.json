@@ -1,19 +1,6 @@
 {
-  "updatedAt": "2026-03-09T20:55:21.835Z",
+  "updatedAt": "2026-03-09T21:21:31.601Z",
   "users": [
-    {
-      "email": "brunosoler@outlook.fr",
-      "displayName": "",
-      "profilePhoto": "",
-      "password": "Audric460&",
-      "totalConnectionSeconds": 0,
-      "lastSeenAt": "",
-      "isActive": false,
-      "activationCode": "e%M*N5sTsS",
-      "activationSentAt": "2026-03-08T19:36:11.872Z",
-      "revoked": false,
-      "blacklisted": false
-    },
     {
       "email": "brunsoler@outlook.fr",
       "displayName": "",
@@ -29,6 +16,14 @@
     }
   ],
   "userLog": [
+    {
+      "email": "vortexcore@outlook.fr",
+      "date": "2026-03-09T21:21:31.419Z"
+    },
+    {
+      "email": "vortexcore@outlook.fr",
+      "date": "2026-03-09T21:03:18.809Z"
+    },
     {
       "email": "vortexcore@outlook.fr",
       "date": "2026-03-09T20:55:21.653Z"

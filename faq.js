@@ -207,6 +207,22 @@ const GAMES_CATALOG_FALLBACK = [
 ];
 const DEFAULT_GAME_INFO_TEXT = "Jouable sans patch.";
 
+function normalizeGameInfoStatusText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’']/g, "")
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .trim();
+}
+
+function isGameInfoGreen(value) {
+  const normalized = normalizeGameInfoStatusText(value);
+  return normalized === "jouable sans patch" || normalized === "jouer sans patch";
+}
+
 function normalizeGameText(value) {
   return String(value || "")
     .normalize("NFD")
@@ -954,7 +970,7 @@ function initializeCookieConsent() {
   if (!cookieBannerEl) return;
   const existing = readCookieConsent();
   if (cookieConsentPreferencesEl) cookieConsentPreferencesEl.checked = existing ? existing.preferences : true;
-  if (cookieConsentAnalyticsEl) cookieConsentAnalyticsEl.checked = existing ? existing.analytics : false;
+  if (cookieConsentAnalyticsEl) cookieConsentAnalyticsEl.checked = existing ? existing.analytics : true;
 
   if (existing) {
     closeCookieBanner();
@@ -2547,7 +2563,10 @@ async function renderGamesCatalog(options = {}) {
     const cardsMarkup = pagedSource
       .map(({ item, index }) => {
         const current = gamesCatalogDraft[index] || item;
-        const hasInfo = Boolean(String(current.info || "").trim());
+        const infoText = String(current.info || "").trim();
+        const hasInfo = Boolean(infoText);
+        const isReadyInfo = isGameInfoGreen(infoText);
+        const infoStateClass = isReadyInfo ? "is-ready" : hasInfo ? "is-custom" : "is-empty";
         const infoEncoded = encodeURIComponent(String(current.info || ""));
         const titleValue = String(current.title || item.title || "Info jeu");
         return `
@@ -2570,7 +2589,7 @@ async function renderGamesCatalog(options = {}) {
             <span>VortexBox Premium</span>
           </div>
           <div class="game-cover-media-wrap" data-game-title="${escapeHtml(current.title || item.title)}" style="--cover-url:url('${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image))).replace(/'/g, "%27")}')">
-            <button class="game-cover-info-btn ${hasInfo ? "" : "is-empty"}" type="button" data-game-index="${index}" data-game-title="${escapeHtml(titleValue)}" data-game-info="${escapeHtml(infoEncoded)}" aria-label="Information jeu">i</button>
+            <button class="game-cover-info-btn ${infoStateClass}" type="button" data-game-index="${index}" data-game-title="${escapeHtml(titleValue)}" data-game-info="${escapeHtml(infoEncoded)}" aria-label="Information jeu">i</button>
             <img
               class="game-cover-media"
               src="${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image)))}"

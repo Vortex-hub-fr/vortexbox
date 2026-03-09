@@ -469,7 +469,7 @@ function initializeCookieConsent() {
   if (!cookieBannerEl) return;
   const existing = readCookieConsent();
   if (cookieConsentPreferencesEl) cookieConsentPreferencesEl.checked = existing ? existing.preferences : true;
-  if (cookieConsentAnalyticsEl) cookieConsentAnalyticsEl.checked = existing ? existing.analytics : false;
+  if (cookieConsentAnalyticsEl) cookieConsentAnalyticsEl.checked = existing ? existing.analytics : true;
 
   if (existing) {
     closeCookieBanner();

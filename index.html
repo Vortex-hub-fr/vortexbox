@@ -1287,8 +1287,10 @@
 
               <section id="admin-process-link-modal" class="admin-process-link-modal hidden" aria-label="Ajouter un lien fournisseur">
                 <article class="admin-process-link-modal-card">
-                  <button class="admin-process-link-modal-close" id="admin-process-link-modal-close" type="button" aria-label="Fermer">×</button>
-                  <h5 class="admin-subtitle">Nouveau lien fournisseur</h5>
+                  <div class="admin-process-link-modal-head">
+                    <h5 class="admin-subtitle">Nouveau lien fournisseur</h5>
+                    <button class="admin-process-link-modal-close" id="admin-process-link-modal-close" type="button" aria-label="Fermer">×</button>
+                  </div>
                   <label>
                     Titre du site
                     <input id="admin-process-link-title-input" type="text" placeholder="Ex: Amazon - RTX 4070" />
@@ -1306,8 +1308,10 @@
 
               <section id="admin-process-file-modal" class="admin-process-link-modal hidden" aria-label="Installation VB PDF">
                 <article class="admin-process-link-modal-card">
-                  <button class="admin-process-link-modal-close" id="admin-process-file-modal-close" type="button" aria-label="Fermer">×</button>
-                  <h5 class="admin-subtitle">Installation VB - PDF</h5>
+                  <div class="admin-process-link-modal-head">
+                    <h5 class="admin-subtitle">Installation VB - PDF</h5>
+                    <button class="admin-process-link-modal-close" id="admin-process-file-modal-close" type="button" aria-label="Fermer">×</button>
+                  </div>
                   <label>
                     Titre du document
                     <input id="admin-process-file-title-input" type="text" placeholder="Ex: Installation VortexBox v1" />
@@ -1331,8 +1335,10 @@
 
               <section id="admin-railway-update-modal" class="admin-process-link-modal hidden" aria-label="Mise à jour Railway">
                 <article class="admin-process-link-modal-card admin-railway-update-modal-card">
-                  <button class="admin-process-link-modal-close" id="admin-railway-update-modal-close" type="button" aria-label="Fermer">×</button>
-                  <h5 class="admin-subtitle">MAJ Railway - Commande complète</h5>
+                  <div class="admin-process-link-modal-head">
+                    <h5 class="admin-subtitle">MAJ Railway - Commande complète</h5>
+                    <button class="admin-process-link-modal-close" id="admin-railway-update-modal-close" type="button" aria-label="Fermer">×</button>
+                  </div>
                   <p class="admin-file-name">Exécutez cette commande pour publier vos dernières modifications.</p>
                   <label>
                     Commande Terminal
@@ -1603,7 +1609,7 @@
         </label>
         <label class="cookie-option">
           <span><strong>Mesure d'audience</strong><span>Nous aide à améliorer les pages les plus visitées.</span></span>
-          <input id="cookie-consent-analytics" type="checkbox" />
+          <input id="cookie-consent-analytics" type="checkbox" checked />
         </label>
         <div class="cookie-customize-actions">
           <button class="cookie-btn" id="cookie-cancel-custom" type="button">Annuler</button>

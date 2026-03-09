@@ -1206,8 +1206,8 @@ h1 {
 .admin-video-modal-close {
   position: absolute;
   top: 0.62rem;
-  left: 0.62rem;
-  right: auto;
+  right: 0.62rem;
+  left: auto;
   z-index: 5;
   width: 40px;
   height: 40px;
@@ -4300,10 +4300,12 @@ textarea {
 }
 
 .admin-process-link-modal-close {
-  position: absolute;
-  top: 0.58rem;
-  left: 0.58rem;
+  position: relative;
+  top: auto;
   right: auto;
+  left: auto;
+  margin-left: auto;
+  flex: 0 0 40px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -4330,9 +4332,15 @@ textarea {
     0 0 18px rgba(122, 234, 255, 0.28);
 }
 
-.admin-process-link-modal-card > .admin-subtitle {
+.admin-process-link-modal-head {
   min-height: 40px;
-  padding-left: 56px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.admin-process-link-modal-head > .admin-subtitle {
+  margin: 0;
   display: flex;
   align-items: center;
 }
@@ -6987,10 +6995,10 @@ body {
 }
 
 .admin-process-link-modal-card .admin-subtitle {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  padding-right: 2rem;
+  position: static;
+  top: auto;
+  z-index: auto;
+  padding-right: 0;
   margin: 0;
 }
 
@@ -7257,6 +7265,18 @@ body {
 
 .game-cover-info-btn.is-empty {
   opacity: 1;
+  border-color: rgba(227, 250, 255, 0.96);
+  background:
+    radial-gradient(circle at 28% 24%, rgba(242, 255, 255, 0.45), rgba(242, 255, 255, 0) 55%),
+    linear-gradient(180deg, rgba(120, 227, 255, 1), rgba(71, 191, 245, 1));
+  box-shadow:
+    0 10px 18px rgba(2, 10, 24, 0.42),
+    0 0 0 2px rgba(66, 179, 236, 0.58),
+    0 0 16px rgba(119, 231, 255, 0.42);
+}
+
+.game-cover-info-btn.is-ready {
+  opacity: 1;
   border-color: rgba(223, 255, 232, 0.96);
   background:
     radial-gradient(circle at 28% 24%, rgba(210, 255, 222, 0.45), rgba(210, 255, 222, 0) 55%),
@@ -7267,7 +7287,7 @@ body {
     0 0 16px rgba(102, 231, 151, 0.46);
 }
 
-.game-cover-info-btn:not(.is-empty) {
+.game-cover-info-btn.is-custom {
   border-color: rgba(255, 236, 236, 0.96);
   background:
     radial-gradient(circle at 28% 24%, rgba(255, 214, 222, 0.45), rgba(255, 214, 222, 0) 55%),
@@ -7278,7 +7298,7 @@ body {
     0 0 16px rgba(255, 106, 136, 0.5);
 }
 
-.game-cover-info-btn:not(.is-empty):hover {
+.game-cover-info-btn.is-custom:hover {
   box-shadow:
     0 12px 20px rgba(34, 4, 12, 0.54),
     0 0 0 2px rgba(235, 63, 103, 0.72),
@@ -7560,6 +7580,11 @@ body {
   display: block;
   backface-visibility: hidden;
   transform: rotateY(0deg);
+  image-rendering: auto;
+  image-rendering: -webkit-optimize-contrast;
+  filter: contrast(1.07) saturate(1.08) brightness(1.01);
+  -webkit-font-smoothing: antialiased;
+  will-change: transform, filter;
   transition: transform 460ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
