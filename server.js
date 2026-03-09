@@ -1277,19 +1277,52 @@ async function handleRunRailwayUpdateTerminal(req, res) {
   }
 
   const shellCommand = buildRailwayUpdateShellCommand();
+  const tmpCommandPath = path.join(os.tmpdir(), `vortexbox-railway-update-${Date.now()}.command`);
+  const fileContent = `#!/bin/zsh\n${shellCommand}\necho \"\\nMise a jour Railway terminee.\"\n`;
+  await fsp.writeFile(tmpCommandPath, fileContent, "utf8");
+  await fsp.chmod(tmpCommandPath, 0o755);
+
+  // Mode principal: ouvrir un fichier .command dans Terminal (plus robuste sur macOS).
+  try {
+    await new Promise((resolve, reject) => {
+      const child = spawn("/usr/bin/open", ["-a", "Terminal", tmpCommandPath], {
+        cwd: ROOT_DIR,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      let stderr = "";
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk.toString("utf8");
+      });
+      child.on("error", (error) => reject(new Error(error.message || "Impossible d'ouvrir Terminal.")));
+      child.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+          return;
+        }
+        reject(new Error(String(stderr || "").trim() || `open a échoué (code ${code}).`));
+      });
+    });
+
+    sendJson(res, 200, {
+      ok: true,
+      message: "Terminal lancé via fichier .command.",
+      command: shellCommand,
+      mode: "command-file",
+    });
+    return;
+  } catch (openError) {
+    // Fallback: AppleScript (utile sur certaines configurations).
+  }
   const appleScriptLines = [
     'tell application "Terminal"',
     "activate",
     `do script "${shellCommand.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`,
     "end tell",
   ];
-
   try {
     await new Promise((resolve, reject) => {
       const args = [];
-      appleScriptLines.forEach((line) => {
-        args.push("-e", line);
-      });
+      appleScriptLines.forEach((line) => args.push("-e", line));
       const child = spawn("/usr/bin/osascript", args, {
         cwd: ROOT_DIR,
         stdio: ["ignore", "pipe", "pipe"],
@@ -1312,56 +1345,21 @@ async function handleRunRailwayUpdateTerminal(req, res) {
         reject(new Error(details || `osascript a échoué (code ${code}).`));
       });
     });
-
     sendJson(res, 200, {
       ok: true,
-      message: "Terminal lancé. La commande de mise à jour est en cours.",
+      message: "Terminal lancé via AppleScript.",
       command: shellCommand,
       mode: "applescript",
     });
     return;
-  } catch (primaryError) {
-    try {
-      const tmpCommandPath = path.join(os.tmpdir(), `vortexbox-railway-update-${Date.now()}.command`);
-      const fileContent = `#!/bin/zsh\n${shellCommand}\necho \"\\nMise a jour Railway terminee.\"\n`;
-      await fsp.writeFile(tmpCommandPath, fileContent, "utf8");
-      await fsp.chmod(tmpCommandPath, 0o755);
-
-      await new Promise((resolve, reject) => {
-        const child = spawn("open", ["-a", "Terminal", tmpCommandPath], {
-          cwd: ROOT_DIR,
-          stdio: ["ignore", "pipe", "pipe"],
-        });
-        let stderr = "";
-        child.stderr.on("data", (chunk) => {
-          stderr += chunk.toString("utf8");
-        });
-        child.on("error", (error) => reject(new Error(error.message || "Impossible d'ouvrir Terminal.")));
-        child.on("close", (code) => {
-          if (code === 0) {
-            resolve();
-            return;
-          }
-          reject(new Error(String(stderr || "").trim() || `open a échoué (code ${code}).`));
-        });
-      });
-
-      sendJson(res, 200, {
-        ok: true,
-        message: "Terminal lancé via fallback .command.",
-        command: shellCommand,
-        mode: "command-file",
-      });
-      return;
-    } catch (fallbackError) {
-      sendJson(res, 500, {
-        ok: false,
-        error: `Impossible de lancer Terminal. Détail: ${String(primaryError?.message || "unknown")} / fallback: ${String(
-          fallbackError?.message || "unknown"
-        )}`,
-      });
-      return;
-    }
+  } catch (appleScriptError) {
+    sendJson(res, 500, {
+      ok: false,
+      error: `Impossible de lancer Terminal. open/command et AppleScript ont échoué. Détail: ${String(
+        appleScriptError?.message || "unknown"
+      )}`,
+    });
+    return;
   }
 }
 

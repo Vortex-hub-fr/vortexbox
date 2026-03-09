@@ -1205,18 +1205,34 @@ h1 {
 
 .admin-video-modal-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.55rem;
+  top: 0.62rem;
+  left: 0.62rem;
+  right: auto;
   z-index: 5;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1px solid rgba(127, 231, 255, 0.6);
-  background: rgba(8, 31, 54, 0.88);
-  color: #e8f6ff;
-  font-size: 1.3rem;
+  border: 1px solid rgba(150, 239, 255, 0.86);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(186, 246, 255, 0.22), transparent 58%),
+    linear-gradient(148deg, rgba(8, 42, 74, 0.94), rgba(7, 26, 50, 0.96));
+  color: #f2fbff;
+  font-size: 1.34rem;
+  font-weight: 900;
   line-height: 1;
   cursor: pointer;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(205, 247, 255, 0.2);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.admin-video-modal-close:hover {
+  transform: translateY(-1px) scale(1.04);
+  border-color: rgba(196, 250, 255, 0.98);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(122, 234, 255, 0.28);
 }
 
 .admin-video-modal-player {
@@ -4285,17 +4301,40 @@ textarea {
 
 .admin-process-link-modal-close {
   position: absolute;
-  top: 0.52rem;
-  right: 0.58rem;
-  width: 34px;
-  height: 34px;
+  top: 0.58rem;
+  left: 0.58rem;
+  right: auto;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1px solid rgba(127, 231, 255, 0.56);
-  background: rgba(8, 31, 54, 0.88);
-  color: #eaf8ff;
-  font-size: 1.2rem;
+  border: 1px solid rgba(150, 239, 255, 0.86);
+  background:
+    radial-gradient(circle at 30% 22%, rgba(186, 246, 255, 0.22), transparent 58%),
+    linear-gradient(148deg, rgba(8, 42, 74, 0.94), rgba(7, 26, 50, 0.96));
+  color: #f2fbff;
+  font-size: 1.34rem;
+  font-weight: 900;
   line-height: 1;
   cursor: pointer;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(205, 247, 255, 0.2);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.admin-process-link-modal-close:hover {
+  transform: translateY(-1px) scale(1.04);
+  border-color: rgba(196, 250, 255, 0.98);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(122, 234, 255, 0.28);
+}
+
+.admin-process-link-modal-card > .admin-subtitle {
+  min-height: 40px;
+  padding-left: 56px;
+  display: flex;
+  align-items: center;
 }
 
 /* Alignement strict des actions de modales Processus (Annuler / Enregistrer) */
