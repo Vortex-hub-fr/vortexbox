@@ -1289,11 +1289,16 @@ function isAdminEmail(email) {
   return String(email || "").trim().toLowerCase() === ADMIN_EMAIL;
 }
 
+function isAdminSessionAuthorized() {
+  const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
+  return isAdminEmail(sessionEmail) && sessionStorage.getItem(SESSION_KEY) === "1";
+}
+
 function refreshNavSessionButtons() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   const isLoggedIn = isAllowedOutlookEmail(sessionEmail);
   if (userProfileToggleBtn) userProfileToggleBtn.classList.toggle("hidden", !isLoggedIn);
-  if (adminToggle) adminToggle.classList.toggle("hidden", !(isLoggedIn && isAdminEmail(sessionEmail)));
+  if (adminToggle) adminToggle.classList.toggle("hidden", !(isLoggedIn && isAdminSessionAuthorized()));
   refreshNavAssignedFilesBadge();
 }
 
@@ -1359,13 +1364,12 @@ function refreshNavAssignedFilesBadge() {
 function updateAdminToggleVisibility() {
   if (!adminToggle) return;
   const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
-  adminToggle.classList.toggle("hidden", !isAdminEmail(sessionEmail));
+  adminToggle.classList.toggle("hidden", !isAdminSessionAuthorized());
   refreshAdminLiveMode();
 }
 
 function isAdminLiveMode() {
-  const email = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
-  return isAdminEmail(email) && sessionStorage.getItem(ADMIN_LIVE_MODE_KEY) !== "0";
+  return isAdminSessionAuthorized() && sessionStorage.getItem(ADMIN_LIVE_MODE_KEY) !== "0";
 }
 
 function refreshAdminLiveMode() {
@@ -1826,7 +1830,7 @@ function unlockSite() {
   if (authGateEl) authGateEl.classList.add("hidden");
   if (userLogoutBtn) userLogoutBtn.classList.remove("hidden");
   const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
-  if (isAdminEmail(sessionEmail) && !sessionStorage.getItem(ADMIN_LIVE_MODE_KEY)) {
+  if (isAdminSessionAuthorized() && !sessionStorage.getItem(ADMIN_LIVE_MODE_KEY)) {
     sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
   }
   refreshNavSessionButtons();
@@ -2134,6 +2138,11 @@ if (siteLoginFormEl) {
       return;
     }
 
+    if (isAdminEmail(email) && !(email === ADMIN_EMAIL && password === ADMIN_PASSWORD)) {
+      setAuthFeedback("Cet email est réservé à l'administrateur.", "error");
+      return;
+    }
+
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       setPendingActivation("");
       showActivationStep(false);
@@ -2302,6 +2311,7 @@ if (userLogoutBtn) {
 
 if (adminToggle) {
   adminToggle.addEventListener("click", () => {
+    if (!isAdminSessionAuthorized()) return;
     sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
     refreshAdminLiveMode();
     window.location.href = "index.html?openAdmin=1";
