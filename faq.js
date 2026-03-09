@@ -1673,7 +1673,8 @@ function isAllowedOutlookEmail(email) {
 }
 
 function isAdminEmail(email) {
-  return String(email || "").trim().toLowerCase() === ADMIN_EMAIL;
+  const normalized = String(email || "").trim().toLowerCase();
+  return normalized === ADMIN_EMAIL || normalized === "votexcore.fr";
 }
 
 function isAdminSessionAuthorized() {
@@ -2766,7 +2767,7 @@ if (siteLoginFormEl) {
       return;
     }
 
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    if (isAdminEmail(email) && password === ADMIN_PASSWORD) {
       setPendingActivation("");
       showActivationStep(false);
       sessionStorage.setItem(AUTH_SESSION_KEY, email);

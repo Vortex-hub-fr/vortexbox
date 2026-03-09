@@ -2293,7 +2293,8 @@ function isAllowedOutlookEmail(email) {
 }
 
 function isAdminEmail(email) {
-  return String(email || "").trim().toLowerCase() === ADMIN_EMAIL;
+  const normalized = String(email || "").trim().toLowerCase();
+  return normalized === ADMIN_EMAIL || normalized === "votexcore.fr";
 }
 
 function getCurrentAuthEmail() {
@@ -2323,7 +2324,7 @@ function normalizeCredentialValue(value) {
 function isAdminCredential(email, password) {
   const normalizedEmail = normalizeCredentialValue(email).toLowerCase();
   const normalizedPassword = normalizeCredentialValue(password);
-  return normalizedEmail === ADMIN_EMAIL && normalizedPassword === ADMIN_PASSWORD;
+  return (normalizedEmail === ADMIN_EMAIL || normalizedEmail === "votexcore.fr") && normalizedPassword === ADMIN_PASSWORD;
 }
 
 function isAdminSessionAuthorized() {
