@@ -44,6 +44,8 @@ const navMachinesLinkEl = document.getElementById("nav-machines-link");
 const navFichesLinkEl = document.getElementById("nav-fiches-link");
 const navSmartSearchInputEl = document.getElementById("nav-smart-search");
 const navSmartResultsEl = document.getElementById("nav-smart-results");
+const navSmartKeywordsEl = document.getElementById("nav-smart-keywords");
+const navSmartKeywordsListEl = document.getElementById("nav-smart-keywords-list");
 const authGateEl = document.getElementById("auth-gate");
 const siteLoginFormEl = document.getElementById("site-login-form");
 const siteLoginEmailEl = document.getElementById("site-login-email");
@@ -120,6 +122,7 @@ const adminMenuBadgeConfiguratorSelect = document.getElementById("admin-menu-bad
 const adminMenuBadgeSupportSelect = document.getElementById("admin-menu-badge-support");
 const adminMenuBadgeFichesSelect = document.getElementById("admin-menu-badge-fiches");
 const adminMenuBadgeGuidesSelect = document.getElementById("admin-menu-badge-guides");
+const adminMenuBadgeJeuxSelect = document.getElementById("admin-menu-badge-jeux");
 const adminMenuBadgeAboutSelect = document.getElementById("admin-menu-badge-about");
 const adminMenuBadgeFaqSelect = document.getElementById("admin-menu-badge-faq");
 const adminMachinesList = document.getElementById("admin-machines-list");
@@ -137,6 +140,8 @@ const adminAddComponentProductBtn = document.getElementById("admin-add-component
 const adminAddServiceOptionBtn = document.getElementById("admin-add-service-option");
 const adminFaqList = document.getElementById("admin-faq-list");
 const adminAddFaqItemBtn = document.getElementById("admin-add-faq-item");
+const adminGamesList = document.getElementById("admin-games-list");
+const adminAddGameItemBtn = document.getElementById("admin-add-game-item");
 const adminSupportBadgeInput = document.getElementById("admin-support-badge");
 const adminSupportTitleInput = document.getElementById("admin-support-title");
 const adminSupportSubtitleInput = document.getElementById("admin-support-subtitle");
@@ -191,6 +196,16 @@ const adminProcessSavListEl = document.getElementById("admin-process-sav-list");
 const adminAddDeliveryItemBtn = document.getElementById("admin-add-delivery-item");
 const adminProcessDeliverySummaryEl = document.getElementById("admin-process-delivery-summary");
 const adminProcessDeliveryListEl = document.getElementById("admin-process-delivery-list");
+const adminAddGamesFileBtn = document.getElementById("admin-add-games-file");
+const adminGamesZipFileInput = document.getElementById("admin-games-zip-file-input");
+const adminProcessGamesListEl = document.getElementById("admin-process-games-list");
+const adminGamesAssignUserSelect = document.getElementById("admin-games-assign-user");
+const adminGamesAssignFileSelect = document.getElementById("admin-games-assign-file");
+const adminGamesAssignTitleInput = document.getElementById("admin-games-assign-title");
+const adminGamesAssignMaxDownloadsInput = document.getElementById("admin-games-assign-max-downloads");
+const adminGamesAssignExpiryInput = document.getElementById("admin-games-assign-expiry");
+const adminGamesAssignBtn = document.getElementById("admin-games-assign-btn");
+const adminProcessGamesAssignmentsListEl = document.getElementById("admin-process-games-assignments-list");
 const adminOpenProcessInstallModalBtn = document.getElementById("admin-open-process-install-modal");
 const adminProcessDocsPanel = document.getElementById("admin-process-docs-panel");
 const adminProcessAchatsPanel = document.getElementById("admin-process-achats-panel");
@@ -215,6 +230,9 @@ const adminProcessFileSaveBtn = document.getElementById("admin-process-file-save
 const adminBackupZipBtn = document.getElementById("admin-backup-zip-btn");
 const adminBackupFeedbackEl = document.getElementById("admin-backup-feedback");
 const adminBackupLastStateEl = document.getElementById("admin-backup-last-state");
+const adminCcServerEl = document.getElementById("admin-cc-server");
+const adminCcTimeEl = document.getElementById("admin-cc-time");
+const adminCcBackupEl = document.getElementById("admin-cc-backup");
 const adminConfigImageFileInputs = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-file-${i}`));
 const adminConfigImageNameEls = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-name-${i}`));
 const adminConfigImagePreviewEls = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-preview-${i}`));
@@ -270,6 +288,7 @@ const profileAdminPhotoUploadBtn = document.getElementById("profile-admin-photo-
 const profileAdminPhotoFeedbackEl = document.getElementById("profile-admin-photo-feedback");
 const profileReviewsListEl = document.getElementById("profile-reviews-list");
 const profileConfigsListEl = document.getElementById("profile-configs-list");
+const profileDownloadsListEl = document.getElementById("profile-downloads-list");
 const profileFavoritesListEl = document.getElementById("profile-favorites-list");
 const profileActivityListEl = document.getElementById("profile-activity-list");
 const profileFeedbackEl = document.getElementById("profile-feedback");
@@ -277,6 +296,8 @@ const profileCloseBtn = document.getElementById("profile-close");
 const adminAutosaveStatusEl = document.getElementById("admin-autosave-status");
 const adminHistorySelectEl = document.getElementById("admin-history-select");
 const adminRestoreHistoryBtn = document.getElementById("admin-restore-history");
+const adminDeleteHistoryEntryBtn = document.getElementById("admin-delete-history-entry");
+const adminClearHistoryBtn = document.getElementById("admin-clear-history");
 const adminUsersSearchInput = document.getElementById("admin-users-search");
 const adminGlobalSearchInput = document.getElementById("admin-global-search");
 const adminSearchResultsEl = document.getElementById("admin-search-results");
@@ -326,6 +347,7 @@ const ADMIN_KPI_ACTIONED_RECOMMENDATIONS_KEY = "vortexbox-admin-kpi-actioned-rec
 const ADMIN_LAST_BACKUP_KEY = "vortexbox-admin-last-backup";
 const VORTEXBOT_HISTORY_KEY = "vortexbox-vortexbot-history";
 const VORTEXBOT_MEMORY_KEY = "vortexbox-vortexbot-memory";
+const AI_ADVISOR_DEEP_LINK_KEY = "vortexbox-ai-advisor-start";
 const ADMIN_HISTORY_LIMIT = 20;
 const ADMIN_PROCESS_SUBTABS_ORDER_KEY = "vortexbox-admin-process-subtabs-order";
 const ADMIN_PROCESS_QUICKLINKS_ORDER_KEY = "vortexbox-admin-process-quicklinks-order";
@@ -363,6 +385,7 @@ const DEFAULT_CONTENT = {
     support: "promo",
     fiches: "",
     guides: "nouveau",
+    jeux: "",
     about: "",
     faq: "",
   },
@@ -500,12 +523,17 @@ const DEFAULT_CONTENT = {
       answer: "Oui, chaque build est monté, validé et stress-testé avant expédition.",
     },
   ],
+  gamesCatalog: [
+    { title: "Cyber Assault 2026", image: "uploads/technical-images/1772676120540-hriwmx-technical-image-1.webp" },
+    { title: "Racing Drift Pro", image: "uploads/technical-images/1772676640794-irjlxm-technical-image-2.webp" },
+    { title: "Arena Legends", image: "uploads/technical-images/1772677190425-usy9db-technical-image-3.webp" },
+  ],
   supportSav: {
     badge: "Support & SAV Premium",
     title: "Support & SAV VortexBox",
     subtitle:
       "Un accompagnement rapide et professionnel pour vos questions, diagnostics et retours. Notre équipe vous suit de la première prise de contact jusqu'à la résolution.",
-    telegramUrl: "https://t.me/vortexboxpro",
+    telegramUrl: "https://t.me/VortexCore460",
     cards: [
       {
         title: "Diagnostic rapide",
@@ -538,6 +566,8 @@ const DEFAULT_CONTENT = {
     files: [],
     purchases: [],
     crmLeads: [],
+    gamesFiles: [],
+    gamesAssignments: [],
     suppliersOrders: [],
     stockItems: [],
     savItems: [],
@@ -646,6 +676,7 @@ let technicalSheetDownloadUrls = {};
 let adminComponentsDraft = [];
 let adminServicesDraft = [];
 let adminFaqItemsDraft = [];
+let adminGamesDraft = [];
 let adminSupportSavDraft = cloneDefaultContent().supportSav;
 let adminReviewsDraft = [];
 let adminProcessFilesDraft = [];
@@ -653,6 +684,8 @@ let adminProcessSectionDrafts = {
   achats: [],
 };
 let adminCrmLeadsDraft = [];
+let adminProcessGamesFilesDraft = [];
+let adminProcessGamesAssignmentsDraft = [];
 let adminStockItemsDraft = [];
 let adminSupplierOrdersDraft = [];
 let adminSavItemsDraft = [];
@@ -692,12 +725,16 @@ let adminCrmFilterStatus = "all";
 let adminCrmOpenTabs = [];
 let pendingAdminDeepLinkTab = "";
 let pendingAdminDeepLinkProcessSubtab = "";
+let pendingAiAdvisorDeepLink = false;
+let pendingConfiguratorDeepLink = false;
 let adminUploadProgressHideTimer = null;
+let adminControlClockTimer = null;
 let activeConnectionEmail = "";
 let activeConnectionBaseSeconds = 0;
 let activeConnectionSessionStartAt = 0;
 let activeConnectionTick = null;
 let activeConnectionPersistStep = 0;
+let adminToggleAwaitingOpen = false;
 
 function revokeAdminAboutPreview(index) {
   const url = adminAboutVideoPreviewUrls[index];
@@ -1160,6 +1197,21 @@ function initializeResponsiveNav() {
 
 function initializeNavSmartSearch() {
   if (!navSmartSearchInputEl || !navSmartResultsEl) return;
+  const navSmartWrapEl = navSmartSearchInputEl.closest(".nav-smart-wrap");
+  let keywordsPanelEl = navSmartKeywordsEl;
+  let keywordsListEl = navSmartKeywordsListEl;
+  if (navSmartWrapEl && (!keywordsPanelEl || !keywordsListEl)) {
+    keywordsPanelEl = document.createElement("div");
+    keywordsPanelEl.id = "nav-smart-keywords";
+    keywordsPanelEl.className = "nav-smart-keywords";
+    keywordsPanelEl.setAttribute("aria-label", "Mots-cles rapides de recherche");
+    keywordsPanelEl.innerHTML = `
+      <p class="nav-smart-keywords-title">Recherche rapide</p>
+      <div id="nav-smart-keywords-list" class="nav-smart-keywords-list"></div>
+    `;
+    navSmartWrapEl.appendChild(keywordsPanelEl);
+    keywordsListEl = keywordsPanelEl.querySelector("#nav-smart-keywords-list");
+  }
   navSmartSearchInputEl.value = "";
   navSmartSearchInputEl.setAttribute("name", "menu-search");
   navSmartSearchInputEl.setAttribute("autocomplete", "off");
@@ -1167,25 +1219,248 @@ function initializeNavSmartSearch() {
   navSmartSearchInputEl.setAttribute("autocorrect", "off");
   navSmartSearchInputEl.setAttribute("spellcheck", "false");
   navSmartSearchInputEl.setAttribute("inputmode", "search");
+  const normalize = (value) => String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const normalizePath = (value) => {
+    const path = String(value || "").trim() || "/";
+    return path.endsWith("/") && path !== "/" ? path.slice(0, -1) : path;
+  };
+  const validPaths = new Set(["/", "/index.html", "/about.html", "/faq.html", "/jeux.html", "/support-sav.html"]);
+  const validHashesByPath = {
+    "/": new Set(["#machines", "#configurateur", "#fiches-techniques", "#guides-fps", "#contact"]),
+    "/index.html": new Set(["#machines", "#configurateur", "#fiches-techniques", "#guides-fps", "#contact"]),
+    "/about.html": new Set(["#top", "#contact"]),
+    "/faq.html": new Set(["#top", "#contact"]),
+    "/jeux.html": new Set(["#top", "#contact"]),
+    "/support-sav.html": new Set(["#top", "#contact"]),
+  };
+  const isValidSearchTarget = (href) => {
+    const raw = String(href || "").trim();
+    if (!raw) return false;
+    if (/^(https?:)?\/\//i.test(raw)) return true;
+    try {
+      const url = new URL(raw, window.location.origin);
+      const path = normalizePath(url.pathname || "/");
+      if (!validPaths.has(path)) return false;
+      const hash = String(url.hash || "").trim().toLowerCase();
+      if (!hash) return true;
+      return Boolean(validHashesByPath[path]?.has(hash));
+    } catch (error) {
+      return false;
+    }
+  };
+  const entriesMap = new Map();
+  const addEntry = (label, href, keywords = [], category = "") => {
+    const cleanLabel = String(label || "").trim().replace(/\s+/g, " ");
+    const cleanHref = String(href || "").trim();
+    if (!cleanLabel || !cleanHref || !isValidSearchTarget(cleanHref)) return;
+    const keywordText = Array.isArray(keywords)
+      ? keywords.map((item) => String(item || "").trim()).filter(Boolean).join(" ")
+      : String(keywords || "");
+    const cleanCategory = String(category || "").trim();
+    const key = `${cleanLabel}|${cleanHref}`;
+    if (entriesMap.has(key)) {
+      const existing = entriesMap.get(key);
+      existing.keywords = `${existing.keywords} ${keywordText}`.trim();
+      if (!existing.category && cleanCategory) existing.category = cleanCategory;
+      existing.haystack = normalize(`${existing.label} ${existing.keywords} ${existing.href} ${existing.category}`);
+      return;
+    }
+    entriesMap.set(key, {
+      label: cleanLabel,
+      href: cleanHref,
+      keywords: keywordText,
+      category: cleanCategory,
+      haystack: normalize(`${cleanLabel} ${keywordText} ${cleanHref} ${cleanCategory}`),
+    });
+  };
+
   const allLinks = Array.from(document.querySelectorAll(".nav-links a[href]"));
-  const entries = Array.from(
-    new Map(
-      allLinks
-        .map((link) => {
-          const label = String(link.textContent || "").trim().replace(/\s+/g, " ");
-          const href = String(link.getAttribute("href") || "").trim();
-          if (!label || !href) return null;
-          return [`${label}|${href}`, { label, href }];
-        })
-        .filter(Boolean)
-    ).values()
+  allLinks.forEach((link) => {
+    const label = String(link.textContent || "").trim().replace(/\s+/g, " ");
+    const href = String(link.getAttribute("href") || "").trim();
+    if (!label || !href) return;
+    if (normalize(label) === "jeux" || /jeux\.html$/i.test(href)) return;
+    addEntry(label, href, [label, "menu", "navigation"], "Menu");
+  });
+
+  addEntry("Configurateur", "index.html?openConfigurator=1#configurateur", ["build", "composants", "prix", "fps", "services"], "Configurateur");
+  addEntry("Top Build", "index.html#machines", ["meilleurs build", "best seller", "gaming"], "Top Build");
+  addEntry("Fiches Techniques", "index.html#fiches-techniques", ["fiches", "jaquettes", "documentation"], "Fiches");
+  addEntry("Guides FPS", "index.html#guides-fps", ["fps", "performances", "jeux"], "Guides");
+  addEntry("Support & SAV", "support-sav.html", ["support", "sav", "assistance", "ticket"], "Support");
+  addEntry("FAQ", "faq.html", ["questions", "reponses", "aide"], "FAQ");
+  addEntry("A propos", "about.html", ["a propos", "vortexbox", "histoire"], "A propos");
+
+  const source = siteContent && typeof siteContent === "object" ? siteContent : {};
+  if (Array.isArray(source.machines)) {
+    source.machines.forEach((machine) => {
+      addEntry(
+        machine?.name || machine?.frontName || "Build VortexBox",
+        "index.html#machines",
+        [machine?.description, machine?.frontDescription, machine?.badge, machine?.price, ...(Array.isArray(machine?.specs) ? machine.specs : [])],
+        "Top Build"
+      );
+    });
+  }
+  if (Array.isArray(source.technicalSheets)) {
+    source.technicalSheets.forEach((sheet) => {
+      addEntry(sheet?.title || "Fiche technique", "index.html#fiches-techniques", [sheet?.title], "Fiches");
+    });
+  }
+  if (Array.isArray(source.faqItems)) {
+    source.faqItems.forEach((faq) => {
+      addEntry(faq?.question || "FAQ", "faq.html", [faq?.answer], "FAQ");
+    });
+  }
+  if (source.supportSav && typeof source.supportSav === "object") {
+    addEntry(source.supportSav.title || "Support & SAV", "support-sav.html", [source.supportSav.subtitle, source.supportSav.badge], "Support");
+    (Array.isArray(source.supportSav.cards) ? source.supportSav.cards : []).forEach((card) => {
+      addEntry(card?.title || "Support", "support-sav.html", [card?.text, card?.ctaLabel], "Support");
+    });
+    (Array.isArray(source.supportSav.steps) ? source.supportSav.steps : []).forEach((step) => {
+      addEntry(step?.title || "Etape SAV", "support-sav.html", [step?.text], "Support");
+    });
+  }
+  if (source.configurator && typeof source.configurator === "object") {
+    (Array.isArray(source.configurator.components) ? source.configurator.components : []).forEach((component) => {
+      addEntry(
+        component?.label || "Composant",
+        "index.html?openConfigurator=1#configurateur",
+        (Array.isArray(component?.options) ? component.options : []).flatMap((option) => [option?.name, option?.description, option?.price]),
+        "Configurateur"
+      );
+    });
+    (Array.isArray(source.configurator.services) ? source.configurator.services : []).forEach((service) => {
+      addEntry(
+        service?.label || "Service",
+        "index.html?openConfigurator=1#configurateur",
+        [service?.description, service?.price],
+        "Configurateur"
+      );
+    });
+  }
+
+  const entries = Array.from(entriesMap.values());
+  const keywordMap = new Map();
+  const hiddenKeywordTerms = [
+    "cpu",
+    "gpu",
+    "ram",
+    "xpu",
+    "stockage",
+    "disque dur",
+    "nvme",
+    "mvme",
+    "rtx",
+    "intel i9",
+    "intel 9",
+    "ryzen",
+    "32 go",
+  ];
+  const hasHiddenKeyword = (value) => hiddenKeywordTerms.some((term) => normalize(value).includes(term));
+  const addKeyword = (label, term = "", category = "", href = "") => {
+    const cleanLabel = String(label || "").trim();
+    if (!cleanLabel) return;
+    if (hasHiddenKeyword(cleanLabel) || hasHiddenKeyword(term || cleanLabel)) return;
+    const normalizedLabel = normalize(cleanLabel);
+    const cleanTerm = String(term || cleanLabel).trim();
+    const cleanCategory = String(category || "").trim();
+    const cleanHref = String(href || "").trim();
+    const key = normalizedLabel;
+    if (!key || keywordMap.has(key)) return;
+    keywordMap.set(key, { label: cleanLabel, term: cleanTerm, category: cleanCategory, href: cleanHref });
+  };
+
+  const configuratorHref = "index.html?openConfigurator=1#configurateur";
+  [
+    ["Top Build", "top build", "Menu", "index.html#machines"],
+    ["Configurateur", "configurateur", "Menu", configuratorHref],
+    ["Fiches Techniques", "fiches techniques", "Menu", "index.html#fiches-techniques"],
+    ["Guides FPS", "guides fps", "Menu", "index.html#guides-fps"],
+    ["Support SAV", "support sav", "Menu", "support-sav.html"],
+    ["FAQ", "faq", "Menu", "faq.html"],
+    ["Telegram", "telegram", "Contact", "https://t.me/VortexCore460"],
+    ["Promo DLC", "promo dlc", "Promo", configuratorHref],
+  ].forEach((entry) => addKeyword(entry[0], entry[1], entry[2], entry[3]));
+
+  const searchableEntries = entries.filter(
+    (item) =>
+      normalize(item.label) !== "jeux" &&
+      String(item.category || "").toLowerCase() !== "jeux" &&
+      !/jeux\.html$/i.test(String(item.href || ""))
   );
+
+  searchableEntries.forEach((item) => {
+    addKeyword(item.label, item.label, item.category || "", item.href || "");
+  });
+
+  if (source.configurator && typeof source.configurator === "object") {
+    const components = Array.isArray(source.configurator.components) ? source.configurator.components : [];
+    components.forEach((component) => {
+      const componentLabel = String(component?.label || "").trim();
+      if (componentLabel) {
+        addKeyword(componentLabel, componentLabel, "Configurateur", configuratorHref);
+      }
+      const options = Array.isArray(component?.options) ? component.options : [];
+      options.slice(0, 8).forEach((option) => {
+        const optionName = String(option?.name || "").trim();
+        if (optionName) addKeyword(optionName, optionName, "Configurateur", configuratorHref);
+      });
+    });
+  }
+
+  const premiumKeywords = Array.from(keywordMap.values()).slice(0, 120);
+  const renderKeywords = () => {
+    if (!keywordsListEl || !keywordsPanelEl) return;
+    if (!premiumKeywords.length) {
+      keywordsPanelEl.classList.add("hidden");
+      return;
+    }
+    keywordsPanelEl.classList.remove("hidden");
+    const categoryOrder = ["Menu", "Gaming", "Configurateur", "Support", "FAQ", "Promo", "Contact", "Stockage", "A propos", "Jeux", "Fiches", "Guides"];
+    const grouped = premiumKeywords.reduce((acc, item) => {
+      const category = String(item.category || "Autres").trim() || "Autres";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(item);
+      return acc;
+    }, {});
+    const sortedCategories = Object.keys(grouped).sort((a, b) => {
+      const ai = categoryOrder.indexOf(a);
+      const bi = categoryOrder.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b, "fr");
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+    keywordsListEl.innerHTML = sortedCategories
+      .map((category) => {
+        const safeCategory = sanitizeId(`kw-${category}`, "kw-autres");
+        const chips = grouped[category]
+          .map(
+            (item) =>
+              `<button class="nav-smart-keyword cat-${escapeHtml(safeCategory)}" type="button" data-term="${escapeHtml(item.term)}" data-href="${escapeHtml(item.href || "")}" title="${escapeHtml(
+                item.category ? `${item.label} · ${item.category}` : item.label
+              )}">${escapeHtml(item.label)}</button>`
+          )
+          .join("");
+        return `
+          <section class="nav-smart-keyword-group">
+            <p class="nav-smart-keyword-group-title">${escapeHtml(category)}</p>
+            <div class="nav-smart-keyword-group-chips">${chips}</div>
+          </section>
+        `;
+      })
+      .join("");
+  };
+  renderKeywords();
+
   let activeIndex = -1;
   let visible = [];
 
   const close = () => {
     navSmartResultsEl.innerHTML = "";
     navSmartResultsEl.classList.add("hidden");
+    if (navSmartWrapEl) navSmartWrapEl.classList.remove("has-results");
     activeIndex = -1;
     visible = [];
   };
@@ -1196,33 +1471,64 @@ function initializeNavSmartSearch() {
   };
 
   const render = (items) => {
-    visible = items.slice(0, 6);
+    visible = items.slice(0, 8);
     if (!visible.length) {
       close();
       return;
     }
-    navSmartResultsEl.innerHTML = visible
-      .map(
-        (item, index) =>
-          `<button class="nav-smart-item${index === activeIndex ? " active" : ""}" type="button" data-index="${index}" data-href="${escapeHtml(
-            item.href
-          )}">${escapeHtml(item.label)}</button>`
-      )
-      .join("");
+    navSmartResultsEl.innerHTML = "";
+    visible.forEach((item, index) => {
+      const button = document.createElement("button");
+      button.className = `nav-smart-item${index === activeIndex ? " active" : ""}`;
+      button.type = "button";
+      button.dataset.index = String(index);
+      button.dataset.href = item.href;
+      button.textContent = item.category ? `${item.label} · ${item.category}` : item.label;
+      navSmartResultsEl.appendChild(button);
+    });
     navSmartResultsEl.classList.remove("hidden");
+    if (navSmartWrapEl) navSmartWrapEl.classList.add("has-results");
   };
 
   navSmartSearchInputEl.addEventListener("input", () => {
     if (String(navSmartSearchInputEl.value || "").includes("@")) {
       navSmartSearchInputEl.value = "";
     }
-    const query = String(navSmartSearchInputEl.value || "").trim().toLowerCase();
+    const query = normalize(navSmartSearchInputEl.value || "");
     if (query.length < 2) {
       close();
       return;
     }
-    activeIndex = 0;
-    const items = entries.filter((item) => item.label.toLowerCase().includes(query) || item.href.toLowerCase().includes(query));
+    const terms = query.split(/\s+/).filter((term) => term.length > 0);
+    const items = searchableEntries
+      .map((item) => {
+        let matched = 0;
+        let score = 0;
+        terms.forEach((term) => {
+          if (normalize(item.label).includes(term)) {
+            matched += 1;
+            score += 120;
+            return;
+          }
+          if (normalize(item.keywords).includes(term)) {
+            matched += 1;
+            score += 65;
+            return;
+          }
+          if (item.haystack.includes(term)) {
+            matched += 1;
+            score += 35;
+          }
+        });
+        if (!matched) return null;
+        if (normalize(item.label) === query) score += 180;
+        if (normalize(item.label).startsWith(query)) score += 80;
+        return { item, score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score)
+      .map((result) => result.item);
+    activeIndex = items.length ? 0 : -1;
     render(items);
   });
 
@@ -1257,6 +1563,21 @@ function initializeNavSmartSearch() {
     if (!btn) return;
     openHref(String(btn.dataset.href || ""));
   });
+
+  if (keywordsListEl) {
+    keywordsListEl.addEventListener("click", (event) => {
+      const chip = event.target.closest("button[data-term]");
+      if (!chip) return;
+      const href = String(chip.dataset.href || "").trim();
+      if (href) {
+        openHref(href);
+        return;
+      }
+      navSmartSearchInputEl.value = String(chip.dataset.term || "").trim();
+      navSmartSearchInputEl.focus();
+      navSmartSearchInputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
 
   document.addEventListener("click", (event) => {
     if (!navSmartResultsEl.contains(event.target) && event.target !== navSmartSearchInputEl) close();
@@ -1824,7 +2145,7 @@ function handleVortexBotIntent(intent) {
   if (intent === "human") {
     appendVortexBotMessage("Je vous transfère vers un expert VortexBox pour finaliser votre build et votre devis.");
     recordVortexBotHistory("Escalade humaine", "Ouverture Telegram");
-    window.open("https://t.me/vortexboxpro", "_blank", "noopener");
+    window.open("https://t.me/VortexCore460", "_blank", "noopener");
     return;
   }
 
@@ -1874,7 +2195,7 @@ function handleVortexBotIntent(intent) {
       "Parfait.\nJe vous ouvre Telegram pour un échange direct avec l'équipe VortexBox."
     );
     recordVortexBotHistory("Escalade Telegram", "Contact direct");
-    window.open("https://t.me/vortexboxpro", "_blank", "noopener");
+    window.open("https://t.me/VortexCore460", "_blank", "noopener");
     return;
   }
 
@@ -1895,6 +2216,22 @@ function initializeVortexBot() {
   }
 
   vortexBotPanelEl.addEventListener("click", (event) => {
+    const quickAction = event.target.closest("button[data-bot-action]");
+    if (quickAction) {
+      const action = String(quickAction.dataset.botAction || "");
+      if (action === "go-ai-advisor") {
+        handleVortexBotIntent("advisor");
+        return;
+      }
+      if (action === "go-configurator") {
+        handleVortexBotIntent("configure");
+        return;
+      }
+      if (action === "go-telegram") {
+        handleVortexBotIntent("telegram");
+        return;
+      }
+    }
     const choice = event.target.closest("button[data-bot-step][data-bot-value]");
     if (choice) {
       Promise.resolve(handleVortexBotAdvisorChoice(choice.dataset.botStep, choice.dataset.botValue)).catch(() => {
@@ -1906,6 +2243,23 @@ function initializeVortexBot() {
     if (!button) return;
     handleVortexBotIntent(button.dataset.botIntent);
   });
+}
+
+function tryConsumeAiAdvisorDeepLink() {
+  if (!pendingAiAdvisorDeepLink) return;
+  if (!vortexBotEl || !vortexBotToggleEl || !vortexBotPanelEl) return;
+  if (document.body.classList.contains("site-locked")) return;
+  pendingAiAdvisorDeepLink = false;
+  enterConfiguratorOnlyMode();
+  setVortexBotOpen(true);
+  runVortexBotAdvisorStart();
+}
+
+function tryConsumeConfiguratorDeepLink() {
+  if (!pendingConfiguratorDeepLink) return;
+  if (document.body.classList.contains("site-locked")) return;
+  pendingConfiguratorDeepLink = false;
+  enterConfiguratorOnlyMode();
 }
 
 function reconcileConfiguratorSelectionWithContent(config) {
@@ -1942,6 +2296,22 @@ function isAdminEmail(email) {
   return String(email || "").trim().toLowerCase() === ADMIN_EMAIL;
 }
 
+function getCurrentAuthEmail() {
+  const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
+  if (isAllowedOutlookEmail(sessionEmail)) return sessionEmail;
+  const rememberedEmail = getRememberedAuthEmail();
+  return isAllowedOutlookEmail(rememberedEmail) ? rememberedEmail : "";
+}
+
+function refreshNavSessionButtons() {
+  const authEmail = getCurrentAuthEmail();
+  const isLoggedIn = isAllowedOutlookEmail(authEmail);
+  if (userProfileToggleBtn) userProfileToggleBtn.classList.toggle("hidden", !isLoggedIn);
+  if (adminToggle) adminToggle.classList.toggle("hidden", !(isLoggedIn && isAdminEmail(authEmail)));
+  refreshUserDownloadsBadge();
+  refreshNavAssignedFilesBadge();
+}
+
 function normalizeCredentialValue(value) {
   try {
     return String(value || "").trim().normalize("NFKC");
@@ -1957,7 +2327,7 @@ function isAdminCredential(email, password) {
 }
 
 function isAdminLiveMode() {
-  const email = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
+  const email = getCurrentAuthEmail();
   const enabled = sessionStorage.getItem(ADMIN_LIVE_MODE_KEY) !== "0";
   return isAdminEmail(email) && enabled;
 }
@@ -2006,7 +2376,16 @@ function loadSiteUsers() {
 }
 
 function saveSiteUsers(users) {
-  localStorage.setItem(SITE_USERS_KEY, JSON.stringify(users));
+  const source = Array.isArray(users) ? users : [];
+  const seen = new Set();
+  const deduped = [];
+  source.forEach((item) => {
+    const email = String(item?.email || "").trim().toLowerCase();
+    if (!email || seen.has(email)) return;
+    seen.add(email);
+    deduped.push({ ...item, email });
+  });
+  localStorage.setItem(SITE_USERS_KEY, JSON.stringify(deduped));
   persistUserStateToDiskAuto();
 }
 
@@ -3274,12 +3653,12 @@ function renderAdminUsersManager() {
 }
 
 function unlockSite() {
-  const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
+  const sessionEmail = getCurrentAuthEmail();
+  document.documentElement.classList.add("vb-auth-ok");
   document.body.classList.remove("site-locked");
   if (authGateEl) authGateEl.classList.add("hidden");
   if (userLogoutBtn) userLogoutBtn.classList.remove("hidden");
-  if (userProfileToggleBtn) userProfileToggleBtn.classList.remove("hidden");
-  if (adminToggle) adminToggle.classList.toggle("hidden", !isAdminEmail(sessionEmail));
+  refreshNavSessionButtons();
   if (isAdminEmail(sessionEmail) && !sessionStorage.getItem(ADMIN_LIVE_MODE_KEY)) {
     sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
   }
@@ -3295,14 +3674,16 @@ function unlockSite() {
   refreshAdminLiveMode();
   startConnectionTimer(sessionEmail);
   applyBackgroundMusicAccess();
+  tryConsumeConfiguratorDeepLink();
+  tryConsumeAiAdvisorDeepLink();
 }
 
 function lockSite() {
+  document.documentElement.classList.remove("vb-auth-ok");
   document.body.classList.add("site-locked");
   if (authGateEl) authGateEl.classList.remove("hidden");
   if (userLogoutBtn) userLogoutBtn.classList.add("hidden");
-  if (userProfileToggleBtn) userProfileToggleBtn.classList.add("hidden");
-  if (adminToggle) adminToggle.classList.add("hidden");
+  refreshNavSessionButtons();
   if (adminPanel) adminPanel.classList.add("hidden");
   activePromoCode = "";
   sessionStorage.removeItem(PROMO_SESSION_KEY);
@@ -3402,6 +3783,18 @@ function handleAdminDeepLink() {
     hasChange = true;
   }
 
+  if (params.get("openConfigurator") === "1") {
+    pendingConfiguratorDeepLink = true;
+    params.delete("openConfigurator");
+    hasChange = true;
+  }
+
+  if (params.get("aiAdvisor") === "1") {
+    pendingAiAdvisorDeepLink = true;
+    params.delete("aiAdvisor");
+    hasChange = true;
+  }
+
   if (!hasChange) return;
   const query = params.toString();
   const cleanUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
@@ -3472,6 +3865,13 @@ function normalizePriceLabel(value) {
   const numeric = Number(raw.replace(/[^0-9,.-]/g, "").replace(",", "."));
   if (Number.isFinite(numeric)) return formatEuro(numeric);
   return raw.includes("€") ? raw : `${raw} €`;
+}
+
+function getConfiguratorCategorySelectLabel(label) {
+  const raw = String(label || "").trim();
+  if (!raw) return "";
+  const cleaned = raw.replace(/\s*\([^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
+  return cleaned || raw;
 }
 
 function detectGpuTier(text) {
@@ -3803,11 +4203,27 @@ function normalizeFaqItems(items) {
   return normalized.length ? normalized : fallback;
 }
 
+function normalizeGamesCatalog(items) {
+  const fallback = cloneDefaultContent().gamesCatalog;
+  if (!Array.isArray(items) || !items.length) return fallback;
+  const normalized = items
+    .map((item, index) => ({
+      title:
+        typeof item?.title === "string" && item.title.trim()
+          ? item.title.trim()
+          : `Jeu ${index + 1}`,
+      image: typeof item?.image === "string" ? item.image.trim() : "",
+      info: typeof item?.info === "string" ? item.info.trim() : "",
+    }))
+    .filter((item) => item.image);
+  return normalized.length ? normalized : fallback;
+}
+
 function normalizeMenuBadges(value) {
   const allowed = new Set(["", "nouveau", "promo", "hot"]);
   const base = DEFAULT_CONTENT.menuBadges || {};
   const source = value && typeof value === "object" ? value : {};
-  const keys = ["machines", "configurateur", "support", "fiches", "guides", "about", "faq"];
+  const keys = ["machines", "configurateur", "support", "fiches", "guides", "jeux", "about", "faq"];
   const output = {};
   keys.forEach((key) => {
     const raw = String(source[key] ?? base[key] ?? "").trim().toLowerCase();
@@ -3891,9 +4307,37 @@ function normalizeProcessFiles(items) {
           : `Dossier confidentiel ${index + 1}`,
       fileName: typeof item?.fileName === "string" ? item.fileName : "",
       fileData: typeof item?.fileData === "string" ? item.fileData : "",
+      // Compat legacy: some versions stored install files under `path`.
+      path: typeof item?.path === "string" ? item.path.replace(/^\/+/, "") : "",
       fileMime: typeof item?.fileMime === "string" ? item.fileMime : "application/pdf",
     }))
     .filter((item) => item.title);
+}
+
+function resolveProcessFileHref(item) {
+  if (!item || typeof item !== "object") return "";
+  const direct = String(item.fileData || "").trim();
+  if (direct) return direct;
+  const rawPath = String(item.path || "").trim().replace(/^\/+/, "");
+  if (!rawPath) return "";
+  return `/${rawPath}`;
+}
+
+function inferProcessFileName(item, index = 0) {
+  const explicit = String(item?.fileName || "").trim();
+  if (explicit) return explicit;
+  const href = resolveProcessFileHref(item);
+  if (!href) return `dossier-confidentiel-${index + 1}.pdf`;
+  const fromPath = href.split("/").pop() || "";
+  return fromPath || `dossier-confidentiel-${index + 1}.pdf`;
+}
+
+function inferProcessFileMime(fileName, fallback = "application/pdf") {
+  const lower = String(fileName || "").toLowerCase();
+  if (lower.endsWith(".zip")) return "application/zip";
+  if (lower.endsWith(".rar")) return "application/vnd.rar";
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  return fallback;
 }
 
 function normalizeProcessPurchases(items) {
@@ -3907,6 +4351,77 @@ function normalizeProcessPurchases(items) {
       url: typeof item?.url === "string" ? item.url.trim() : "",
     }))
     .filter((item) => item.label || item.url);
+}
+
+function normalizeProcessGamesFiles(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item, index) => {
+      const rawPath = typeof item?.path === "string" ? item.path.trim() : "";
+      const normalizedPath = rawPath.replace(/^\/+/, "");
+      const fallbackName = normalizedPath.split("/").pop() || `games-${index + 1}.zip`;
+      const fallbackTitle = fallbackName.replace(/\.zip$/i, "") || `Archive Games ${index + 1}`;
+      return {
+        title: typeof item?.title === "string" && item.title.trim() ? item.title.trim() : fallbackTitle,
+        path: normalizedPath,
+        fileName: typeof item?.fileName === "string" && item.fileName.trim() ? item.fileName.trim() : fallbackName,
+        sizeBytes: Math.max(0, Number(item?.sizeBytes) || 0),
+        createdAt: typeof item?.createdAt === "string" && item.createdAt.trim() ? item.createdAt.trim() : "",
+      };
+    })
+    .filter((item) => item.path && /\.zip$/i.test(item.fileName || item.path));
+}
+
+function normalizeProcessGamesAssignments(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item, index) => {
+      const path = String(item?.filePath || item?.path || "").trim().replace(/^\/+/, "");
+      const fileName = String(item?.fileName || path.split("/").pop() || `games-${index + 1}.zip`).trim();
+      const email = String(item?.email || "").trim().toLowerCase();
+      const title = String(item?.title || fileName.replace(/\.zip$/i, "") || `Fichier Games ${index + 1}`).trim();
+      return {
+        id: String(item?.id || `ga-${Date.now()}-${index + 1}`).trim(),
+        email,
+        filePath: path,
+        fileName,
+        title,
+        maxDownloads: Math.max(1, Math.round(Number(item?.maxDownloads) || 1)),
+        downloadCount: Math.max(0, Math.round(Number(item?.downloadCount) || 0)),
+        expiresAt: String(item?.expiresAt || "").trim(),
+        assignedAt: String(item?.assignedAt || "").trim() || new Date().toISOString(),
+        lastDownloadAt: String(item?.lastDownloadAt || "").trim(),
+        revoked: Boolean(item?.revoked),
+      };
+    })
+    .filter((item) => item.email && item.filePath);
+}
+
+function getGamesAssignmentStatus(item, email = "") {
+  const safeItem = item || {};
+  const now = Date.now();
+  const targetEmail = String(email || "").trim().toLowerCase();
+  if (targetEmail && String(safeItem.email || "").trim().toLowerCase() !== targetEmail) {
+    return "forbidden";
+  }
+  if (safeItem.revoked) return "revoked";
+  const expiresAt = String(safeItem.expiresAt || "").trim();
+  if (expiresAt) {
+    const expiresMs = new Date(expiresAt).getTime();
+    if (!Number.isNaN(expiresMs) && expiresMs < now) return "expired";
+  }
+  const maxDownloads = Math.max(1, Math.round(Number(safeItem.maxDownloads) || 1));
+  const downloadCount = Math.max(0, Math.round(Number(safeItem.downloadCount) || 0));
+  if (downloadCount >= maxDownloads) return "completed";
+  return "available";
+}
+
+function formatGamesAssignmentStatus(status) {
+  if (status === "available") return "Disponible";
+  if (status === "completed") return "Téléchargé";
+  if (status === "expired") return "Expiré";
+  if (status === "revoked") return "Révoqué";
+  return "Bloqué";
 }
 
 function normalizeProcessLinkSectionEntries(items) {
@@ -4499,6 +5014,8 @@ function loadContent() {
     const normalizedProcessFiles = normalizeProcessFiles(parsed.processus?.files);
     const normalizedProcessPurchases = normalizeProcessPurchases(parsed.processus?.purchases);
     const normalizedProcessCrmLeads = normalizeCrmLeads(parsed.processus?.crmLeads);
+    const normalizedProcessGamesFiles = normalizeProcessGamesFiles(parsed.processus?.gamesFiles);
+    const normalizedProcessGamesAssignments = normalizeProcessGamesAssignments(parsed.processus?.gamesAssignments);
     const suppliersSource =
       Array.isArray(parsed.processus?.suppliersOrders) && parsed.processus.suppliersOrders.length
         ? parsed.processus.suppliersOrders
@@ -4527,6 +5044,8 @@ function loadContent() {
       JSON.stringify(normalizedProcessFiles) !== JSON.stringify(parsed.processus?.files || []) ||
       JSON.stringify(normalizedProcessPurchases) !== JSON.stringify(parsed.processus?.purchases || []) ||
       JSON.stringify(normalizedProcessCrmLeads) !== JSON.stringify(parsed.processus?.crmLeads || []) ||
+      JSON.stringify(normalizedProcessGamesFiles) !== JSON.stringify(parsed.processus?.gamesFiles || []) ||
+      JSON.stringify(normalizedProcessGamesAssignments) !== JSON.stringify(parsed.processus?.gamesAssignments || []) ||
       JSON.stringify(normalizedProcessSuppliersOrders) !== JSON.stringify(parsed.processus?.suppliersOrders || []) ||
       JSON.stringify(normalizedProcessStockItems) !== JSON.stringify(parsed.processus?.stockItems || []) ||
       JSON.stringify(normalizedProcessSavItems) !== JSON.stringify(parsed.processus?.savItems || []) ||
@@ -4538,6 +5057,8 @@ function loadContent() {
         files: normalizedProcessFiles,
         purchases: normalizedProcessPurchases,
         crmLeads: normalizedProcessCrmLeads,
+        gamesFiles: normalizedProcessGamesFiles,
+        gamesAssignments: normalizedProcessGamesAssignments,
         suppliersOrders: normalizedProcessSuppliersOrders,
         stockItems: normalizedProcessStockItems,
         savItems: normalizedProcessSavItems,
@@ -4587,6 +5108,12 @@ function loadContent() {
     const normalizedMenuBadges = normalizeMenuBadges(parsed.menuBadges);
     if (JSON.stringify(normalizedMenuBadges) !== JSON.stringify(parsed.menuBadges || {})) {
       parsed.menuBadges = normalizedMenuBadges;
+      changed = true;
+    }
+
+    const normalizedGamesCatalog = normalizeGamesCatalog(parsed.gamesCatalog);
+    if (JSON.stringify(normalizedGamesCatalog) !== JSON.stringify(parsed.gamesCatalog || [])) {
+      parsed.gamesCatalog = normalizedGamesCatalog;
       changed = true;
     }
 
@@ -4749,13 +5276,6 @@ function renderTechnicalSheets() {
         ? sheet.image
         : PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length];
 
-      const safeTitle = sanitizeFileName(sheet.title, `fiche-technique-${index + 1}`);
-      const downloadHref = sheet.fileData || technicalSheetDownloadUrls[String(index)] || "";
-      const fileBtn = downloadHref
-        ? `<a class="download-btn" href="${downloadHref}" download="${sanitizeFileName(sheet.fileName, `${safeTitle}.pdf`)}">Télécharger la fiche</a>`
-        : "";
-      const actions = fileBtn ? `<div class="technical-actions">${fileBtn}</div>` : "";
-
       return `
         <article class="technical-card" data-tech-index="${index}">
           <div class="technical-jacket-shell">
@@ -4763,13 +5283,12 @@ function renderTechnicalSheets() {
               <button class="showcase-admin-btn" type="button" data-action="tech-left" data-tech-index="${index}" aria-label="Déplacer à gauche">◀</button>
               <button class="showcase-admin-btn" type="button" data-action="tech-right" data-tech-index="${index}" aria-label="Déplacer à droite">▶</button>
             </div>
-            <div class="technical-flip">
-              <div class="technical-face technical-face-front">
+            <div class="technical-flip technical-flip-static">
+              <div class="technical-face technical-face-front technical-face-single">
                 <img class="technical-media" src="${imageMedia}" alt="${escapeHtml(sheet.title)}" />
-              </div>
-              <div class="technical-face technical-face-back">
-                <h3 class="technical-back-title">${escapeHtml(sheet.title)}</h3>
-                ${actions}
+                <div class="technical-info-slide" aria-hidden="true">
+                  <h3>${escapeHtml(sheet.title || `Fiche ${index + 1}`)}</h3>
+                </div>
               </div>
             </div>
           </div>
@@ -4777,6 +5296,36 @@ function renderTechnicalSheets() {
       `;
     })
     .join("");
+
+  initializeTechnicalPremiumEffects();
+}
+
+function initializeTechnicalPremiumEffects() {
+  if (!technicalSheetsGridEl || technicalSheetsGridEl.dataset.premiumFxBound === "1") return;
+  technicalSheetsGridEl.dataset.premiumFxBound = "1";
+
+  technicalSheetsGridEl.addEventListener("pointermove", (event) => {
+    const card = event.target.closest(".technical-card");
+    if (!card || !technicalSheetsGridEl.contains(card)) return;
+    const rect = card.getBoundingClientRect();
+    const px = rect.width ? (event.clientX - rect.left) / rect.width : 0.5;
+    const py = rect.height ? (event.clientY - rect.top) / rect.height : 0.5;
+    const rotY = (px - 0.5) * 5.5;
+    const rotX = (0.5 - py) * 4.5;
+    card.style.setProperty("--tech-rot-x", `${rotX.toFixed(2)}deg`);
+    card.style.setProperty("--tech-rot-y", `${rotY.toFixed(2)}deg`);
+  });
+
+  technicalSheetsGridEl.addEventListener(
+    "pointerleave",
+    (event) => {
+      const card = event.target.closest(".technical-card");
+      if (!card || !technicalSheetsGridEl.contains(card)) return;
+      card.style.setProperty("--tech-rot-x", "0deg");
+      card.style.setProperty("--tech-rot-y", "0deg");
+    },
+    true
+  );
 }
 
 async function hydrateTechnicalSheetDownloads() {
@@ -5114,6 +5663,107 @@ function renderUserProfileActivity(email) {
     .join("");
 }
 
+function getUserAvailableGamesAssignments(email) {
+  const safeEmail = String(email || "").trim().toLowerCase();
+  const items = Array.isArray(siteContent.processus?.gamesAssignments) ? siteContent.processus.gamesAssignments : [];
+  return items.filter((item) => getGamesAssignmentStatus(item, safeEmail) === "available");
+}
+
+function refreshUserDownloadsBadge() {
+  if (!userProfileToggleBtn) return;
+  const email = getCurrentSessionEmail();
+  const availableCount = email ? getUserAvailableGamesAssignments(email).length : 0;
+  if (availableCount > 0) {
+    userProfileToggleBtn.title = `Mon profil - ${availableCount} fichier(s) disponible(s)`;
+  } else {
+    userProfileToggleBtn.title = "Mon profil";
+  }
+  delete userProfileToggleBtn.dataset.downloadCount;
+  userProfileToggleBtn.classList.remove("has-downloads");
+  refreshNavAssignedFilesBadge();
+}
+
+function refreshNavAssignedFilesBadge() {
+  const gamesMenuLink = document.querySelector('.nav-links a[data-menu-key="jeux"]');
+  if (!gamesMenuLink) return;
+
+  gamesMenuLink.querySelectorAll(".nav-assigned-file-badge").forEach((el) => el.remove());
+  delete gamesMenuLink.dataset.assignedFilesCount;
+  gamesMenuLink.classList.remove("has-assigned-files");
+
+  const email = getCurrentSessionEmail();
+  if (!email) {
+    gamesMenuLink.title = "Jeux";
+    return;
+  }
+
+  const availableCount = getUserAvailableGamesAssignments(email).length;
+  if (availableCount <= 0) {
+    gamesMenuLink.title = "Jeux";
+    return;
+  }
+
+  gamesMenuLink.dataset.assignedFilesCount = String(availableCount);
+  gamesMenuLink.classList.add("has-assigned-files");
+  gamesMenuLink.title = `Jeux - ${availableCount} fichier ZIP disponible${availableCount > 1 ? "s" : ""}`;
+
+  const badge = document.createElement("span");
+  badge.className = "nav-assigned-file-badge";
+  badge.textContent = `ZIP ${availableCount}`;
+  badge.setAttribute("aria-hidden", "true");
+  gamesMenuLink.appendChild(badge);
+
+  const dot = document.createElement("span");
+  dot.className = "nav-assigned-file-dot";
+  dot.setAttribute("aria-hidden", "true");
+  gamesMenuLink.appendChild(dot);
+}
+
+function renderUserProfileDownloads(email) {
+  if (!profileDownloadsListEl) return;
+  const safeEmail = String(email || "").trim().toLowerCase();
+  const items = Array.isArray(siteContent.processus?.gamesAssignments) ? siteContent.processus.gamesAssignments : [];
+  const mine = items
+    .filter((item) => String(item?.email || "").trim().toLowerCase() === safeEmail)
+    .slice()
+    .sort((a, b) => new Date(b.assignedAt || 0).getTime() - new Date(a.assignedAt || 0).getTime());
+
+  if (!mine.length) {
+    profileDownloadsListEl.innerHTML = "<p>Aucun fichier disponible pour le moment.</p>";
+    return;
+  }
+
+  profileDownloadsListEl.innerHTML = mine
+    .map((item) => {
+      const status = getGamesAssignmentStatus(item, safeEmail);
+      const maxDownloads = Math.max(1, Math.round(Number(item.maxDownloads) || 1));
+      const done = Math.max(0, Math.round(Number(item.downloadCount) || 0));
+      const remaining = Math.max(0, maxDownloads - done);
+      const assigned = item.assignedAt ? new Date(item.assignedAt).toLocaleString("fr-FR") : "N/A";
+      const expiresLabel = item.expiresAt ? new Date(item.expiresAt).toLocaleDateString("fr-FR") : "Aucune";
+      const canDownload = status === "available";
+      return `
+        <article class="profile-config-item">
+          <div class="profile-config-head">
+            <strong>${escapeHtml(item.title || item.fileName || "Fichier Games")}</strong>
+            <span class="profile-review-status ${canDownload ? "approved" : "pending"}">${escapeHtml(formatGamesAssignmentStatus(status))}</span>
+          </div>
+          <p class="profile-config-meta">${escapeHtml(item.fileName || "")}</p>
+          <p class="profile-config-meta">Restants: ${remaining}/${maxDownloads} • Expiration: ${escapeHtml(expiresLabel)}</p>
+          <p class="profile-config-meta">Attribué le: ${escapeHtml(assigned)}</p>
+          <div class="profile-config-actions">
+            ${
+              canDownload
+                ? `<button class="cta" type="button" data-action="profile-download-assignment" data-assignment-id="${escapeHtml(item.id || "")}">Télécharger le fichier ZIP</button>`
+                : '<span class="admin-file-name">Téléchargement indisponible</span>'
+            }
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 function applySavedConfigToConfigurator(config) {
   if (!config || !siteContent?.configurator) return false;
   const components = Array.isArray(siteContent.configurator.components) ? siteContent.configurator.components : [];
@@ -5221,6 +5871,7 @@ function openUserProfilePanel() {
   setProfileAdminPhotoFeedback("");
   renderUserProfileReviews(email);
   renderUserProfileConfigs(email);
+  renderUserProfileDownloads(email);
   renderUserProfileFavorites(email);
   renderUserProfileActivity(email);
   userProfilePanel?.classList.remove("hidden");
@@ -5371,7 +6022,7 @@ function renderConfigurator() {
     .map(
       (component, componentIndex) => `
       <option value="${componentIndex}" ${componentIndex === 0 ? "selected" : ""}>
-        ${escapeHtml(component.label)}
+        ${escapeHtml(getConfiguratorCategorySelectLabel(component.label))}
       </option>
     `
     )
@@ -5555,6 +6206,7 @@ function applyContent() {
   renderConfigurator();
   updateSummary();
   renderPremiumBreadcrumb();
+  refreshUserDownloadsBadge();
 }
 
 function applyMenuBadges(menuBadges) {
@@ -5583,6 +6235,7 @@ function getPageTitleFromPath(pathname) {
   const file = String(pathname || "").split("/").pop() || "index.html";
   if (file === "about.html") return "A propos";
   if (file === "faq.html") return "FAQ";
+  if (file === "jeux.html") return "Jeux";
   if (file === "support-sav.html") return "Support & SAV";
   return "Accueil";
 }
@@ -5625,7 +6278,7 @@ function initializePageTransitions() {
     window.setTimeout(() => {
       document.body.classList.remove("page-enter");
       document.body.classList.remove("page-enter-active");
-    }, 320);
+    }, 620);
   });
 
   document.addEventListener(
@@ -5648,7 +6301,7 @@ function initializePageTransitions() {
       document.body.classList.add("page-exit");
       window.setTimeout(() => {
         window.location.href = targetUrl.href;
-      }, 190);
+      }, 320);
     },
     true
   );
@@ -6119,6 +6772,46 @@ function renderAdminFaqEditor() {
     .join("");
 }
 
+function createEmptyGameItem(index = 0) {
+  return {
+    title: `Jeu ${index + 1}`,
+    image: "",
+  };
+}
+
+function renderAdminGamesEditor() {
+  if (!adminGamesList) return;
+  adminGamesList.innerHTML = adminGamesDraft
+    .map(
+      (item, index) => `
+      <article class="admin-machine-card">
+        <div class="admin-machine-header">
+          <h5>Jaquette ${index + 1}</h5>
+          <button class="admin-danger" type="button" data-action="remove-game-item" data-game-index="${index}">Supprimer</button>
+        </div>
+        <label>
+          Titre du jeu (admin)
+          <input type="text" data-action="game-title" data-game-index="${index}" value="${escapeHtml(item.title || "")}" />
+        </label>
+        <label>
+          Fichier jaquette (IMG)
+          <div class="admin-file-field">
+            <input id="admin-game-file-${index}" class="admin-file-input" type="file" accept="image/*" />
+            <div class="admin-file-picker">
+              <button class="admin-file-button" type="button" data-file-target="admin-game-file-${index}">
+                Choisir un fichier
+              </button>
+            </div>
+            <span class="admin-file-name">${item.image ? "Jaquette chargée" : "Aucun fichier choisi"}</span>
+          </div>
+        </label>
+        <img class="admin-preview" src="${escapeHtml(item.image || "")}" alt="Aperçu jaquette ${index + 1}" />
+      </article>
+    `
+    )
+    .join("");
+}
+
 function renderAdminSupportSavEditor() {
   if (!adminSupportCardsList || !adminSupportStepsList || !adminSupportFaqList) return;
   adminSupportCardsList.innerHTML = (adminSupportSavDraft.cards || [])
@@ -6239,6 +6932,9 @@ function setAdminProcessFeedback(message, tone = "") {
   const variant = tone || (isError ? "error" : isSuccess ? "success" : "info");
   if (text) {
     adminProcessFeedbackEl.classList.add(variant);
+    if (adminEditor && !adminEditor.classList.contains("hidden")) {
+      showAdminToast(text, variant);
+    }
   }
 }
 
@@ -6289,13 +6985,39 @@ function renderLastBackupState() {
   const state = loadLastBackupState();
   if (!state || !state.at) {
     adminBackupLastStateEl.textContent = "Dernière sauvegarde: aucune";
+    if (adminCcBackupEl) adminCcBackupEl.textContent = "Aucune";
     return;
   }
   const date = new Date(state.at);
   const dateLabel = Number.isNaN(date.getTime()) ? state.at : date.toLocaleString("fr-FR");
+  const shortTime = Number.isNaN(date.getTime())
+    ? "--:--"
+    : date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   const nameLabel = state.fileName || "backup.zip";
   const sizeLabel = formatBytes(state.sizeBytes);
   adminBackupLastStateEl.textContent = `Dernière sauvegarde: ${dateLabel} - ${nameLabel} - ${sizeLabel}`;
+  if (adminCcBackupEl) adminCcBackupEl.textContent = shortTime;
+}
+
+function updateAdminControlCenter() {
+  if (adminCcTimeEl) {
+    adminCcTimeEl.textContent = new Date().toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }
+  if (adminCcServerEl) {
+    const online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
+    adminCcServerEl.textContent = online ? "En ligne" : "Hors ligne";
+    adminCcServerEl.classList.toggle("is-offline", !online);
+  }
+}
+
+function startAdminControlCenterClock() {
+  if (adminControlClockTimer) clearInterval(adminControlClockTimer);
+  updateAdminControlCenter();
+  adminControlClockTimer = window.setInterval(updateAdminControlCenter, 1000);
 }
 
 async function triggerAdminBackupZipDownload() {
@@ -6349,11 +7071,6 @@ async function triggerAdminBackupZipDownload() {
 
 function setAdminProcessUnlocked(unlocked) {
   adminProcessUnlocked = Boolean(unlocked);
-  if (adminProcessUnlocked) {
-    sessionStorage.setItem(ADMIN_PROCESS_UNLOCKED_KEY, "1");
-  } else {
-    sessionStorage.removeItem(ADMIN_PROCESS_UNLOCKED_KEY);
-  }
   if (adminProcessEditor) adminProcessEditor.classList.toggle("hidden", !adminProcessUnlocked);
 }
 
@@ -6533,7 +7250,7 @@ function closeAdminProcessLinkModal() {
   activeAdminProcessLinkSection = "achats";
 }
 
-function saveAdminProcessLinkFromModal() {
+async function saveAdminProcessLinkFromModal() {
   if (!adminProcessLinkTitleInput || !adminProcessLinkUrlInput) return;
   const label = String(adminProcessLinkTitleInput.value || "").trim();
   const rawUrl = String(adminProcessLinkUrlInput.value || "").trim();
@@ -6551,12 +7268,15 @@ function saveAdminProcessLinkFromModal() {
   const sectionDraft = getProcessSectionDraft(activeAdminProcessLinkSection);
   if (activeAdminProcessLinkEditIndex >= 0 && sectionDraft[activeAdminProcessLinkEditIndex]) {
     sectionDraft[activeAdminProcessLinkEditIndex] = { label, url: normalizedUrl };
-    setAdminProcessFeedback(`${getProcessSectionLabel(activeAdminProcessLinkSection)}: lien mis à jour.`);
   } else {
     sectionDraft.push({ label, url: normalizedUrl });
-    setAdminProcessFeedback(`${getProcessSectionLabel(activeAdminProcessLinkSection)}: lien ajouté.`);
   }
   adminProcessSectionDrafts[activeAdminProcessLinkSection] = sectionDraft;
+  await persistProcessDraftsNow(
+    activeAdminProcessLinkEditIndex >= 0
+      ? `${getProcessSectionLabel(activeAdminProcessLinkSection)}: lien mis à jour.`
+      : `${getProcessSectionLabel(activeAdminProcessLinkSection)}: lien ajouté.`
+  );
   renderAdminProcessusEditor();
   closeAdminProcessLinkModal();
 }
@@ -6606,24 +7326,26 @@ async function saveAdminProcessFileFromModal() {
 
   let fileData = editing ? String(adminProcessFilesDraft[activeAdminProcessFileEditIndex].fileData || "") : "";
   let fileName = editing ? String(adminProcessFilesDraft[activeAdminProcessFileEditIndex].fileName || "") : "";
-  let fileMime = "application/pdf";
+  let fileMime = editing
+    ? String(adminProcessFilesDraft[activeAdminProcessFileEditIndex].fileMime || "application/pdf")
+    : "application/pdf";
 
   if (file) {
-    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
-    if (!isPdf) {
-      setAdminProcessFeedback("Seuls les fichiers PDF sont autorisés.");
+    const isAllowedDoc = file.type === "application/pdf" || /\.(pdf|zip|rar)$/i.test(file.name);
+    if (!isAllowedDoc) {
+      setAdminProcessFeedback("Seuls les fichiers PDF, ZIP ou RAR sont autorisés.");
       return;
     }
     if (file.size > MAX_PROCESS_FILE_BYTES) {
-      setAdminProcessFeedback("PDF trop lourd. Limite: 20 MB par dossier.");
+      setAdminProcessFeedback("Fichier trop lourd. Limite: 20 MB par dossier.");
       return;
     }
     try {
       fileData = await readFileAsDataURL(file);
       fileName = file.name;
-      fileMime = "application/pdf";
+      fileMime = inferProcessFileMime(file.name, file.type || "application/octet-stream");
     } catch (error) {
-      setAdminProcessFeedback("Impossible de lire le PDF.");
+      setAdminProcessFeedback("Impossible de lire le fichier.");
       return;
     }
   }
@@ -6631,11 +7353,10 @@ async function saveAdminProcessFileFromModal() {
   const nextItem = { title, fileName, fileData, fileMime };
   if (editing) {
     adminProcessFilesDraft[activeAdminProcessFileEditIndex] = nextItem;
-    setAdminProcessFeedback("PDF Installation VB mis à jour.");
   } else {
     adminProcessFilesDraft.push(nextItem);
-    setAdminProcessFeedback("PDF Installation VB ajouté.");
   }
+  await persistProcessDraftsNow(editing ? "Fichier Installation VB mis à jour." : "Fichier Installation VB ajouté.");
   renderAdminProcessusEditor();
   closeAdminProcessFileModal();
 }
@@ -6765,7 +7486,7 @@ function buildCrmQuoteHtml(lead) {
     </section>
     <footer class="foot">
       Document généré depuis l'administration VortexBox.<br />
-      Contact: VortexCore@outlook.Fr - Telegram: t.me/vortexboxpro
+      Contact: VortexCore@outlook.Fr - Telegram: t.me/VortexCore460
     </footer>
   </main>
 </body></html>`;
@@ -7176,10 +7897,130 @@ function renderAdminSavEditor() {
     .join("");
 }
 
+function renderAdminProcessGamesEditor() {
+  if (!adminProcessGamesListEl) return;
+  const items = Array.isArray(adminProcessGamesFilesDraft) ? adminProcessGamesFilesDraft : [];
+  if (!items.length) {
+    adminProcessGamesListEl.innerHTML = "<p>Aucun ZIP Games. Cliquez sur Uploader un ZIP Games.</p>";
+    return;
+  }
+  adminProcessGamesListEl.innerHTML = items
+    .map((item, index) => {
+      const safePath = String(item.path || "").replace(/^\/+/, "");
+      const displayFile = String(item.fileName || safePath.split("/").pop() || `games-${index + 1}.zip`);
+      const title = String(item.title || displayFile.replace(/\.zip$/i, "") || `Archive Games ${index + 1}`);
+      const createdAtRaw = String(item.createdAt || "").trim();
+      const createdDate = createdAtRaw ? new Date(createdAtRaw) : null;
+      const createdLabel =
+        createdDate && !Number.isNaN(createdDate.getTime())
+          ? createdDate.toLocaleString("fr-FR")
+          : "Date inconnue";
+      const sizeLabel = formatBytes(item.sizeBytes);
+      return `
+        <article class="admin-tech-card">
+          <div class="admin-machine-header">
+            <h5>ZIP Games ${index + 1}</h5>
+            <div class="admin-option-actions">
+              <a class="download-btn" href="/${escapeHtml(safePath)}" download="${escapeHtml(displayFile)}">Retélécharger</a>
+              <button class="admin-danger" type="button" data-action="remove-process-game-file" data-process-game-index="${index}">Supprimer</button>
+            </div>
+          </div>
+          <label>
+            Nom affiché
+            <input type="text" data-action="process-game-title" data-process-game-index="${index}" value="${escapeHtml(title)}" />
+          </label>
+          <p class="admin-file-name">${escapeHtml(displayFile)} - ${escapeHtml(sizeLabel)} - ${escapeHtml(createdLabel)}</p>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderAdminProcessGamesAssignmentForm() {
+  const items = Array.isArray(adminProcessGamesFilesDraft) ? adminProcessGamesFilesDraft : [];
+  const users = loadSiteUsers().filter((item) => item.email && !isAdminEmail(item.email) && item.isActive && !item.revoked && !item.blacklisted);
+  if (adminGamesAssignUserSelect) {
+    if (!users.length) {
+      adminGamesAssignUserSelect.innerHTML = '<option value="">Aucun utilisateur actif</option>';
+    } else {
+      const current = String(adminGamesAssignUserSelect.value || "").trim().toLowerCase();
+      adminGamesAssignUserSelect.innerHTML = users
+        .map((user) => {
+          const label = user.displayName ? `${user.displayName} (${user.email})` : user.email;
+          return `<option value="${escapeHtml(user.email)}">${escapeHtml(label)}</option>`;
+        })
+        .join("");
+      if (users.some((user) => user.email === current)) adminGamesAssignUserSelect.value = current;
+    }
+  }
+
+  if (adminGamesAssignFileSelect) {
+    if (!items.length) {
+      adminGamesAssignFileSelect.innerHTML = '<option value="">Aucun ZIP disponible</option>';
+    } else {
+      const current = String(adminGamesAssignFileSelect.value || "").trim();
+      adminGamesAssignFileSelect.innerHTML = items
+        .map((item, index) => {
+          const fileName = String(item.fileName || item.path || `games-${index + 1}.zip`);
+          const title = String(item.title || fileName.replace(/\.zip$/i, ""));
+          return `<option value="${escapeHtml(item.path)}">${escapeHtml(title)} - ${escapeHtml(fileName)}</option>`;
+        })
+        .join("");
+      if (items.some((item) => String(item.path) === current)) adminGamesAssignFileSelect.value = current;
+      if (!adminGamesAssignFileSelect.value && items[0]?.path) {
+        adminGamesAssignFileSelect.value = String(items[0].path);
+      }
+    }
+  }
+  if (adminGamesAssignBtn) {
+    adminGamesAssignBtn.disabled = !users.length || !items.length;
+  }
+}
+
+function renderAdminProcessGamesAssignmentsEditor() {
+  if (!adminProcessGamesAssignmentsListEl) return;
+  const items = Array.isArray(adminProcessGamesAssignmentsDraft) ? adminProcessGamesAssignmentsDraft : [];
+  if (!items.length) {
+    adminProcessGamesAssignmentsListEl.innerHTML = "<p>Aucune attribution Games pour le moment.</p>";
+    return;
+  }
+  adminProcessGamesAssignmentsListEl.innerHTML = items
+    .slice()
+    .sort((a, b) => new Date(b.assignedAt || 0).getTime() - new Date(a.assignedAt || 0).getTime())
+    .map((item, index) => {
+      const status = getGamesAssignmentStatus(item);
+      const remaining = Math.max(0, Math.max(1, Number(item.maxDownloads) || 1) - Math.max(0, Number(item.downloadCount) || 0));
+      const expiry = item.expiresAt ? new Date(item.expiresAt).toLocaleDateString("fr-FR") : "Aucune";
+      const assigned = item.assignedAt ? new Date(item.assignedAt).toLocaleString("fr-FR") : "N/A";
+      return `
+        <article class="admin-tech-card">
+          <div class="admin-machine-header">
+            <h5>${escapeHtml(item.title || item.fileName || `Attribution ${index + 1}`)}</h5>
+            <div class="admin-option-actions">
+              ${
+                item.revoked
+                  ? `<button class="admin-secondary" type="button" data-action="reactivate-process-game-assignment" data-assignment-id="${escapeHtml(item.id)}">Réactiver</button>`
+                  : `<button class="admin-danger" type="button" data-action="revoke-process-game-assignment" data-assignment-id="${escapeHtml(item.id)}">Révoquer</button>`
+              }
+              <button class="admin-danger" type="button" data-action="remove-process-game-assignment" data-assignment-id="${escapeHtml(item.id)}">Supprimer</button>
+            </div>
+          </div>
+          <p class="admin-file-name">${escapeHtml(item.email)} - ${escapeHtml(item.fileName || "")}</p>
+          <p class="admin-file-name">Statut: ${escapeHtml(formatGamesAssignmentStatus(status))} | Restants: ${remaining} | Expiration: ${escapeHtml(expiry)}</p>
+          <p class="admin-file-name">Attribué le: ${escapeHtml(assigned)}</p>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 function renderAdminProcessusEditor() {
   if (!adminProcessList) return;
   setAdminProcessSubtab(activeAdminProcessSubtab);
   renderAdminCrmEditor();
+  renderAdminProcessGamesEditor();
+  renderAdminProcessGamesAssignmentForm();
+  renderAdminProcessGamesAssignmentsEditor();
   renderAdminSupplierOrdersEditor();
   renderAdminStockEditor();
   renderAdminSavEditor();
@@ -7191,9 +8032,11 @@ function renderAdminProcessusEditor() {
     adminProcessList.innerHTML = adminProcessFilesDraft
     .map((item, index) => {
       const safeTitle = sanitizeFileName(item.title, `dossier-confidentiel-${index + 1}`);
-      const downloadBtn = item.fileData
-        ? `<a class="download-btn" href="${item.fileData}" download="${sanitizeFileName(item.fileName || `${safeTitle}.pdf`, `${safeTitle}.pdf`)}">Download PDF</a>`
-        : '<span class="admin-file-name">PDF non chargé</span>';
+      const fileHref = resolveProcessFileHref(item);
+      const suggestedName = inferProcessFileName(item, index);
+      const downloadBtn = fileHref
+        ? `<a class="download-btn" href="${fileHref}" download="${sanitizeFileName(suggestedName, suggestedName)}">Télécharger</a>`
+        : '<span class="admin-file-name">Fichier non chargé</span>';
       return `
         <article class="admin-tech-card">
           <div class="admin-machine-header">
@@ -7203,7 +8046,7 @@ function renderAdminProcessusEditor() {
               <button class="admin-danger" type="button" data-action="remove-process-file" data-process-index="${index}">Supprimer</button>
             </div>
           </div>
-          <p class="admin-file-name">${escapeHtml(item.fileName || "Aucun fichier choisi")}</p>
+          <p class="admin-file-name">${escapeHtml(suggestedName || "Aucun fichier choisi")}</p>
           <div class="technical-actions">${downloadBtn}</div>
         </article>
       `;
@@ -7309,6 +8152,7 @@ function fillAdminFields() {
   if (adminMenuBadgeSupportSelect) adminMenuBadgeSupportSelect.value = menuBadges.support || "";
   if (adminMenuBadgeFichesSelect) adminMenuBadgeFichesSelect.value = menuBadges.fiches || "";
   if (adminMenuBadgeGuidesSelect) adminMenuBadgeGuidesSelect.value = menuBadges.guides || "";
+  if (adminMenuBadgeJeuxSelect) adminMenuBadgeJeuxSelect.value = menuBadges.jeux || "";
   if (adminMenuBadgeAboutSelect) adminMenuBadgeAboutSelect.value = menuBadges.about || "";
   if (adminMenuBadgeFaqSelect) adminMenuBadgeFaqSelect.value = menuBadges.faq || "";
   if (adminFooterEmailInput) {
@@ -7354,6 +8198,7 @@ function fillAdminFields() {
   if (!Array.isArray(adminAboutGalleryDraft.photos)) adminAboutGalleryDraft.photos = [];
   revokeAllAdminAboutPreviews();
   adminFaqItemsDraft = JSON.parse(JSON.stringify(siteContent.faqItems || cloneDefaultContent().faqItems));
+  adminGamesDraft = JSON.parse(JSON.stringify(siteContent.gamesCatalog || cloneDefaultContent().gamesCatalog));
   adminSupportSavDraft = JSON.parse(
     JSON.stringify(siteContent.supportSav || cloneDefaultContent().supportSav)
   );
@@ -7366,6 +8211,12 @@ function fillAdminFields() {
   };
   adminCrmLeadsDraft = JSON.parse(
     JSON.stringify(siteContent.processus?.crmLeads || cloneDefaultContent().processus.crmLeads)
+  );
+  adminProcessGamesFilesDraft = JSON.parse(
+    JSON.stringify(siteContent.processus?.gamesFiles || cloneDefaultContent().processus.gamesFiles)
+  );
+  adminProcessGamesAssignmentsDraft = JSON.parse(
+    JSON.stringify(siteContent.processus?.gamesAssignments || cloneDefaultContent().processus.gamesAssignments)
   );
   activeAdminCrmLeadIndex = -1;
   adminCrmOpenTabs = [];
@@ -7386,10 +8237,9 @@ function fillAdminFields() {
     JSON.stringify(siteContent.processus?.deliveryItems || cloneDefaultContent().processus.deliveryItems)
   );
   setAdminProcessSubtab("crm");
-  const processWasUnlocked = sessionStorage.getItem(ADMIN_PROCESS_UNLOCKED_KEY) === "1";
-  setAdminProcessUnlocked(processWasUnlocked);
+  setAdminProcessUnlocked(false);
   if (adminProcessPasswordInput) adminProcessPasswordInput.value = "";
-  setAdminProcessFeedback(processWasUnlocked ? "Reprendre là où vous vous êtes arrêté" : "");
+  setAdminProcessFeedback("");
   adminComponentsDraft = JSON.parse(JSON.stringify(siteContent.configurator.components));
   activeAdminComponentIndex = 0;
   adminServicesDraft = JSON.parse(JSON.stringify(siteContent.configurator.services));
@@ -7401,6 +8251,7 @@ function fillAdminFields() {
   renderAdminTechnicalSheetsEditor();
   renderAdminConfiguratorEditor();
   renderAdminFaqEditor();
+  renderAdminGamesEditor();
   if (adminSupportBadgeInput) adminSupportBadgeInput.value = String(adminSupportSavDraft.badge || "");
   if (adminSupportTitleInput) adminSupportTitleInput.value = String(adminSupportSavDraft.title || "");
   if (adminSupportSubtitleInput) adminSupportSubtitleInput.value = String(adminSupportSavDraft.subtitle || "");
@@ -7481,18 +8332,20 @@ async function hydrateAdminAboutVideoPreviews() {
 }
 
 function setActiveAdminTab(tabName) {
+  const hasTab = adminTabButtons.some((button) => button.dataset.tab === tabName);
+  const safeTabName = hasTab ? tabName : "general";
   adminTabButtons.forEach((button) => {
-    const isActive = button.dataset.tab === tabName;
+    const isActive = button.dataset.tab === safeTabName;
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-selected", String(isActive));
   });
 
   adminTabPanels.forEach((panel) => {
-    panel.classList.toggle("hidden", panel.dataset.tabContent !== tabName);
+    panel.classList.toggle("hidden", panel.dataset.tabContent !== safeTabName);
   });
 
   if (adminEditor) {
-    adminEditor.classList.toggle("admin-processus-minimal", tabName === "processus");
+    adminEditor.classList.toggle("admin-processus-minimal", safeTabName === "processus");
   }
 }
 
@@ -7584,6 +8437,69 @@ function initializeAdminTabsReorder() {
   });
 }
 
+function enableHoverScrollableTabs(container) {
+  if (!container || container.dataset.hoverScrollBound === "1") return;
+  container.dataset.hoverScrollBound = "1";
+
+  let rafId = 0;
+  let velocity = 0;
+  let isHovering = false;
+  const edgeZone = 120;
+  const maxSpeed = 18;
+
+  const updateScrollableClass = () => {
+    const canScroll = container.scrollWidth - container.clientWidth > 8;
+    container.classList.toggle("is-scrollable", canScroll);
+  };
+
+  const tick = () => {
+    if (!isHovering || Math.abs(velocity) < 0.2) {
+      rafId = 0;
+      return;
+    }
+    container.scrollLeft += velocity;
+    rafId = window.requestAnimationFrame(tick);
+  };
+
+  const startTickIfNeeded = () => {
+    if (!rafId) rafId = window.requestAnimationFrame(tick);
+  };
+
+  container.addEventListener("mouseenter", () => {
+    isHovering = true;
+    updateScrollableClass();
+  });
+
+  container.addEventListener("mouseleave", () => {
+    isHovering = false;
+    velocity = 0;
+  });
+
+  container.addEventListener("mousemove", (event) => {
+    if (!isHovering) return;
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const leftRatio = Math.max(0, (edgeZone - x) / edgeZone);
+    const rightRatio = Math.max(0, (x - (rect.width - edgeZone)) / edgeZone);
+    velocity = (rightRatio - leftRatio) * maxSpeed;
+    if (Math.abs(velocity) >= 0.2) startTickIfNeeded();
+  });
+
+  container.addEventListener(
+    "wheel",
+    (event) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      container.scrollLeft += event.deltaY;
+      event.preventDefault();
+      updateScrollableClass();
+    },
+    { passive: false }
+  );
+
+  window.addEventListener("resize", updateScrollableClass);
+  updateScrollableClass();
+}
+
 function setAdminState(isLoggedIn) {
   if (!isLoggedIn) {
     sessionStorage.removeItem(ADMIN_PROCESS_UNLOCKED_KEY);
@@ -7657,13 +8573,38 @@ function saveAdminHistory(history) {
   localStorage.setItem(ADMIN_HISTORY_KEY, JSON.stringify(Array.isArray(history) ? history.slice(0, ADMIN_HISTORY_LIMIT) : []));
 }
 
+function clearAdminHistory() {
+  localStorage.removeItem(ADMIN_HISTORY_KEY);
+}
+
+function removeAdminHistoryEntryById(entryId) {
+  const targetId = String(entryId || "").trim();
+  if (!targetId) return false;
+  const history = loadAdminHistory();
+  const nextHistory = history.filter((entry) => String(entry?.id || "") !== targetId);
+  if (nextHistory.length === history.length) return false;
+  saveAdminHistory(nextHistory);
+  return true;
+}
+
+function updateAdminHistoryActionButtons() {
+  const history = loadAdminHistory();
+  const hasHistory = history.length > 0;
+  const hasSelection = Boolean(String(adminHistorySelectEl?.value || "").trim());
+  if (adminRestoreHistoryBtn) adminRestoreHistoryBtn.disabled = !(hasHistory && hasSelection);
+  if (adminDeleteHistoryEntryBtn) adminDeleteHistoryEntryBtn.disabled = !(hasHistory && hasSelection);
+  if (adminClearHistoryBtn) adminClearHistoryBtn.disabled = !hasHistory;
+}
+
 function renderAdminHistoryOptions() {
   if (!adminHistorySelectEl) return;
   const history = loadAdminHistory();
   if (!history.length) {
     adminHistorySelectEl.innerHTML = '<option value="">Historique indisponible</option>';
+    updateAdminHistoryActionButtons();
     return;
   }
+  const previous = String(adminHistorySelectEl.value || "").trim();
   adminHistorySelectEl.innerHTML = history
     .map((entry) => {
       const date = new Date(entry.at || "");
@@ -7671,6 +8612,12 @@ function renderAdminHistoryOptions() {
       return `<option value="${escapeHtml(entry.id || "")}">${escapeHtml(label)}</option>`;
     })
     .join("");
+  if (previous && history.some((entry) => String(entry?.id || "") === previous)) {
+    adminHistorySelectEl.value = previous;
+  } else {
+    adminHistorySelectEl.selectedIndex = 0;
+  }
+  updateAdminHistoryActionButtons();
 }
 
 function pushAdminHistorySnapshot(content) {
@@ -7688,7 +8635,7 @@ function pushAdminHistorySnapshot(content) {
 
 function scheduleAdminAutosave() {
   if (adminAutosaveTimer) clearTimeout(adminAutosaveTimer);
-  setAdminAutosaveStatus("Brouillon détecté. Auto-save en cours...", "info");
+  setAdminAutosaveStatus("Brouillon détecté. Auto-save dans 1 minute...", "info");
   adminAutosaveTimer = window.setTimeout(() => {
     if (!adminEditor || adminEditor.classList.contains("hidden")) return;
     try {
@@ -7700,7 +8647,58 @@ function scheduleAdminAutosave() {
     } catch (error) {
       setAdminAutosaveStatus("Auto-save impossible.", "error");
     }
-  }, 2500);
+  }, 60000);
+}
+
+function buildProcessusPayloadFromDrafts(baseProcessus = {}) {
+  return {
+    ...baseProcessus,
+    files: normalizeProcessFiles(adminProcessFilesDraft)
+      .map((item, index) => ({
+        title:
+          typeof item.title === "string" && item.title.trim()
+            ? item.title.trim()
+            : `Dossier confidentiel ${index + 1}`,
+        fileName: inferProcessFileName(item, index),
+        fileData: resolveProcessFileHref(item),
+        path: String(item.path || "").trim().replace(/^\/+/, ""),
+        fileMime:
+          typeof item.fileMime === "string" && item.fileMime.trim()
+            ? item.fileMime.trim()
+            : inferProcessFileMime(inferProcessFileName(item, index), "application/pdf"),
+      }))
+      .filter((item) => item.fileData || item.path),
+    purchases: getProcessSectionDraft("achats")
+      .map((item, index) => ({
+        label:
+          typeof item.label === "string" && item.label.trim()
+            ? item.label.trim()
+            : `Lien achat ${index + 1}`,
+        url: normalizeProcessLinkUrl(item.url),
+      }))
+      .filter((item) => item.url),
+    crmLeads: normalizeCrmLeads(adminCrmLeadsDraft),
+    gamesFiles: normalizeProcessGamesFiles(adminProcessGamesFilesDraft),
+    gamesAssignments: normalizeProcessGamesAssignments(adminProcessGamesAssignmentsDraft),
+    suppliersOrders: normalizeSupplierOrders(adminSupplierOrdersDraft),
+    stockItems: normalizeStockItems(adminStockItemsDraft),
+    savItems: normalizeSavItems(adminSavItemsDraft),
+    deliveryItems: normalizeDeliveryItems(adminDeliveryItemsDraft),
+  };
+}
+
+async function persistProcessDraftsNow(successMessage = "Processus sauvegardé.", tone = "success") {
+  siteContent.processus = buildProcessusPayloadFromDrafts(siteContent.processus || {});
+  if (!persistSiteContent()) {
+    setAdminProcessFeedback("Sauvegarde Processus impossible (stockage saturé).", "error");
+    return false;
+  }
+  const diskSaved = await saveContentSnapshotToDisk(siteContent).catch(() => false);
+  setAdminProcessFeedback(
+    diskSaved ? successMessage : `${successMessage} (local uniquement)`,
+    diskSaved ? tone : "info"
+  );
+  return true;
 }
 
 function triggerFileInput(input) {
@@ -7715,6 +8713,26 @@ function triggerFileInput(input) {
   }
   input.focus();
   input.click();
+}
+
+function flashAdminSaveButton(target) {
+  if (!(target instanceof HTMLElement)) return;
+  const button = target.closest("button, .cta, .admin-secondary, .admin-file-button");
+  if (!(button instanceof HTMLElement)) return;
+  const id = String(button.id || "").toLowerCase();
+  const label = String(button.textContent || "").trim().toLowerCase();
+  const isSaveAction =
+    id.includes("save") ||
+    label.includes("enregistrer") ||
+    label.includes("mettre à jour");
+  if (!isSaveAction) return;
+  button.classList.remove("admin-save-flash");
+  // Reflow to replay animation consistently on repeated clicks.
+  void button.offsetWidth;
+  button.classList.add("admin-save-flash");
+  window.setTimeout(() => {
+    button.classList.remove("admin-save-flash");
+  }, 1200);
 }
 
 function isSupportedAboutVideoFile(file) {
@@ -7830,6 +8848,21 @@ async function uploadDataUrlToDisk(kind, fileName, dataUrl) {
     throw new Error("Chemin fichier manquant");
   }
   return payload.path;
+}
+
+async function deleteUploadedFileFromDisk(filePath) {
+  const safePath = String(filePath || "").trim().replace(/^\/+/, "");
+  if (!safePath) return { ok: true, deleted: false };
+  const response = await fetch("/api/delete-upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: safePath }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.ok === false) {
+    throw new Error(String(payload?.error || "Suppression fichier impossible."));
+  }
+  return payload;
 }
 
 async function uploadBlobToDisk(kind, fileName, blob, onProgress = null) {
@@ -8312,6 +9345,13 @@ if (adminAddFaqItemBtn) {
   });
 }
 
+if (adminAddGameItemBtn) {
+  adminAddGameItemBtn.addEventListener("click", () => {
+    adminGamesDraft.push(createEmptyGameItem(adminGamesDraft.length));
+    renderAdminGamesEditor();
+  });
+}
+
 if (adminAddSupportCardBtn) {
   adminAddSupportCardBtn.addEventListener("click", () => {
     if (!Array.isArray(adminSupportSavDraft.cards)) adminSupportSavDraft.cards = [];
@@ -8488,7 +9528,7 @@ if (adminBackupZipBtn) {
 }
 
 if (adminProcessList) {
-  adminProcessList.addEventListener("click", (event) => {
+  adminProcessList.addEventListener("click", async (event) => {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
     const action = button.dataset.action;
@@ -8501,15 +9541,189 @@ if (adminProcessList) {
 
     if (action === "remove-process-file") {
       adminProcessFilesDraft.splice(index, 1);
+      await persistProcessDraftsNow("Fichier Installation VB supprimé.", "info");
       renderAdminProcessusEditor();
-      setAdminProcessFeedback("PDF Installation VB supprimé.");
+    }
+  });
+}
+
+if (adminAddGamesFileBtn) {
+  adminAddGamesFileBtn.addEventListener("click", () => {
+    if (!adminProcessUnlocked) {
+      setAdminProcessFeedback("Déverrouillez l'accès Processus d'abord.");
+      return;
+    }
+    triggerFileInput(adminGamesZipFileInput);
+  });
+}
+
+if (adminGamesZipFileInput) {
+  adminGamesZipFileInput.addEventListener("change", async () => {
+    const file = adminGamesZipFileInput.files && adminGamesZipFileInput.files[0];
+    adminGamesZipFileInput.value = "";
+    if (!file) return;
+    if (!adminProcessUnlocked) {
+      setAdminProcessFeedback("Déverrouillez l'accès Processus d'abord.");
+      return;
+    }
+    if (!/\.zip$/i.test(file.name)) {
+      setAdminProcessFeedback("Seuls les fichiers ZIP sont autorisés.");
+      return;
+    }
+
+    const safeBaseName = sanitizeFileName(file.name, `games-${Date.now()}.zip`).replace(/\.zip$/i, "");
+    const safeName = `${safeBaseName}.zip`;
+    setAdminUploadProgress(3, "Games ZIP • upload");
+    try {
+      const uploadPayload = await uploadBlobToDiskDetailed("games-zips", safeName, file, (percent, label) => {
+        setAdminUploadProgress(percent, `Games ZIP • ${label || "upload"}`);
+      });
+      hideAdminUploadProgress(1400);
+      if (!uploadPayload?.path) {
+        setAdminProcessFeedback("Upload ZIP impossible. Vérifiez la taille du fichier.", "error");
+        return;
+      }
+      adminProcessGamesFilesDraft.push({
+        title: safeBaseName,
+        path: String(uploadPayload.path || "").replace(/^\/+/, ""),
+        fileName: safeName,
+        sizeBytes: Math.max(0, Number(uploadPayload.bytes || file.size || 0)),
+        createdAt: new Date().toISOString(),
+      });
+      await persistProcessDraftsNow("ZIP Games ajouté.", "success");
+      renderAdminProcessusEditor();
+    } catch (error) {
+      hideAdminUploadProgress(600);
+      setAdminProcessFeedback("Upload ZIP impossible. Vérifiez la taille ou le format.", "error");
+    }
+  });
+}
+
+if (adminProcessGamesListEl) {
+  adminProcessGamesListEl.addEventListener("input", (event) => {
+    const target = event.target;
+    const action = String(target.dataset.action || "");
+    const index = Number(target.dataset.processGameIndex);
+    if (Number.isNaN(index) || !adminProcessGamesFilesDraft[index]) return;
+    if (action === "process-game-title") {
+      adminProcessGamesFilesDraft[index].title = String(target.value || "");
+    }
+  });
+  adminProcessGamesListEl.addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
+    const action = String(button.dataset.action || "");
+    const index = Number(button.dataset.processGameIndex);
+    if (Number.isNaN(index) || !adminProcessGamesFilesDraft[index]) return;
+    if (action !== "remove-process-game-file") return;
+    const removedPath = String(adminProcessGamesFilesDraft[index].path || "").replace(/^\/+/, "");
+    button.disabled = true;
+    try {
+      if (removedPath) await deleteUploadedFileFromDisk(removedPath);
+      adminProcessGamesFilesDraft.splice(index, 1);
+      if (removedPath) {
+        adminProcessGamesAssignmentsDraft = adminProcessGamesAssignmentsDraft.filter(
+          (assignment) => String(assignment.filePath || "").replace(/^\/+/, "") !== removedPath
+        );
+      }
+      await persistProcessDraftsNow("ZIP Games supprimé (liste + disque).", "success");
+      renderAdminProcessusEditor();
+    } catch (error) {
+      button.disabled = false;
+      setAdminProcessFeedback(String(error?.message || "Suppression ZIP impossible."), "error");
+    }
+  });
+}
+
+if (adminGamesAssignBtn) {
+  adminGamesAssignBtn.addEventListener("click", async () => {
+    if (!adminProcessUnlocked) {
+      setAdminProcessFeedback("Déverrouillez l'accès Processus d'abord.");
+      return;
+    }
+    const email = String(adminGamesAssignUserSelect?.value || "").trim().toLowerCase();
+    const filePath = String(adminGamesAssignFileSelect?.value || "").trim().replace(/^\/+/, "");
+    const customTitle = String(adminGamesAssignTitleInput?.value || "").trim();
+    const maxDownloads = Math.max(1, Math.round(Number(adminGamesAssignMaxDownloadsInput?.value) || 1));
+    const expiresRaw = String(adminGamesAssignExpiryInput?.value || "").trim();
+    const expiresAt = expiresRaw ? new Date(`${expiresRaw}T23:59:59`).toISOString() : "";
+
+    if (!email || !isAllowedOutlookEmail(email)) {
+      setAdminProcessFeedback("Sélectionnez un utilisateur valide.", "error");
+      return;
+    }
+    if (!filePath) {
+      setAdminProcessFeedback("Sélectionnez un fichier ZIP.", "error");
+      return;
+    }
+    const sourceFile = adminProcessGamesFilesDraft.find((item) => String(item.path || "") === filePath);
+    if (!sourceFile) {
+      setAdminProcessFeedback("Fichier ZIP introuvable.", "error");
+      return;
+    }
+
+    const existingIndex = adminProcessGamesAssignmentsDraft.findIndex(
+      (item) => String(item.email || "") === email && String(item.filePath || "") === filePath
+    );
+    const payload = {
+      id: existingIndex >= 0 ? adminProcessGamesAssignmentsDraft[existingIndex].id : `ga-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      email,
+      filePath,
+      fileName: String(sourceFile.fileName || ""),
+      title: customTitle || String(sourceFile.title || sourceFile.fileName || "Fichier Games"),
+      maxDownloads,
+      downloadCount: existingIndex >= 0 ? Math.max(0, Number(adminProcessGamesAssignmentsDraft[existingIndex].downloadCount) || 0) : 0,
+      expiresAt,
+      assignedAt: existingIndex >= 0 ? String(adminProcessGamesAssignmentsDraft[existingIndex].assignedAt || new Date().toISOString()) : new Date().toISOString(),
+      lastDownloadAt: existingIndex >= 0 ? String(adminProcessGamesAssignmentsDraft[existingIndex].lastDownloadAt || "") : "",
+      revoked: false,
+    };
+
+    if (existingIndex >= 0) {
+      adminProcessGamesAssignmentsDraft[existingIndex] = payload;
+    } else {
+      adminProcessGamesAssignmentsDraft.unshift(payload);
+    }
+
+    if (adminGamesAssignTitleInput) adminGamesAssignTitleInput.value = "";
+    if (adminGamesAssignMaxDownloadsInput) adminGamesAssignMaxDownloadsInput.value = "1";
+    if (adminGamesAssignExpiryInput) adminGamesAssignExpiryInput.value = "";
+    await persistProcessDraftsNow(existingIndex >= 0 ? "Attribution mise à jour." : "Fichier attribué à l'utilisateur.", "success");
+    renderAdminProcessusEditor();
+  });
+}
+
+if (adminProcessGamesAssignmentsListEl) {
+  adminProcessGamesAssignmentsListEl.addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-action][data-assignment-id]");
+    if (!button) return;
+    const action = String(button.dataset.action || "");
+    const assignmentId = String(button.dataset.assignmentId || "");
+    const index = adminProcessGamesAssignmentsDraft.findIndex((item) => String(item.id || "") === assignmentId);
+    if (index < 0) return;
+    if (action === "revoke-process-game-assignment") {
+      adminProcessGamesAssignmentsDraft[index].revoked = true;
+      await persistProcessDraftsNow("Accès révoqué.", "info");
+      renderAdminProcessusEditor();
+      return;
+    }
+    if (action === "reactivate-process-game-assignment") {
+      adminProcessGamesAssignmentsDraft[index].revoked = false;
+      await persistProcessDraftsNow("Accès réactivé.", "success");
+      renderAdminProcessusEditor();
+      return;
+    }
+    if (action === "remove-process-game-assignment") {
+      adminProcessGamesAssignmentsDraft.splice(index, 1);
+      await persistProcessDraftsNow("Attribution supprimée.", "info");
+      renderAdminProcessusEditor();
     }
   });
 }
 
 if (adminProcessLinksLists.length) {
   adminProcessLinksLists.forEach((listEl) => {
-    listEl.addEventListener("click", (event) => {
+    listEl.addEventListener("click", async (event) => {
       const button = event.target.closest("button[data-action]");
       if (!button) return;
       const sectionKey = String(button.dataset.processLinkSection || listEl.dataset.section || "achats");
@@ -8523,6 +9737,7 @@ if (adminProcessLinksLists.length) {
       if (button.dataset.action !== "remove-process-link") return;
       sectionDraft.splice(index, 1);
       adminProcessSectionDrafts[sectionKey] = sectionDraft;
+      await persistProcessDraftsNow(`${getProcessSectionLabel(sectionKey)}: lien supprimé.`, "info");
       renderAdminProcessusEditor();
     });
   });
@@ -8865,6 +10080,44 @@ if (adminFaqList) {
     }
     adminFaqItemsDraft.splice(index, 1);
     renderAdminFaqEditor();
+  });
+}
+
+if (adminGamesList) {
+  adminGamesList.addEventListener("input", (event) => {
+    const target = event.target;
+    const action = String(target.dataset.action || "");
+    const index = Number(target.dataset.gameIndex);
+    if (Number.isNaN(index) || !adminGamesDraft[index]) return;
+    if (action === "game-title") adminGamesDraft[index].title = String(target.value || "");
+  });
+
+  adminGamesList.addEventListener("change", async (event) => {
+    const target = event.target;
+    if (!target.matches("input[type='file'][id^='admin-game-file-']")) return;
+    const index = Number(String(target.id || "").replace("admin-game-file-", ""));
+    if (Number.isNaN(index) || !adminGamesDraft[index]) return;
+    const file = target.files && target.files[0];
+    if (!file) return;
+    try {
+      adminGamesDraft[index].image = await readFileAsDataURL(file);
+      renderAdminGamesEditor();
+    } catch (error) {
+      setFeedback("Impossible de lire la jaquette sélectionnée.");
+    }
+  });
+
+  adminGamesList.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-action='remove-game-item']");
+    if (!button) return;
+    const index = Number(button.dataset.gameIndex);
+    if (Number.isNaN(index) || !adminGamesDraft[index]) return;
+    if (adminGamesDraft.length === 1) {
+      setFeedback("Gardez au moins une jaquette.");
+      return;
+    }
+    adminGamesDraft.splice(index, 1);
+    renderAdminGamesEditor();
   });
 }
 
@@ -9508,6 +10761,7 @@ adminTabButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveAdminTab(button.dataset.tab));
 });
 
+
 heroShowcaseEl.addEventListener("click", (event) => {
   const adminButton = event.target.closest("button[data-action][data-index]");
   if (adminButton && isAdminLiveMode()) {
@@ -9835,18 +11089,35 @@ document.addEventListener("keydown", (event) => {
 adminToggle.addEventListener("click", () => {
   const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
   if (!isAdminEmail(sessionEmail)) return;
-  sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
-  refreshAdminLiveMode();
-  adminPanel.classList.toggle("hidden");
+  const panelHidden = adminPanel.classList.contains("hidden");
+
+  if (panelHidden && !adminToggleAwaitingOpen) {
+    sessionStorage.setItem(SESSION_KEY, "1");
+    sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
+    refreshAdminLiveMode();
+    adminToggleAwaitingOpen = true;
+    setFeedback("Mode administrateur live activé. Cliquez une 2e fois pour ouvrir le menu admin.", "info");
+    return;
+  }
+
+  if (panelHidden && adminToggleAwaitingOpen) {
+    adminToggleAwaitingOpen = false;
+    adminPanel.classList.remove("hidden");
+    showAdminEditor();
+    setFeedback("");
+    return;
+  }
+
+  adminPanel.classList.add("hidden");
+  adminToggleAwaitingOpen = false;
   setFeedback("");
-  const logged = sessionStorage.getItem(SESSION_KEY) === "1";
-  setAdminState(logged);
 });
 
 if (adminLiveExitBtn) {
   adminLiveExitBtn.addEventListener("click", () => {
     sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "0");
     if (adminPanel) adminPanel.classList.add("hidden");
+    adminToggleAwaitingOpen = false;
     refreshAdminLiveMode();
   });
 }
@@ -9914,17 +11185,6 @@ if (siteLoginFormEl) {
         return;
       }
       if (existing && existing.isActive) {
-        if (existing.password === password) {
-          setPendingActivation("");
-          showActivationStep(false);
-          sessionStorage.setItem(AUTH_SESSION_KEY, email);
-          sessionStorage.removeItem(SESSION_KEY);
-          syncRememberPreference(email);
-          recordUserLogin(email);
-          unlockSite();
-          setAuthFeedback("");
-          return;
-        }
         setAuthFeedback("Ce compte existe déjà. Passez sur Utilisateur pour vous connecter.", "error");
         return;
       }
@@ -9954,6 +11214,11 @@ if (siteLoginFormEl) {
       saveSiteUsers(users);
       setPendingActivation(email);
       showActivationStep(true);
+      if (siteActivationCodeEl) {
+        siteActivationCodeEl.value = code;
+        siteActivationCodeEl.focus();
+        siteActivationCodeEl.select();
+      }
       setAuthFeedback(`Code d'activation: ${code} (10 caractères). Conservez-le pour activer le compte.`, "success");
       return;
     } else {
@@ -10379,6 +11644,56 @@ if (profileFavoritesListEl) {
   });
 }
 
+if (profileDownloadsListEl) {
+  profileDownloadsListEl.addEventListener("click", async (event) => {
+    const button = event.target.closest('button[data-action="profile-download-assignment"][data-assignment-id]');
+    if (!button) return;
+    const email = getCurrentSessionEmail();
+    const assignmentId = String(button.dataset.assignmentId || "");
+    if (!email || !assignmentId) return;
+    const assignments = Array.isArray(siteContent.processus?.gamesAssignments) ? siteContent.processus.gamesAssignments : [];
+    const index = assignments.findIndex((item) => String(item?.id || "") === assignmentId);
+    if (index < 0) {
+      setProfileFeedback("Fichier introuvable.");
+      return;
+    }
+    const assignment = assignments[index];
+    if (String(assignment.email || "").trim().toLowerCase() !== email) {
+      setProfileFeedback("Accès refusé pour ce fichier.");
+      return;
+    }
+    if (getGamesAssignmentStatus(assignment, email) !== "available") {
+      setProfileFeedback("Ce téléchargement n'est plus disponible.");
+      renderUserProfileDownloads(email);
+      refreshUserDownloadsBadge();
+      return;
+    }
+    const safePath = String(assignment.filePath || "").replace(/^\/+/, "");
+    if (!safePath) {
+      setProfileFeedback("Chemin du fichier invalide.");
+      return;
+    }
+
+    assignments[index].downloadCount = Math.max(0, Math.round(Number(assignments[index].downloadCount) || 0)) + 1;
+    assignments[index].lastDownloadAt = new Date().toISOString();
+    siteContent.processus.gamesAssignments = assignments;
+    persistSiteContent();
+    saveContentSnapshotToDisk(siteContent).catch(() => {});
+    renderUserProfileDownloads(email);
+    refreshUserDownloadsBadge();
+    recordUserActivity(email, "Téléchargement ZIP Games", String(assignment.title || assignment.fileName || ""));
+    renderUserProfileActivity(email);
+
+    const link = document.createElement("a");
+    link.href = `/${safePath}`;
+    link.download = String(assignment.fileName || "");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setProfileFeedback("Téléchargement lancé.");
+  });
+}
+
 if (siteActivateBtnEl) {
   siteActivateBtnEl.addEventListener("click", () => {
     const email = String(siteLoginEmailEl.value || pendingActivationEmail || "").trim().toLowerCase();
@@ -10526,6 +11841,16 @@ adminEditor.addEventListener("submit", async (event) => {
     return;
   }
 
+  const validGames =
+    Array.isArray(adminGamesDraft) &&
+    adminGamesDraft.length > 0 &&
+    adminGamesDraft.every((item) => item.title?.trim() && String(item.image || "").trim());
+
+  if (!validGames) {
+    setFeedback("Chaque jaquette de la page Jeux doit avoir un titre et une image.");
+    return;
+  }
+
   const validReviews =
     Array.isArray(adminReviewsDraft) &&
     adminReviewsDraft.length > 0 &&
@@ -10557,6 +11882,15 @@ adminEditor.addEventListener("submit", async (event) => {
     draft.image = await persistDataUrlAsset(draft.image, "technical-images", `technical-image-${index + 1}.webp`);
   }
 
+  for (let index = 0; index < adminGamesDraft.length; index += 1) {
+    const game = adminGamesDraft[index];
+    game.image = await persistDataUrlAsset(
+      game.image,
+      "games-covers",
+      sanitizeFileName(game.title || `game-${index + 1}`, `game-${index + 1}`) + ".webp"
+    );
+  }
+
   for (let cIndex = 0; cIndex < adminComponentsDraft.length; cIndex += 1) {
     const component = adminComponentsDraft[cIndex];
     for (let oIndex = 0; oIndex < component.options.length; oIndex += 1) {
@@ -10577,6 +11911,14 @@ adminEditor.addEventListener("submit", async (event) => {
       sanitizeFileName(item.fileName || `processus-${index + 1}.pdf`, `processus-${index + 1}.pdf`)
     );
   }
+
+  // Protection anti-perte: si la section Installation VB n'est pas modifiée mais vide en draft,
+  // on conserve les fichiers déjà présents dans le contenu courant.
+  const existingProcessFiles = normalizeProcessFiles(siteContent.processus?.files || []);
+  const processFilesSource =
+    adminProcessFilesDraft.length > 0
+      ? adminProcessFilesDraft
+      : existingProcessFiles;
 
   const showcase = [0, 1, 2].map((index) => ({
     title: adminShowcaseTitleInputs[index].value.trim() || DEFAULT_CONTENT.showcase[index].title,
@@ -10815,6 +12157,32 @@ adminEditor.addEventListener("submit", async (event) => {
     "summary-telegram.webp"
   );
 
+  // Anti-perte global: si un bloc média/fichier revient vide par erreur,
+  // on conserve la version actuelle déjà stockée.
+  const existingTechnicalSheetsSafe = normalizeTechnicalSheets(siteContent.technicalSheets || []);
+  const existingAboutVideosSafe = normalizeAboutVideos(siteContent.aboutVideos || []);
+  const existingAboutGallerySafe = normalizeAboutGallery(siteContent.aboutGallery || {});
+  const existingGamesCatalogSafe = normalizeGamesCatalog(siteContent.gamesCatalog || []);
+  const existingProcessGamesFilesSafe = normalizeProcessGamesFiles(siteContent.processus?.gamesFiles || []);
+  const existingProcessGamesAssignmentsSafe = normalizeProcessGamesAssignments(siteContent.processus?.gamesAssignments || []);
+
+  const nextTechnicalSheets = technicalSheets.length ? technicalSheets : existingTechnicalSheetsSafe;
+  const nextAboutVideos = aboutVideos.length ? aboutVideos : existingAboutVideosSafe;
+  const nextAboutGallery = {
+    ...aboutGallery,
+    photos:
+      Array.isArray(aboutGallery.photos) && aboutGallery.photos.length
+        ? aboutGallery.photos
+        : (Array.isArray(existingAboutGallerySafe.photos) ? existingAboutGallerySafe.photos : []),
+  };
+  const nextGamesCatalog = adminGamesDraft.length ? adminGamesDraft : existingGamesCatalogSafe;
+  const nextProcessGamesFiles = adminProcessGamesFilesDraft.length
+    ? adminProcessGamesFilesDraft
+    : existingProcessGamesFilesSafe;
+  const nextProcessGamesAssignments = adminProcessGamesAssignmentsDraft.length
+    ? adminProcessGamesAssignmentsDraft
+    : existingProcessGamesAssignmentsSafe;
+
   siteContent = {
     adminProfileReviewPhoto:
       (typeof siteContent.adminProfileReviewPhoto === "string" && siteContent.adminProfileReviewPhoto) ||
@@ -10832,6 +12200,7 @@ adminEditor.addEventListener("submit", async (event) => {
       support: adminMenuBadgeSupportSelect?.value || "",
       fiches: adminMenuBadgeFichesSelect?.value || "",
       guides: adminMenuBadgeGuidesSelect?.value || "",
+      jeux: adminMenuBadgeJeuxSelect?.value || "",
       about: adminMenuBadgeAboutSelect?.value || "",
       faq: adminMenuBadgeFaqSelect?.value || "",
     }),
@@ -10870,9 +12239,9 @@ adminEditor.addEventListener("submit", async (event) => {
       ),
     })),
     showcase,
-    technicalSheets,
-    aboutVideos,
-    aboutGallery,
+    technicalSheets: nextTechnicalSheets,
+    aboutVideos: nextAboutVideos,
+    aboutGallery: nextAboutGallery,
     reviews: adminReviewsDraft.map((item) => ({
       author: item.author.trim(),
       rating: Math.min(5, Math.max(1, Number(item.rating) || 5)),
@@ -10882,17 +12251,21 @@ adminEditor.addEventListener("submit", async (event) => {
       createdAt: typeof item.createdAt === "string" ? item.createdAt : "",
     })),
     processus: {
-      files: adminProcessFilesDraft
+      files: processFilesSource
         .map((item, index) => ({
           title:
             typeof item.title === "string" && item.title.trim()
               ? item.title.trim()
               : `Dossier confidentiel ${index + 1}`,
-          fileName: typeof item.fileName === "string" ? item.fileName : "",
-          fileData: typeof item.fileData === "string" ? item.fileData : "",
-          fileMime: "application/pdf",
+          fileName: inferProcessFileName(item, index),
+          fileData: resolveProcessFileHref(item),
+          path: String(item.path || "").trim().replace(/^\/+/, ""),
+          fileMime:
+            typeof item.fileMime === "string" && item.fileMime.trim()
+              ? item.fileMime.trim()
+              : inferProcessFileMime(inferProcessFileName(item, index), "application/pdf"),
         }))
-        .filter((item) => item.fileData),
+        .filter((item) => item.fileData || item.path),
       purchases: getProcessSectionDraft("achats")
         .map((item, index) => ({
           label:
@@ -10938,6 +12311,45 @@ adminEditor.addEventListener("submit", async (event) => {
           updatedAt: new Date().toISOString(),
         }))
         .filter((item) => item.name || item.email || item.phone || item.note || item.orderNumber),
+      gamesFiles: nextProcessGamesFiles
+        .map((item, index) => ({
+          title:
+            typeof item.title === "string" && item.title.trim()
+              ? item.title.trim()
+              : `Archive Games ${index + 1}`,
+          path: typeof item.path === "string" ? item.path.replace(/^\/+/, "").trim() : "",
+          fileName:
+            typeof item.fileName === "string" && item.fileName.trim()
+              ? item.fileName.trim()
+              : sanitizeFileName(`games-${index + 1}.zip`, `games-${index + 1}.zip`),
+          sizeBytes: Math.max(0, Number(item.sizeBytes) || 0),
+          createdAt:
+            typeof item.createdAt === "string" && item.createdAt.trim()
+              ? item.createdAt.trim()
+              : new Date().toISOString(),
+        }))
+        .filter((item) => item.path),
+      gamesAssignments: nextProcessGamesAssignments
+        .map((item, index) => ({
+          id: typeof item.id === "string" && item.id.trim() ? item.id.trim() : `ga-${Date.now()}-${index + 1}`,
+          email: typeof item.email === "string" ? item.email.trim().toLowerCase() : "",
+          filePath: typeof item.filePath === "string" ? item.filePath.replace(/^\/+/, "").trim() : "",
+          fileName: typeof item.fileName === "string" ? item.fileName.trim() : "",
+          title:
+            typeof item.title === "string" && item.title.trim()
+              ? item.title.trim()
+              : `Fichier Games ${index + 1}`,
+          maxDownloads: Math.max(1, Math.round(Number(item.maxDownloads) || 1)),
+          downloadCount: Math.max(0, Math.round(Number(item.downloadCount) || 0)),
+          expiresAt: typeof item.expiresAt === "string" ? item.expiresAt.trim() : "",
+          assignedAt:
+            typeof item.assignedAt === "string" && item.assignedAt.trim()
+              ? item.assignedAt.trim()
+              : new Date().toISOString(),
+          lastDownloadAt: typeof item.lastDownloadAt === "string" ? item.lastDownloadAt.trim() : "",
+          revoked: Boolean(item.revoked),
+        }))
+        .filter((item) => item.email && item.filePath),
       suppliersOrders: adminSupplierOrdersDraft
         .map((item, index) => ({
           firstName:
@@ -10997,6 +12409,11 @@ adminEditor.addEventListener("submit", async (event) => {
       question: item.question.trim(),
       answer: item.answer.trim(),
     })),
+    gamesCatalog: nextGamesCatalog.map((item, index) => ({
+      title: String(item.title || `Jeu ${index + 1}`).trim() || `Jeu ${index + 1}`,
+      image: String(item.image || "").trim(),
+      info: String(item.info || "").trim(),
+    })),
     supportSav: {
       badge: String(adminSupportBadgeInput?.value || adminSupportSavDraft.badge || "").trim() || "Support & SAV Premium",
       title: String(adminSupportTitleInput?.value || adminSupportSavDraft.title || "").trim() || "Support & SAV VortexBox",
@@ -11005,7 +12422,7 @@ adminEditor.addEventListener("submit", async (event) => {
         "Accompagnement premium VortexBox.",
       telegramUrl:
         String(adminSupportTelegramUrlInput?.value || adminSupportSavDraft.telegramUrl || "").trim() ||
-        "https://t.me/vortexboxpro",
+        "https://t.me/VortexCore460",
       cards: (Array.isArray(adminSupportSavDraft.cards) ? adminSupportSavDraft.cards : [])
         .map((item) => ({
           title: String(item?.title || "").trim(),
@@ -11125,11 +12542,46 @@ if (adminRestoreHistoryBtn) {
   });
 }
 
+if (adminHistorySelectEl) {
+  adminHistorySelectEl.addEventListener("change", () => {
+    updateAdminHistoryActionButtons();
+  });
+}
+
+if (adminDeleteHistoryEntryBtn) {
+  adminDeleteHistoryEntryBtn.addEventListener("click", () => {
+    const targetId = String(adminHistorySelectEl?.value || "");
+    if (!targetId) {
+      setFeedback("Sélectionnez une version à supprimer.", "error");
+      return;
+    }
+    const removed = removeAdminHistoryEntryById(targetId);
+    if (!removed) {
+      setFeedback("Version introuvable.", "error");
+      return;
+    }
+    renderAdminHistoryOptions();
+    setFeedback("Version supprimée de l'historique.", "success");
+  });
+}
+
+if (adminClearHistoryBtn) {
+  adminClearHistoryBtn.addEventListener("click", () => {
+    clearAdminHistory();
+    renderAdminHistoryOptions();
+    setFeedback("Historique des sauvegardes effacé.", "success");
+  });
+}
+
 adminPanel.addEventListener("click", (event) => {
   if (event.target === adminPanel) adminPanel.classList.add("hidden");
 });
 
 if (adminEditor) {
+  adminEditor.addEventListener("click", (event) => {
+    flashAdminSaveButton(event.target);
+  });
+
   adminEditor.addEventListener(
     "click",
     (event) => {
@@ -11419,6 +12871,76 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeConfiguratorInfoPanels();
 });
 
+function mountPremiumPreloader() {
+  if (document.querySelector(".vb-preloader")) return;
+  const preloader = document.createElement("div");
+  preloader.className = "vb-preloader";
+  preloader.innerHTML = `
+    <div class="vb-preloader-core">
+      <div class="vb-preloader-logo"><img src="favicon-vb.svg" alt="VB" /></div>
+      <div class="vb-preloader-text">VortexBox Premium</div>
+    </div>
+  `;
+  document.body.appendChild(preloader);
+  requestAnimationFrame(() => preloader.classList.add("is-ready"));
+  const hide = () => {
+    preloader.classList.add("is-hidden");
+    window.setTimeout(() => preloader.remove(), 450);
+  };
+  window.addEventListener("load", hide, { once: true });
+  window.setTimeout(hide, 1400);
+}
+
+function initializePremiumRevealAndSpotlight() {
+  const revealTargets = Array.from(
+    document.querySelectorAll("main section, .hero, .section, .about-section, .faq-hero, .support-sav-hero, .support-sav-grid")
+  );
+  revealTargets.forEach((el) => {
+    if (el.classList.contains("vb-reveal")) return;
+    el.classList.add("vb-reveal");
+  });
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.14, rootMargin: "0px 0px -8% 0px" }
+    );
+    revealTargets.forEach((el) => observer.observe(el));
+  } else {
+    revealTargets.forEach((el) => el.classList.add("is-visible"));
+  }
+
+  const spotTargets = Array.from(
+    document.querySelectorAll(
+      ".card, .machine-card, .showcase-card, .technical-card, .review-card, .why-card, .about-card, .config-option-card, .game-cover-card"
+    )
+  );
+  spotTargets.forEach((el) => {
+    el.classList.add("vb-spotlight-target");
+    el.addEventListener("pointermove", (event) => {
+      const rect = el.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      const y = ((event.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
+      el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
+      el.style.setProperty("--vb-spot-a", "1");
+    });
+    el.addEventListener("pointerleave", () => {
+      el.style.setProperty("--vb-spot-a", "0");
+    });
+  });
+}
+
+function initializeUltraPremiumVisuals() {
+  mountPremiumPreloader();
+  initializePremiumRevealAndSpotlight();
+}
+
 async function initializeApp() {
   await hydrateContentFromDiskIfMissing();
   const hydratedUserState = await hydrateUserStateFromDisk();
@@ -11436,16 +12958,31 @@ async function initializeApp() {
   initializePasswordStrengthMeter();
   initializeForgotPasswordFlow();
   initializePageTransitions();
+  initializeUltraPremiumVisuals();
+  startAdminControlCenterClock();
+  window.addEventListener("online", updateAdminControlCenter);
+  window.addEventListener("offline", updateAdminControlCenter);
   initializeSiteAuth();
+  refreshNavSessionButtons();
+  window.addEventListener("pageshow", refreshNavSessionButtons);
+  window.addEventListener("storage", (event) => {
+    if (event.key === AUTH_SESSION_KEY || event.key === AUTH_REMEMBER_KEY || event.key === STORAGE_KEY) {
+      refreshNavSessionButtons();
+    }
+  });
   handleAdminDeepLink();
   initializeAdminTabsReorder();
+  enableHoverScrollableTabs(adminTabsContainer);
   applyAdminProcessSubtabsOrder();
   enableAdminProcessSubtabsDrag();
+  enableHoverScrollableTabs(adminProcessSubtabsContainer);
   applyAdminProcessQuicklinksOrder();
   enableAdminProcessQuicklinksDrag();
   setAdminDensityMode(loadAdminDensityMode());
   initializeRevealAnimations();
   initializeVortexBot();
+  tryConsumeConfiguratorDeepLink();
+  tryConsumeAiAdvisorDeepLink();
 }
 
 initializeApp();

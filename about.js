@@ -584,6 +584,21 @@ function initializeResponsiveNav() {
 
 function initializeNavSmartSearch() {
   if (!navSmartSearchInputEl || !navSmartResultsEl) return;
+  const navSmartWrapEl = navSmartSearchInputEl.closest(".nav-smart-wrap");
+  let navSmartKeywordsEl = document.getElementById("nav-smart-keywords");
+  let navSmartKeywordsListEl = document.getElementById("nav-smart-keywords-list");
+  if (navSmartWrapEl && (!navSmartKeywordsEl || !navSmartKeywordsListEl)) {
+    navSmartKeywordsEl = document.createElement("div");
+    navSmartKeywordsEl.id = "nav-smart-keywords";
+    navSmartKeywordsEl.className = "nav-smart-keywords";
+    navSmartKeywordsEl.setAttribute("aria-label", "Mots-cles rapides de recherche");
+    navSmartKeywordsEl.innerHTML = `
+      <p class="nav-smart-keywords-title">Recherche rapide</p>
+      <div id="nav-smart-keywords-list" class="nav-smart-keywords-list"></div>
+    `;
+    navSmartWrapEl.appendChild(navSmartKeywordsEl);
+    navSmartKeywordsListEl = navSmartKeywordsEl.querySelector("#nav-smart-keywords-list");
+  }
   navSmartSearchInputEl.value = "";
   navSmartSearchInputEl.setAttribute("name", "menu-search");
   navSmartSearchInputEl.setAttribute("autocomplete", "off");
@@ -591,16 +606,260 @@ function initializeNavSmartSearch() {
   navSmartSearchInputEl.setAttribute("autocorrect", "off");
   navSmartSearchInputEl.setAttribute("spellcheck", "false");
   navSmartSearchInputEl.setAttribute("inputmode", "search");
+  const normalize = (value) => String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const normalizePath = (value) => {
+    const path = String(value || "").trim() || "/";
+    return path.endsWith("/") && path !== "/" ? path.slice(0, -1) : path;
+  };
+  const validPaths = new Set(["/", "/index.html", "/about.html", "/faq.html", "/jeux.html", "/support-sav.html"]);
+  const validHashesByPath = {
+    "/": new Set(["#machines", "#configurateur", "#fiches-techniques", "#guides-fps", "#contact"]),
+    "/index.html": new Set(["#machines", "#configurateur", "#fiches-techniques", "#guides-fps", "#contact"]),
+    "/about.html": new Set(["#top", "#contact"]),
+    "/faq.html": new Set(["#top", "#contact"]),
+    "/jeux.html": new Set(["#top", "#contact"]),
+    "/support-sav.html": new Set(["#top", "#contact"]),
+  };
+  const isValidSearchTarget = (href) => {
+    const raw = String(href || "").trim();
+    if (!raw) return false;
+    if (/^(https?:)?\/\//i.test(raw)) return true;
+    try {
+      const url = new URL(raw, window.location.origin);
+      const path = normalizePath(url.pathname || "/");
+      if (!validPaths.has(path)) return false;
+      const hash = String(url.hash || "").trim().toLowerCase();
+      if (!hash) return true;
+      return Boolean(validHashesByPath[path]?.has(hash));
+    } catch (error) {
+      return false;
+    }
+  };
+  const isExcludedSearchTerm = (value) => {
+    const text = normalize(value).replace(/[’']/g, "").replace(/\s+/g, " ");
+    return text.includes("capture decran") || text.includes("capture ecran");
+  };
+  const entriesMap = new Map();
+  const addEntry = (label, href, keywords = [], category = "") => {
+    const cleanLabel = String(label || "").trim().replace(/\s+/g, " ");
+    const cleanHref = String(href || "").trim();
+    if (!cleanLabel || !cleanHref || !isValidSearchTarget(cleanHref)) return;
+    if (isExcludedSearchTerm(cleanLabel)) return;
+    const keywordText = Array.isArray(keywords)
+      ? keywords.map((item) => String(item || "").trim()).filter(Boolean).join(" ")
+      : String(keywords || "");
+    if (isExcludedSearchTerm(keywordText)) return;
+    const cleanCategory = String(category || "").trim();
+    const key = `${cleanLabel}|${cleanHref}`;
+    if (entriesMap.has(key)) {
+      const existing = entriesMap.get(key);
+      existing.keywords = `${existing.keywords} ${keywordText}`.trim();
+      if (!existing.category && cleanCategory) existing.category = cleanCategory;
+      existing.haystack = normalize(`${existing.label} ${existing.keywords} ${existing.href} ${existing.category}`);
+      return;
+    }
+    entriesMap.set(key, {
+      label: cleanLabel,
+      href: cleanHref,
+      keywords: keywordText,
+      category: cleanCategory,
+      haystack: normalize(`${cleanLabel} ${keywordText} ${cleanHref} ${cleanCategory}`),
+    });
+  };
 
-  const allLinks = Array.from(document.querySelectorAll(".nav-links a[href]"));
-  const map = new Map();
-  allLinks.forEach((link) => {
+  Array.from(document.querySelectorAll(".nav-links a[href]")).forEach((link) => {
     const label = String(link.textContent || "").trim().replace(/\s+/g, " ");
     const href = String(link.getAttribute("href") || "").trim();
     if (!label || !href) return;
-    map.set(`${label}|${href}`, { label, href });
+    addEntry(label, href, [label, "menu", "navigation"], "Menu");
   });
-  const entries = Array.from(map.values());
+
+  addEntry("Configurateur", "index.html?openConfigurator=1#configurateur", ["build", "composants", "prix", "fps", "services"], "Configurateur");
+  addEntry("Top Build", "index.html#machines", ["meilleurs build", "best seller", "gaming"], "Top Build");
+  addEntry("Fiches Techniques", "index.html#fiches-techniques", ["fiches", "jaquettes", "documentation"], "Fiches");
+  addEntry("Guides FPS", "index.html#guides-fps", ["fps", "performances", "jeux"], "Guides");
+  addEntry("Jeux", "jeux.html", ["catalogue", "jaquettes", "gaming"], "Jeux");
+  addEntry("Support & SAV", "support-sav.html", ["support", "sav", "assistance"], "Support");
+  addEntry("FAQ", "faq.html", ["questions", "reponses", "aide"], "FAQ");
+  addEntry("A propos", "about.html", ["vortexbox", "atelier", "videos"], "A propos");
+
+  let snapshot = {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    snapshot = raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    snapshot = {};
+  }
+  if (Array.isArray(snapshot.machines)) {
+    snapshot.machines.forEach((machine) => {
+      addEntry(
+        machine?.name || machine?.frontName || "Build VortexBox",
+        "index.html#machines",
+        [machine?.description, machine?.frontDescription, machine?.badge, machine?.price, ...(Array.isArray(machine?.specs) ? machine.specs : [])],
+        "Top Build"
+      );
+    });
+  }
+  if (Array.isArray(snapshot.technicalSheets)) {
+    snapshot.technicalSheets.forEach((sheet) => {
+      addEntry(sheet?.title || "Fiche technique", "index.html#fiches-techniques", [sheet?.title], "Fiches");
+    });
+  }
+  if (Array.isArray(snapshot.faqItems)) {
+    snapshot.faqItems.forEach((faq) => {
+      addEntry(faq?.question || "FAQ", "faq.html", [faq?.answer], "FAQ");
+    });
+  }
+  if (Array.isArray(snapshot.gamesCatalog)) {
+    snapshot.gamesCatalog.forEach((game) => {
+      addEntry(game?.title || "Jeu", "jeux.html", [game?.info], "Jeux");
+    });
+  }
+  if (snapshot.supportSav && typeof snapshot.supportSav === "object") {
+    addEntry(snapshot.supportSav.title || "Support & SAV", "support-sav.html", [snapshot.supportSav.subtitle], "Support");
+  }
+  if (Array.isArray(snapshot.aboutVideos)) {
+    snapshot.aboutVideos.forEach((video) => {
+      addEntry(video?.title || "Video VortexBox", "about.html", [video?.title], "A propos");
+    });
+  }
+  if (snapshot.configurator && typeof snapshot.configurator === "object") {
+    (Array.isArray(snapshot.configurator.components) ? snapshot.configurator.components : []).forEach((component) => {
+      addEntry(
+        component?.label || "Composant",
+        "index.html?openConfigurator=1#configurateur",
+        (Array.isArray(component?.options) ? component.options : []).flatMap((option) => [option?.name, option?.description, option?.price]),
+        "Configurateur"
+      );
+    });
+    (Array.isArray(snapshot.configurator.services) ? snapshot.configurator.services : []).forEach((service) => {
+      addEntry(service?.label || "Service", "index.html?openConfigurator=1#configurateur", [service?.description, service?.price], "Configurateur");
+    });
+  }
+
+  const entries = Array.from(entriesMap.values());
+  const keywordMap = new Map();
+  const hiddenKeywordTerms = [
+    "cpu",
+    "gpu",
+    "ram",
+    "xpu",
+    "stockage",
+    "disque dur",
+    "nvme",
+    "mvme",
+    "rtx",
+    "intel i9",
+    "intel 9",
+    "ryzen",
+    "32 go",
+  ];
+  const hasHiddenKeyword = (value) => hiddenKeywordTerms.some((term) => normalize(value).includes(term));
+  const addKeyword = (label, term = "", category = "", href = "") => {
+    const cleanLabel = String(label || "").trim();
+    if (!cleanLabel) return;
+    if (isExcludedSearchTerm(cleanLabel) || isExcludedSearchTerm(term)) return;
+    if (hasHiddenKeyword(cleanLabel) || hasHiddenKeyword(term || cleanLabel)) return;
+    const normalizedLabel = normalize(cleanLabel);
+    const cleanTerm = String(term || cleanLabel).trim();
+    const cleanCategory = String(category || "").trim();
+    const cleanHref = String(href || "").trim();
+    const key = normalizedLabel;
+    if (!key || keywordMap.has(key)) return;
+    keywordMap.set(key, { label: cleanLabel, term: cleanTerm, category: cleanCategory, href: cleanHref });
+  };
+
+  const configuratorHref = "index.html?openConfigurator=1#configurateur";
+  [
+    ["Top Build", "top build", "Menu", "index.html#machines"],
+    ["Configurateur", "configurateur", "Menu", configuratorHref],
+    ["Fiches Techniques", "fiches techniques", "Menu", "index.html#fiches-techniques"],
+    ["Guides FPS", "guides fps", "Menu", "index.html#guides-fps"],
+    ["Support SAV", "support sav", "Menu", "support-sav.html"],
+    ["FAQ", "faq", "Menu", "faq.html"],
+    ["Telegram", "telegram", "Contact", "https://t.me/VortexCore460"],
+    ["Promo DLC", "promo dlc", "Promo", configuratorHref],
+  ].forEach((entry) => addKeyword(entry[0], entry[1], entry[2], entry[3]));
+
+  entries.forEach((item) => {
+    addKeyword(item.label, item.label, item.category || "", item.href || "");
+  });
+
+  if (snapshot.configurator && typeof snapshot.configurator === "object") {
+    const components = Array.isArray(snapshot.configurator.components) ? snapshot.configurator.components : [];
+    components.forEach((component) => {
+      const componentLabel = String(component?.label || "").trim();
+      if (componentLabel) addKeyword(componentLabel, componentLabel, "Configurateur", configuratorHref);
+      const options = Array.isArray(component?.options) ? component.options : [];
+      options.slice(0, 8).forEach((option) => {
+        const optionName = String(option?.name || "").trim();
+        if (optionName) addKeyword(optionName, optionName, "Configurateur", configuratorHref);
+      });
+    });
+  }
+
+  const premiumKeywords = Array.from(keywordMap.values()).slice(0, 120);
+  if (navSmartKeywordsEl && navSmartKeywordsListEl) {
+    if (!premiumKeywords.length) {
+      navSmartKeywordsEl.classList.add("hidden");
+    } else {
+      navSmartKeywordsEl.classList.remove("hidden");
+      const categoryOrder = ["Menu", "Gaming", "Configurateur", "Support", "FAQ", "Promo", "Contact", "Stockage", "A propos", "Jeux", "Fiches", "Guides"];
+      const grouped = premiumKeywords.reduce((acc, item) => {
+        const category = String(item.category || "Autres").trim() || "Autres";
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(item);
+        return acc;
+      }, {});
+      const sortedCategories = Object.keys(grouped).sort((a, b) => {
+        const ai = categoryOrder.indexOf(a);
+        const bi = categoryOrder.indexOf(b);
+        if (ai === -1 && bi === -1) return a.localeCompare(b, "fr");
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+      const sanitizeCategory = (value) =>
+        `kw-${String(value || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "autres"}`;
+      navSmartKeywordsListEl.innerHTML = sortedCategories
+        .map((category) => {
+          const safeCategory = sanitizeCategory(category);
+          const chips = grouped[category]
+            .map(
+              (item) =>
+                `<button class="nav-smart-keyword cat-${escapeHtml(safeCategory)}" type="button" data-term="${escapeHtml(item.term)}" data-href="${escapeHtml(item.href || "")}" title="${escapeHtml(
+                  item.category ? `${item.label} · ${item.category}` : item.label
+                )}">${escapeHtml(item.label)}</button>`
+            )
+            .join("");
+          return `
+            <section class="nav-smart-keyword-group">
+              <p class="nav-smart-keyword-group-title">${escapeHtml(category)}</p>
+              <div class="nav-smart-keyword-group-chips">${chips}</div>
+            </section>
+          `;
+        })
+        .join("");
+      navSmartKeywordsListEl.addEventListener("click", (event) => {
+        const chip = event.target.closest("button[data-term]");
+        if (!chip) return;
+        const href = String(chip.dataset.href || "").trim();
+        if (href) {
+          openHref(href);
+          return;
+        }
+        navSmartSearchInputEl.value = String(chip.dataset.term || "").trim();
+        navSmartSearchInputEl.dispatchEvent(new Event("input", { bubbles: true }));
+        navSmartSearchInputEl.focus();
+      });
+    }
+  }
+
   let activeIndex = -1;
   let visible = [];
 
@@ -617,7 +876,7 @@ function initializeNavSmartSearch() {
   };
 
   const render = (items) => {
-    visible = items.slice(0, 6);
+    visible = items.slice(0, 8);
     if (!visible.length) {
       close();
       return;
@@ -629,7 +888,7 @@ function initializeNavSmartSearch() {
       button.className = `nav-smart-item${index === activeIndex ? " active" : ""}`;
       button.dataset.index = String(index);
       button.dataset.href = item.href;
-      button.textContent = item.label;
+      button.textContent = item.category ? `${item.label} · ${item.category}` : item.label;
       navSmartResultsEl.appendChild(button);
     });
     navSmartResultsEl.classList.remove("hidden");
@@ -639,13 +898,41 @@ function initializeNavSmartSearch() {
     if (String(navSmartSearchInputEl.value || "").includes("@")) {
       navSmartSearchInputEl.value = "";
     }
-    const query = String(navSmartSearchInputEl.value || "").trim().toLowerCase();
+    const query = normalize(navSmartSearchInputEl.value || "");
     if (query.length < 2) {
       close();
       return;
     }
-    activeIndex = 0;
-    const items = entries.filter((item) => item.label.toLowerCase().includes(query) || item.href.toLowerCase().includes(query));
+    const terms = query.split(/\s+/).filter((term) => term.length > 0);
+    const items = entries
+      .map((item) => {
+        let matched = 0;
+        let score = 0;
+        terms.forEach((term) => {
+          if (normalize(item.label).includes(term)) {
+            matched += 1;
+            score += 120;
+            return;
+          }
+          if (normalize(item.keywords).includes(term)) {
+            matched += 1;
+            score += 65;
+            return;
+          }
+          if (item.haystack.includes(term)) {
+            matched += 1;
+            score += 35;
+          }
+        });
+        if (!matched) return null;
+        if (normalize(item.label) === query) score += 180;
+        if (normalize(item.label).startsWith(query)) score += 80;
+        return { item, score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score)
+      .map((result) => result.item);
+    activeIndex = items.length ? 0 : -1;
     render(items);
   });
 
@@ -714,6 +1001,7 @@ function normalizeMenuBadges(value) {
     support: normalize("support"),
     fiches: normalize("fiches"),
     guides: normalize("guides"),
+    jeux: normalize("jeux"),
     about: normalize("about"),
     faq: normalize("faq"),
   };
@@ -754,7 +1042,7 @@ function initializePageTransitions() {
     window.setTimeout(() => {
       document.body.classList.remove("page-enter");
       document.body.classList.remove("page-enter-active");
-    }, 320);
+    }, 620);
   });
 
   document.addEventListener(
@@ -777,7 +1065,7 @@ function initializePageTransitions() {
       document.body.classList.add("page-exit");
       window.setTimeout(() => {
         window.location.href = targetUrl.href;
-      }, 190);
+      }, 320);
     },
     true
   );
@@ -1006,6 +1294,66 @@ function refreshNavSessionButtons() {
   const isLoggedIn = isAllowedOutlookEmail(sessionEmail);
   if (userProfileToggleBtn) userProfileToggleBtn.classList.toggle("hidden", !isLoggedIn);
   if (adminToggle) adminToggle.classList.toggle("hidden", !(isLoggedIn && isAdminEmail(sessionEmail)));
+  refreshNavAssignedFilesBadge();
+}
+
+function refreshNavAssignedFilesBadge() {
+  const gamesMenuLink = document.querySelector('.nav-links a[data-menu-key="jeux"]');
+  if (!gamesMenuLink) return;
+
+  gamesMenuLink.querySelectorAll(".nav-assigned-file-badge").forEach((el) => el.remove());
+  delete gamesMenuLink.dataset.assignedFilesCount;
+  gamesMenuLink.classList.remove("has-assigned-files");
+
+  const email = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
+  if (!isAllowedOutlookEmail(email)) {
+    gamesMenuLink.title = "Jeux";
+    return;
+  }
+
+  let assignments = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    assignments = Array.isArray(parsed?.processus?.gamesAssignments) ? parsed.processus.gamesAssignments : [];
+  } catch (error) {
+    assignments = [];
+  }
+
+  const now = Date.now();
+  const availableCount = assignments.filter((item) => {
+    const owner = String(item?.email || "").trim().toLowerCase();
+    if (!owner || owner !== email) return false;
+    if (Boolean(item?.revoked)) return false;
+    const maxDownloads = Math.max(1, Math.round(Number(item?.maxDownloads) || 1));
+    const done = Math.max(0, Math.round(Number(item?.downloadCount) || 0));
+    if (done >= maxDownloads) return false;
+    if (item?.expiresAt) {
+      const expiresAt = new Date(item.expiresAt).getTime();
+      if (Number.isFinite(expiresAt) && expiresAt > 0 && expiresAt < now) return false;
+    }
+    return Boolean(String(item?.filePath || "").trim());
+  }).length;
+
+  if (availableCount <= 0) {
+    gamesMenuLink.title = "Jeux";
+    return;
+  }
+
+  gamesMenuLink.dataset.assignedFilesCount = String(availableCount);
+  gamesMenuLink.classList.add("has-assigned-files");
+  gamesMenuLink.title = `Jeux - ${availableCount} fichier ZIP disponible${availableCount > 1 ? "s" : ""}`;
+
+  const badge = document.createElement("span");
+  badge.className = "nav-assigned-file-badge";
+  badge.textContent = `ZIP ${availableCount}`;
+  badge.setAttribute("aria-hidden", "true");
+  gamesMenuLink.appendChild(badge);
+
+  const dot = document.createElement("span");
+  dot.className = "nav-assigned-file-dot";
+  dot.setAttribute("aria-hidden", "true");
+  gamesMenuLink.appendChild(dot);
 }
 
 function updateAdminToggleVisibility() {
@@ -1061,7 +1409,16 @@ function loadSiteUsers() {
 }
 
 function saveSiteUsers(users) {
-  localStorage.setItem(SITE_USERS_KEY, JSON.stringify(users));
+  const source = Array.isArray(users) ? users : [];
+  const seen = new Set();
+  const deduped = [];
+  source.forEach((item) => {
+    const email = String(item?.email || "").trim().toLowerCase();
+    if (!email || seen.has(email)) return;
+    seen.add(email);
+    deduped.push({ ...item, email });
+  });
+  localStorage.setItem(SITE_USERS_KEY, JSON.stringify(deduped));
   persistUserStateToDiskAuto();
 }
 
@@ -1464,6 +1821,7 @@ function recordUserLogin(email) {
 }
 
 function unlockSite() {
+  document.documentElement.classList.add("vb-auth-ok");
   document.body.classList.remove("site-locked");
   if (authGateEl) authGateEl.classList.add("hidden");
   if (userLogoutBtn) userLogoutBtn.classList.remove("hidden");
@@ -1478,6 +1836,7 @@ function unlockSite() {
 }
 
 function lockSite() {
+  document.documentElement.classList.remove("vb-auth-ok");
   document.body.classList.add("site-locked");
   if (authGateEl) authGateEl.classList.remove("hidden");
   if (userLogoutBtn) userLogoutBtn.classList.add("hidden");
@@ -1633,12 +1992,17 @@ function initializeVortexBot() {
 
     if (action === "go-configurator") {
       addVortexBotMessage("J'ouvre le configurateur.", "bot");
-      window.location.href = "index.html#configurateur";
+      window.location.href = "index.html?openConfigurator=1#configurateur";
+      return;
+    }
+    if (action === "go-ai-advisor") {
+      addVortexBotMessage("Je lance votre conseiller IA.", "bot");
+      window.location.href = "index.html?openConfigurator=1&aiAdvisor=1#configurateur";
       return;
     }
     if (action === "go-telegram") {
       addVortexBotMessage("Je vous redirige vers Telegram.", "bot");
-      window.open("https://t.me/vortexboxpro", "_blank", "noopener,noreferrer");
+      window.open("https://t.me/VortexCore460", "_blank", "noopener,noreferrer");
     }
   });
 }
@@ -1816,17 +2180,6 @@ if (siteLoginFormEl) {
         return;
       }
       if (existing && existing.isActive) {
-        if (existing.password === password) {
-          setPendingActivation("");
-          showActivationStep(false);
-          sessionStorage.setItem(AUTH_SESSION_KEY, email);
-          sessionStorage.removeItem(SESSION_KEY);
-          syncRememberPreference(email);
-          recordUserLogin(email);
-          unlockSite();
-          setAuthFeedback("");
-          return;
-        }
         setAuthFeedback("Ce compte existe déjà. Passez sur Utilisateur pour vous connecter.", "error");
         return;
       }
@@ -1852,6 +2205,11 @@ if (siteLoginFormEl) {
       saveSiteUsers(users);
       setPendingActivation(email);
       showActivationStep(true);
+      if (siteActivationCodeEl) {
+        siteActivationCodeEl.value = code;
+        siteActivationCodeEl.focus();
+        siteActivationCodeEl.select();
+      }
       setAuthFeedback(`Code d'activation: ${code} (10 caractères). Conservez-le pour activer le compte.`, "success");
       return;
     } else {
@@ -1963,6 +2321,70 @@ if (userProfileToggleBtn) {
   });
 }
 
+function mountPremiumPreloader() {
+  if (document.querySelector(".vb-preloader")) return;
+  const preloader = document.createElement("div");
+  preloader.className = "vb-preloader";
+  preloader.innerHTML = `
+    <div class="vb-preloader-core">
+      <div class="vb-preloader-logo"><img src="favicon-vb.svg" alt="VB" /></div>
+      <div class="vb-preloader-text">VortexBox Premium</div>
+    </div>
+  `;
+  document.body.appendChild(preloader);
+  requestAnimationFrame(() => preloader.classList.add("is-ready"));
+  const hide = () => {
+    preloader.classList.add("is-hidden");
+    window.setTimeout(() => preloader.remove(), 450);
+  };
+  window.addEventListener("load", hide, { once: true });
+  window.setTimeout(hide, 1400);
+}
+
+function initializePremiumRevealAndSpotlight() {
+  const revealTargets = Array.from(document.querySelectorAll("main section, .about-hero, .about-section, .about-cards"));
+  revealTargets.forEach((el) => {
+    if (el.classList.contains("vb-reveal")) return;
+    el.classList.add("vb-reveal");
+  });
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.14, rootMargin: "0px 0px -8% 0px" }
+    );
+    revealTargets.forEach((el) => observer.observe(el));
+  } else {
+    revealTargets.forEach((el) => el.classList.add("is-visible"));
+  }
+
+  const spotTargets = Array.from(document.querySelectorAll(".about-card, .about-video-card, .about-gallery-photo-card"));
+  spotTargets.forEach((el) => {
+    el.classList.add("vb-spotlight-target");
+    el.addEventListener("pointermove", (event) => {
+      const rect = el.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      const y = ((event.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
+      el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
+      el.style.setProperty("--vb-spot-a", "1");
+    });
+    el.addEventListener("pointerleave", () => {
+      el.style.setProperty("--vb-spot-a", "0");
+    });
+  });
+}
+
+function initializeUltraPremiumVisuals() {
+  mountPremiumPreloader();
+  initializePremiumRevealAndSpotlight();
+}
+
 async function initializeAboutPage() {
   const hydratedUserState = await hydrateUserStateFromDisk();
   if (!hydratedUserState) persistUserStateToDiskAuto();
@@ -1981,11 +2403,12 @@ async function initializeAboutPage() {
   initializePasswordStrengthMeter();
   initializeForgotPasswordFlow();
   initializePageTransitions();
+  initializeUltraPremiumVisuals();
   initializeSiteAuth();
   refreshNavSessionButtons();
   window.addEventListener("pageshow", refreshNavSessionButtons);
   window.addEventListener("storage", (event) => {
-    if (event.key === AUTH_SESSION_KEY) refreshNavSessionButtons();
+    if (event.key === AUTH_SESSION_KEY || event.key === STORAGE_KEY) refreshNavSessionButtons();
   });
   initializeVortexBot();
 }

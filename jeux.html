@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      try {
+        const s = String(sessionStorage.getItem("vortexbox-auth-user") || "").trim().toLowerCase();
+        const r = String(localStorage.getItem("vortexbox-auth-remember") || "").trim().toLowerCase();
+        const email = s || r;
+        if (/@outlook\./i.test(email)) document.documentElement.classList.add("vb-auth-ok");
+      } catch (error) {}
+    </script>
+    <title>Jeux | VortexBox Pro</title>
+    <meta name="description" content="Catalogue des jaquettes de jeux disponibles sur VortexBox." />
+    <link rel="canonical" href="https://vortexbox.onrender.com/jeux.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Jeux | VortexBox Pro" />
+    <meta property="og:description" content="Découvrez les jaquettes des jeux disponibles sur VortexBox." />
+    <meta property="og:image" content="https://vortexbox.onrender.com/favicon-vb.svg" />
+    <meta property="og:url" content="https://vortexbox.onrender.com/jeux.html" />
+    <link rel="icon" type="image/svg+xml" href="favicon-vb.svg" />
+    <link rel="shortcut icon" href="favicon-vb.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=20260309c" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Jeux | VortexBox Pro",
+        "description": "Catalogue des jaquettes de jeux disponibles sur VortexBox.",
+        "url": "https://vortexbox.onrender.com/jeux.html"
+      }
+    </script>
+    <style>
+      body.faq-theme {
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 9% 5%, rgba(95, 196, 255, 0.22), transparent 38%),
+          radial-gradient(circle at 91% 0%, rgba(27, 109, 178, 0.28), transparent 34%),
+          linear-gradient(180deg, #051224 0%, #030c1a 56%, #020915 100%);
+      }
+
+      .hero {
+        min-height: auto;
+        padding: 5.4rem 1.25rem 0.6rem;
+      }
+
+      .hero-glow {
+        display: none;
+      }
+
+      .jeux-page {
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 0.75rem 1.25rem 3.8rem;
+      }
+
+      .jeux-hero {
+        margin-top: 1rem;
+        border: 1px solid rgba(127, 231, 255, 0.32);
+        border-radius: 1.15rem;
+        padding: 1.15rem 1.1rem 1.2rem;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(127, 231, 255, 0.22), transparent 40%),
+          linear-gradient(155deg, rgba(18, 49, 82, 0.95), rgba(8, 24, 45, 0.95));
+        box-shadow: 0 18px 34px rgba(2, 10, 24, 0.34);
+      }
+
+      .jeux-hero h1 {
+        margin-bottom: 0.5rem;
+      }
+
+      .jeux-kpis {
+        margin-top: 0.9rem;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.65rem;
+      }
+
+      .jeux-kpi {
+        border: 1px solid rgba(127, 231, 255, 0.25);
+        border-radius: 0.8rem;
+        padding: 0.62rem 0.68rem;
+        background: linear-gradient(160deg, rgba(13, 36, 61, 0.9), rgba(6, 19, 35, 0.92));
+      }
+
+      .jeux-kpi strong {
+        display: block;
+        color: #eef9ff;
+        font-size: 0.9rem;
+      }
+
+      .jeux-kpi span {
+        color: #cbe5f9;
+        font-size: 0.76rem;
+      }
+
+      .jeux-actions {
+        margin-top: 0.85rem;
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
+      .jeux-search-wrap {
+        margin-top: 0.8rem;
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+      }
+
+      .jeux-search-input {
+        width: min(520px, 100%);
+        min-height: 40px;
+        border-radius: 0.68rem;
+        border: 1px solid rgba(127, 231, 255, 0.34);
+        background: linear-gradient(160deg, rgba(5, 19, 35, 0.92), rgba(8, 28, 49, 0.88));
+        color: #e8f6ff;
+        padding: 0.45rem 0.75rem;
+        font-size: 0.86rem;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .jeux-search-input::placeholder {
+        color: rgba(183, 214, 236, 0.75);
+      }
+
+      .jeux-search-input:focus {
+        border-color: rgba(144, 231, 255, 0.64);
+        box-shadow: 0 0 0 1px rgba(112, 205, 232, 0.3), 0 10px 24px rgba(2, 10, 24, 0.26);
+      }
+
+      .games-catalog-grid {
+        margin-top: 1rem;
+      }
+
+      .games-results-toolbar {
+        margin-top: 0.7rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .games-results-meta {
+        color: #cbe6f9;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .games-pagination {
+        display: inline-flex;
+        gap: 0.45rem;
+        align-items: center;
+      }
+
+      .games-page-btn {
+        border: 1px solid rgba(127, 231, 255, 0.34);
+        border-radius: 0.6rem;
+        background: linear-gradient(160deg, rgba(8, 28, 48, 0.92), rgba(4, 16, 31, 0.95));
+        color: #dff5ff;
+        font-weight: 700;
+        font-size: 0.76rem;
+        min-height: 34px;
+        padding: 0.35rem 0.6rem;
+        cursor: pointer;
+      }
+
+      .games-page-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .games-page-size {
+        min-height: 34px;
+        border-radius: 0.58rem;
+        border: 1px solid rgba(127, 231, 255, 0.32);
+        background: linear-gradient(160deg, rgba(6, 24, 42, 0.94), rgba(3, 16, 31, 0.96));
+        color: #e6f7ff;
+        padding: 0.2rem 0.45rem;
+        font-size: 0.78rem;
+      }
+
+      .game-cover-card {
+        border: 1px solid rgba(127, 231, 255, 0.3);
+        background:
+          radial-gradient(circle at 100% 0%, rgba(127, 231, 255, 0.11), transparent 42%),
+          linear-gradient(170deg, rgba(10, 30, 52, 0.95), rgba(6, 19, 35, 0.96));
+        transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+      }
+
+      .game-cover-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(139, 235, 255, 0.62);
+        box-shadow: 0 24px 34px rgba(2, 10, 24, 0.44);
+      }
+
+      .game-cover-media {
+        border-bottom: 1px solid rgba(127, 231, 255, 0.2);
+      }
+
+      .game-cover-title {
+        color: #e7f7ff;
+        font-size: 0.8rem;
+      }
+
+      @media (max-width: 980px) {
+        .jeux-kpis {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 720px) {
+        .jeux-page {
+          padding-top: 0.55rem;
+        }
+
+        .jeux-kpis {
+          grid-template-columns: 1fr;
+        }
+
+        .jeux-actions {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="site-locked faq-theme">
+    <div class="auth-gate" id="auth-gate">
+      <form class="auth-box" id="site-login-form">
+        <div class="auth-title">
+          <img class="auth-title-logo" src="favicon-vb.svg" alt="VortexBox Pro" />
+          <h2>Connexion</h2>
+        </div>
+        <p>Accès réservé aux adresses Outlook.</p>
+        <div class="auth-trust-row" aria-label="Indicateurs de sécurité">
+          <span class="auth-trust-pill">Connexion sécurisée</span>
+          <span class="auth-trust-pill">Aucune revente de données</span>
+          <span class="auth-trust-pill">Support VortexBox</span>
+        </div>
+        <div class="auth-mode-switch">
+          <button class="auth-mode-btn active" id="auth-mode-user" type="button">
+            <span class="auth-mode-title">Utilisateur</span>
+            <span class="auth-mode-subtitle">J'ai déjà un compte</span>
+          </button>
+          <button class="auth-mode-btn" id="auth-mode-new" type="button">
+            <span class="auth-mode-title">Nouveau utilisateur</span>
+            <span class="auth-mode-subtitle">Créer un compte sécurisé</span>
+          </button>
+        </div>
+        <label>
+          Adresse email
+          <input id="site-login-email" type="email" placeholder="exemple@outlook.com" required />
+        </label>
+        <label>
+          Mot de passe
+          <input id="site-login-password" type="password" placeholder="Votre mot de passe" required />
+        </label>
+        <div class="auth-password-strength hidden" id="auth-password-strength" aria-live="polite">
+          <div class="auth-password-strength-bar"><span></span></div>
+          <p id="auth-password-strength-label">Force du mot de passe</p>
+        </div>
+        <div class="auth-login-row">
+          <label class="auth-remember">
+            <input id="auth-remember" type="checkbox" />
+            <span>Rester connecté sur cet appareil</span>
+          </label>
+          <button class="auth-link-btn" id="auth-forgot-toggle" type="button">Mot de passe oublié ?</button>
+        </div>
+        <div class="auth-reset-step hidden" id="auth-reset-step">
+          <label>
+            Email du compte
+            <input id="auth-reset-email" type="email" placeholder="exemple@outlook.com" />
+          </label>
+          <label>
+            Nouveau mot de passe
+            <input id="auth-reset-password" type="password" placeholder="Nouveau mot de passe" />
+          </label>
+          <label>
+            Code de réinitialisation (6 chiffres)
+            <input id="auth-reset-code" type="password" inputmode="numeric" maxlength="6" placeholder="123456" />
+          </label>
+          <div class="auth-reset-actions">
+            <button class="auth-mode-btn" id="auth-reset-send-btn" type="button">Envoyer le code</button>
+            <button class="auth-mode-btn" id="auth-reset-confirm-btn" type="button">Valider la réinitialisation</button>
+          </div>
+          <p class="auth-feedback" id="auth-reset-feedback"></p>
+        </div>
+        <div class="activation-step hidden" id="activation-step">
+          <label>
+            Code d'activation (10 caractères)
+            <input id="site-activation-code" type="text" maxlength="10" placeholder="Ab3$k9!Q2z" />
+          </label>
+          <button class="auth-mode-btn" id="site-activate-btn" type="button">Activer mon compte</button>
+        </div>
+        <button class="cta" type="submit">Accéder au site</button>
+        <p class="auth-feedback" id="site-login-feedback"></p>
+      </form>
+    </div>
+
+    <header class="hero" id="top">
+      <nav class="nav">
+        <a class="logo" href="index.html" aria-label="VortexBox accueil">
+          <img src="favicon-vb.svg" alt="VortexBox Pro" />
+          <span class="logo-text">VortexBox <strong>PRO</strong></span>
+        </a>
+        <button class="nav-menu-toggle" id="nav-menu-toggle" type="button" aria-expanded="false" aria-label="Ouvrir le menu">
+          Menu
+        </button>
+        <div class="nav-links">
+          <div class="nav-row nav-row-primary">
+            <a href="index.html#machines" data-icon="🚀" data-menu-key="machines">Top Build</a>
+            <a class="nav-link-priority" href="index.html?openConfigurator=1#configurateur" data-icon="🧩" data-menu-key="configurateur">Configurateur</a>
+            <a class="nav-link-priority" href="support-sav.html" data-icon="🛟" data-menu-key="support">Support & SAV</a>
+          </div>
+          <div class="nav-row nav-row-secondary">
+            <a href="index.html#fiches-techniques" data-icon="📄" data-menu-key="fiches">Fiches Techniques</a>
+            <a href="index.html#guides-fps" data-icon="🎯" data-menu-key="guides">Guides FPS</a>
+            <a href="jeux.html" data-icon="🎮" data-menu-key="jeux">Jeux</a>
+            <a href="about.html" data-icon="ℹ️" data-menu-key="about">A propos</a>
+            <a href="faq.html" data-icon="❓" data-menu-key="faq">FAQ</a>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <div class="nav-smart-wrap" data-search-hint="Tapez 2 lettres pour trouver une page du menu.">
+            <input id="nav-smart-search" class="nav-smart-search" type="search" placeholder="Recherche menu..." aria-label="Recherche intelligente dans le menu" title="Tapez 2 lettres pour trouver une page du menu" autocomplete="off" name="menu-search" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="search" />
+            <div id="nav-smart-results" class="nav-smart-results hidden"></div>
+          </div>
+          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/VortexCore460','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
+          <button class="logout-btn nav-icon-btn nav-profile-btn hidden" id="user-profile-toggle" type="button" aria-label="Mon profil" title="Mon profil"><img src="nav-profile-premium.svg" alt="" aria-hidden="true" /></button>
+          <button class="admin-btn nav-icon-btn nav-admin-btn hidden" id="admin-toggle" type="button" aria-label="Administrateur" title="Administrateur"><img src="nav-admin-premium.svg" alt="" aria-hidden="true" /></button>
+          <button class="admin-live-exit hidden" id="admin-live-exit" type="button" aria-label="Sortir du mode admin">×</button>
+        </div>
+      </nav>
+      <div class="premium-breadcrumb" id="premium-breadcrumb" aria-label="Fil d'ariane"></div>
+    </header>
+
+    <main class="jeux-page">
+      <section class="games-admin-debug ko hidden" id="games-admin-debug" aria-live="polite"></section>
+      <section class="jeux-hero">
+        <p class="badge">Catalogue Jeux VortexBox</p>
+        <h1>Jeux disponibles sur VortexBox</h1>
+        <p class="lead">Présélection de jaquettes de jeux disponibles sur votre VortexBox.</p>
+        <div class="jeux-kpis" aria-label="Points forts jeux">
+          <article class="jeux-kpi"><strong>15 000+ jeux</strong><span>Catalogue compatible VortexBox</span></article>
+          <article class="jeux-kpi"><strong>Pack inclus</strong><span>Selon offre active VortexBox</span></article>
+          <article class="jeux-kpi"><strong>Compatibilité totale</strong><span>Build calibrés pour le gaming</span></article>
+          <article class="jeux-kpi"><strong>Support premium</strong><span>Accompagnement rapide Telegram</span></article>
+        </div>
+        <div class="jeux-actions">
+          <a class="cta" href="index.html?openConfigurator=1#configurateur">Configurer ma VortexBox</a>
+          <a class="cta" href="https://t.me/VortexCore460" target="_blank" rel="noopener noreferrer">Demander mon code promo DLC</a>
+        </div>
+        <div class="jeux-search-wrap">
+          <input
+            id="games-search-input"
+            class="jeux-search-input"
+            type="search"
+            placeholder="Rechercher un jeu par nom..."
+            aria-label="Rechercher un jeu par nom"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+        <div id="games-results-toolbar" class="games-results-toolbar" aria-live="polite"></div>
+      </section>
+
+      <section class="games-catalog-grid" id="games-catalog-grid">
+        <article class="game-cover-card">
+          <div class="game-cover-topbar">
+            <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
+            <span>VortexBox Premium</span>
+          </div>
+          <div class="game-cover-media-wrap" data-game-title="Jeu 1" style="--cover-url:url('/uploads/games-covers/1772987532904-j8oqxa-cyber-assault-2026.webp')">
+            <img class="game-cover-media" src="/uploads/games-covers/1772987532904-j8oqxa-cyber-assault-2026.webp" alt="Jeu 1" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/favicon-vb.svg';" />
+          </div>
+          <p class="game-cover-title">Jeu 1</p>
+        </article>
+        <article class="game-cover-card">
+          <div class="game-cover-topbar">
+            <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
+            <span>VortexBox Premium</span>
+          </div>
+          <div class="game-cover-media-wrap" data-game-title="Jeu 2" style="--cover-url:url('/uploads/games-covers/1772987833227-1xjipg-jeu-2.webp')">
+            <img class="game-cover-media" src="/uploads/games-covers/1772987833227-1xjipg-jeu-2.webp" alt="Jeu 2" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/favicon-vb.svg';" />
+          </div>
+          <p class="game-cover-title">Jeu 2</p>
+        </article>
+        <article class="game-cover-card">
+          <div class="game-cover-topbar">
+            <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
+            <span>VortexBox Premium</span>
+          </div>
+          <div class="game-cover-media-wrap" data-game-title="Jeu 3" style="--cover-url:url('/uploads/games-covers/1772987824472-p9qewy-cyber-assault-2026.webp')">
+            <img class="game-cover-media" src="/uploads/games-covers/1772987824472-p9qewy-cyber-assault-2026.webp" alt="Jeu 3" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/favicon-vb.svg';" />
+          </div>
+          <p class="game-cover-title">Jeu 3</p>
+        </article>
+      </section>
+    </main>
+
+    <footer id="contact" class="site-footer">
+      <p>VortexBox - Paris - <span id="footer-contact-email">VortexCore@outlook.Fr</span></p>
+      <div class="footer-legal-links">
+        <button class="footer-legal-btn" id="footer-legal-mentions-btn" type="button">Mentions légales</button>
+        <button class="footer-legal-btn" id="footer-legal-cgv-btn" type="button">Conditions générales de vente</button>
+        <button class="footer-legal-btn" id="footer-legal-rgpd-btn" type="button">Politique de confidentialité RGPD</button>
+        <button class="footer-legal-btn" id="footer-legal-cookies-btn" type="button">Gestion des cookies</button>
+      </div>
+    </footer>
+
+    <div class="legal-modal hidden" id="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
+      <div class="legal-modal-card">
+        <button class="legal-modal-close" id="legal-modal-close" type="button" aria-label="Fermer">×</button>
+        <div class="legal-modal-header">
+          <img class="legal-modal-logo" src="favicon-vb.svg" alt="VortexBox" />
+          <div class="legal-modal-title-wrap">
+            <p class="legal-modal-kicker">Informations légales VortexBox</p>
+            <h3 id="legal-modal-title"></h3>
+          </div>
+        </div>
+        <div class="legal-modal-content" id="legal-modal-content"></div>
+      </div>
+    </div>
+
+    <section class="vortexbot" id="vortexbot" aria-label="Assistant VortexBot">
+      <button class="vortexbot-toggle" id="vortexbot-toggle" type="button" aria-expanded="false" aria-controls="vortexbot-panel">
+        <span class="vortexbot-icon" aria-hidden="true"><img src="favicon-vb.svg" alt="" /></span>
+        <span>VortexBot</span>
+      </button>
+      <div class="vortexbot-panel hidden" id="vortexbot-panel">
+        <div class="vortexbot-head">
+          <div class="vortexbot-head-title">
+            <h3>VortexBot</h3>
+            <p>Assistant build gaming</p>
+          </div>
+          <button class="vortexbot-close" id="vortexbot-close" type="button" aria-label="Fermer">×</button>
+        </div>
+        <div class="vortexbot-messages" id="vortexbot-messages">
+          <p class="vortexbot-msg bot">Bienvenue chez VortexBox. Je peux vous guider vers le meilleur build.</p>
+          <p class="vortexbot-msg bot">Choisissez une action rapide ci-dessous.</p>
+        </div>
+        <div class="vortexbot-actions">
+          <button type="button" data-bot-action="go-ai-advisor">Conseil IA instantane</button>
+          <button type="button" data-bot-action="go-configurator">Ouvrir le configurateur</button>
+          <button type="button" data-bot-action="go-telegram">Contacter sur Telegram</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="bg-music-control hidden" id="bg-music-control">
+      <button class="bg-music-toggle" id="bg-music-toggle" type="button" aria-pressed="false" aria-label="Activer la musique" title="Activer la musique">
+        <span class="bg-music-icon" aria-hidden="true">♪</span>
+      </button>
+      <audio id="bg-music" loop preload="auto">
+        <source src="vortexbox-bg.mp3" type="audio/mpeg" />
+      </audio>
+    </div>
+
+    <section class="cookie-banner hidden" id="cookie-banner" aria-label="Gestion des cookies">
+      <div class="cookie-banner-inner">
+        <div>
+          <h4>Votre confidentialité sur VortexBox</h4>
+          <p>Nous utilisons des cookies pour améliorer votre expérience. Vous pouvez accepter, refuser ou personnaliser.</p>
+        </div>
+        <div class="cookie-actions">
+          <button class="cookie-btn" id="cookie-open-customize" type="button">Personnaliser</button>
+          <button class="cookie-btn" id="cookie-reject-all" type="button">Refuser</button>
+          <button class="cookie-btn primary" id="cookie-accept-all" type="button">Accepter</button>
+        </div>
+      </div>
+      <div class="cookie-customize hidden" id="cookie-customize-panel">
+        <label class="cookie-option">
+          <span><strong>Cookies nécessaires</strong><span>Indispensables au fonctionnement du site.</span></span>
+          <input type="checkbox" checked disabled />
+        </label>
+        <label class="cookie-option">
+          <span><strong>Préférences</strong><span>Mémorise vos choix d'interface.</span></span>
+          <input id="cookie-consent-preferences" type="checkbox" checked />
+        </label>
+        <label class="cookie-option">
+          <span><strong>Mesure d'audience</strong><span>Nous aide à améliorer les pages les plus visitées.</span></span>
+          <input id="cookie-consent-analytics" type="checkbox" />
+        </label>
+        <div class="cookie-customize-actions">
+          <button class="cookie-btn" id="cookie-cancel-custom" type="button">Annuler</button>
+          <button class="cookie-btn primary" id="cookie-save-custom" type="button">Enregistrer</button>
+        </div>
+      </div>
+    </section>
+
+    <script src="faq.js?v=20260309c"></script>
+  </body>
+</html>

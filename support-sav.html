@@ -22,27 +22,14 @@
     <script>
       (function () {
         try {
-          var email = String(sessionStorage.getItem("vortexbox-auth-user") || "").trim().toLowerCase();
-          if (/@outlook\.(fr|com)$/.test(email)) {
-            document.documentElement.classList.add("vb-auth-ok");
-          }
+          var s = String(sessionStorage.getItem("vortexbox-auth-user") || "").trim().toLowerCase();
+          var r = String(localStorage.getItem("vortexbox-auth-remember") || "").trim().toLowerCase();
+          var email = s || r;
+          if (/@outlook\./i.test(email)) document.documentElement.classList.add("vb-auth-ok");
         } catch (e) {}
       })();
     </script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        try {
-          var email = String(sessionStorage.getItem("vortexbox-auth-user") || "").trim().toLowerCase();
-          var isLogged = /@outlook\.(fr|com)$/.test(email);
-          var isAdmin = email === "vortexcore@outlook.fr";
-          var profileBtn = document.getElementById("user-profile-toggle");
-          var adminBtn = document.getElementById("admin-toggle");
-          if (profileBtn) profileBtn.classList.toggle("hidden", !isLogged);
-          if (adminBtn) adminBtn.classList.toggle("hidden", !(isLogged && isAdmin));
-        } catch (e) {}
-      });
-    </script>
-    <link rel="stylesheet" href="styles.css?v=20260308c" />
+    <link rel="stylesheet" href="styles.css?v=20260309c" />
     <style>
       html.vb-auth-ok #auth-gate {
         display: none !important;
@@ -215,19 +202,13 @@
         <div class="nav-links">
           <div class="nav-row nav-row-primary">
             <a href="index.html#machines" data-icon="🚀" data-menu-key="machines">Top Build</a>
-            <div class="nav-link-item has-mega">
-              <a class="nav-link-priority" href="index.html#configurateur" data-icon="🧩" data-menu-key="configurateur">Configurateur</a>
-              <div class="nav-mega">
-                <a href="index.html#configurateur">Configurer ma VortexBox</a>
-                <a href="index.html#guides-fps">Voir les guides FPS</a>
-                <a href="support-sav.html">Besoin d'aide SAV</a>
-              </div>
-            </div>
+            <a class="nav-link-priority" href="index.html?openConfigurator=1#configurateur" data-icon="🧩" data-menu-key="configurateur">Configurateur</a>
             <a class="nav-link-priority" href="support-sav.html" data-icon="🛟" data-menu-key="support">Support & SAV</a>
           </div>
           <div class="nav-row nav-row-secondary">
             <a href="index.html#fiches-techniques" data-icon="📄" data-menu-key="fiches">Fiches Techniques</a>
             <a href="index.html#guides-fps" data-icon="🎯" data-menu-key="guides">Guides FPS</a>
+            <a href="jeux.html" data-icon="🎮" data-menu-key="jeux">Jeux</a>
             <a href="about.html" data-icon="ℹ️" data-menu-key="about">A propos</a>
             <a href="faq.html" data-icon="❓" data-menu-key="faq">FAQ</a>
           </div>
@@ -237,7 +218,7 @@
             <input id="nav-smart-search" class="nav-smart-search" type="search" placeholder="Recherche menu..." aria-label="Recherche intelligente dans le menu" title="Tapez 2 lettres pour trouver une page du menu" autocomplete="off" name="menu-search" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="search" />
             <div id="nav-smart-results" class="nav-smart-results hidden"></div>
           </div>
-          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/vortexboxpro','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
+          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/VortexCore460','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
           <button class="logout-btn nav-icon-btn nav-profile-btn hidden" id="user-profile-toggle" type="button" aria-label="Mon profil" title="Mon profil"><img src="nav-profile-premium.svg" alt="" aria-hidden="true" /></button>
           <button class="admin-btn nav-icon-btn nav-admin-btn hidden" id="admin-toggle" type="button" aria-label="Administrateur" title="Administrateur"><img src="nav-admin-premium.svg" alt="" aria-hidden="true" /></button>
           <button class="admin-live-exit hidden" id="admin-live-exit" type="button" aria-label="Sortir du mode admin">×</button>
@@ -252,7 +233,7 @@
         <h1 id="support-sav-title">Support & SAV VortexBox</h1>
         <p class="lead" id="support-sav-subtitle">Accompagnement client premium VortexBox.</p>
         <div class="support-cta-wrap">
-          <a class="cta" id="support-sav-cta" href="https://t.me/vortexboxpro" target="_blank" rel="noopener noreferrer">Contactez nous sur Telegram</a>
+          <a class="cta" id="support-sav-cta" href="https://t.me/VortexCore460" target="_blank" rel="noopener noreferrer">Contactez nous sur Telegram</a>
         </div>
       </section>
 
@@ -303,6 +284,7 @@
           <p class="vortexbot-msg bot">Choisissez une action rapide ci-dessous.</p>
         </div>
         <div class="vortexbot-actions">
+          <button type="button" data-bot-action="go-ai-advisor">Conseil IA instantane</button>
           <button type="button" data-bot-action="go-configurator">Ouvrir le configurateur</button>
           <button type="button" data-bot-action="go-telegram">Contacter sur Telegram</button>
         </div>
@@ -341,6 +323,6 @@
       </div>
     </section>
 
-    <script src="faq.js?v=20260308c"></script>
+    <script src="faq.js?v=20260309c"></script>
   </body>
 </html>

@@ -3,6 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      try {
+        const s = String(sessionStorage.getItem("vortexbox-auth-user") || "").trim().toLowerCase();
+        const r = String(localStorage.getItem("vortexbox-auth-remember") || "").trim().toLowerCase();
+        const email = s || r;
+        if (/@outlook\./i.test(email)) document.documentElement.classList.add("vb-auth-ok");
+      } catch (error) {}
+    </script>
     <title>FAQ | VortexBox Pro</title>
     <meta name="description" content="FAQ VortexBox: garantie 2 ans, configurateur, livraison, option DLC et support." />
     <link rel="canonical" href="https://vortexbox.onrender.com/faq.html" />
@@ -19,7 +27,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260308c" />
+    <link rel="stylesheet" href="styles.css?v=20260309c" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -231,19 +239,13 @@
         <div class="nav-links">
           <div class="nav-row nav-row-primary">
             <a href="index.html#machines" data-icon="🚀" data-menu-key="machines">Top Build</a>
-            <div class="nav-link-item has-mega">
-              <a class="nav-link-priority" href="index.html#configurateur" data-icon="🧩" data-menu-key="configurateur">Configurateur</a>
-              <div class="nav-mega">
-                <a href="index.html#configurateur">Configurer ma VortexBox</a>
-                <a href="index.html#guides-fps">Voir les guides FPS</a>
-                <a href="support-sav.html">Besoin d'aide SAV</a>
-              </div>
-            </div>
+            <a class="nav-link-priority" href="index.html?openConfigurator=1#configurateur" data-icon="🧩" data-menu-key="configurateur">Configurateur</a>
             <a class="nav-link-priority" href="support-sav.html" data-icon="🛟" data-menu-key="support">Support & SAV</a>
           </div>
           <div class="nav-row nav-row-secondary">
             <a href="index.html#fiches-techniques" data-icon="📄" data-menu-key="fiches">Fiches Techniques</a>
             <a href="index.html#guides-fps" data-icon="🎯" data-menu-key="guides">Guides FPS</a>
+            <a href="jeux.html" data-icon="🎮" data-menu-key="jeux">Jeux</a>
             <a href="about.html" data-icon="ℹ️" data-menu-key="about">A propos</a>
             <a href="faq.html" data-icon="❓" data-menu-key="faq">FAQ</a>
           </div>
@@ -253,7 +255,7 @@
             <input id="nav-smart-search" class="nav-smart-search" type="search" placeholder="Recherche menu..." aria-label="Recherche intelligente dans le menu" title="Tapez 2 lettres pour trouver une page du menu" autocomplete="off" name="menu-search" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="search" />
             <div id="nav-smart-results" class="nav-smart-results hidden"></div>
           </div>
-          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/vortexboxpro','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
+          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/VortexCore460','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
           <button class="logout-btn nav-icon-btn nav-profile-btn hidden" id="user-profile-toggle" type="button" aria-label="Mon profil" title="Mon profil"><img src="nav-profile-premium.svg" alt="" aria-hidden="true" /></button>
           <button class="admin-btn nav-icon-btn nav-admin-btn hidden" id="admin-toggle" type="button" aria-label="Administrateur" title="Administrateur"><img src="nav-admin-premium.svg" alt="" aria-hidden="true" /></button>
           <button class="admin-live-exit hidden" id="admin-live-exit" type="button" aria-label="Sortir du mode admin">×</button>
@@ -314,6 +316,7 @@
           <p class="vortexbot-msg bot">Choisissez une action rapide ci-dessous.</p>
         </div>
         <div class="vortexbot-actions">
+          <button type="button" data-bot-action="go-ai-advisor">Conseil IA instantane</button>
           <button type="button" data-bot-action="go-configurator">Ouvrir le configurateur</button>
           <button type="button" data-bot-action="go-telegram">Contacter sur Telegram</button>
         </div>
@@ -361,6 +364,6 @@
       </div>
     </section>
 
-    <script src="faq.js?v=20260308c"></script>
+    <script src="faq.js?v=20260309c"></script>
   </body>
 </html>

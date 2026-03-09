@@ -10,6 +10,7 @@
     "support": "",
     "fiches": "nouveau",
     "guides": "",
+    "jeux": "",
     "about": "",
     "faq": ""
   },
@@ -105,7 +106,7 @@
         "SSD: 1 To NVMe"
       ],
       "price": "3 198 €",
-      "badge": "Les PC préférés des joueurs",
+      "badge": "Le PC préféré des joueurs",
       "backName": "VortexBox Expert",
       "backDescription": "VortexBox Expert – L’excellence du gaming.",
       "backComments": [
@@ -384,7 +385,15 @@
     }
   ],
   "processus": {
-    "files": [],
+    "files": [
+      {
+        "title": "Tuto installer VB sur serveur",
+        "fileName": "VortexBox-Tuto-Complet-Hetzner-Premium-v4-sans-logo.pdf",
+        "fileData": "uploads/processus/1773062409787-1vrr1p-vortexbox-tuto-complet-hetzner-premium-v4-sans-logo.pdf",
+        "path": "",
+        "fileMime": "application/pdf"
+      }
+    ],
     "purchases": [
       {
         "label": "VortexBox Pro",
@@ -423,9 +432,49 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-07T16:20:15.183Z",
-        "updatedAt": "2026-03-08T11:18:04.895Z"
+        "updatedAt": "2026-03-09T16:37:26.530Z"
+      },
+      {
+        "id": "crm-1772995291080-2",
+        "name": "Vortexcore",
+        "email": "vortexcore@outlook.fr",
+        "phone": "",
+        "source": "VortexBot",
+        "status": "Qualifié",
+        "budget": 2999,
+        "dealValue": 2999,
+        "owner": "Administrateur",
+        "priority": "Normale",
+        "nextReminder": "",
+        "configRef": "Recommandation VortexBot IA",
+        "lostReason": "",
+        "note": "Lead score: 75/100\nLead score: 91/100\nRecommandation: Recommandation VortexBot IA",
+        "activities": [
+          {
+            "at": "2026-03-08T18:41:31.080Z",
+            "text": "Lead créé depuis VortexBot"
+          },
+          {
+            "at": "2026-03-09T13:07:49.571Z",
+            "text": "Interaction VortexBot (Lead score: 75/100)"
+          }
+        ],
+        "orderNumber": "",
+        "orderCreatedAt": "",
+        "createdAt": "2026-03-08T18:41:31.080Z",
+        "updatedAt": "2026-03-09T16:37:26.530Z"
       }
     ],
+    "gamesFiles": [
+      {
+        "title": "Code-de-secours-compte-Google.txt",
+        "path": "uploads/games-zips/1773025867346-yucjwr-code-de-secours-compte-google.txt.zip",
+        "fileName": "Code-de-secours-compte-Google.txt.zip",
+        "sizeBytes": 1318,
+        "createdAt": "2026-03-09T03:11:07.358Z"
+      }
+    ],
+    "gamesAssignments": [],
     "suppliersOrders": [],
     "stockItems": [],
     "deliveryItems": [],
@@ -477,11 +526,78 @@
       "answer": "Les VortexBox sont configurées pour fonctionner parfaitement avec la plateforme Steam, l’une des plus grandes bibliothèques de jeux PC au monde.\n\nGrâce à votre VortexBox, vous pouvez accéder à plus de 15 000 jeux disponibles sur Steam, couvrant tous les styles de jeu : FPS, RPG, stratégie, simulation, aventure ou encore jeux indépendants.\n\nVotre machine est optimisée pour :\n\t•\tinstaller et gérer facilement vos jeux via Steam\n\t•\taccéder rapidement à votre bibliothèque de jeux\n\t•\tprofiter d’une expérience de jeu fluide et performante.\n\nUne fois votre compte Steam connecté, vous pouvez télécharger, installer et jouer à vos jeux directement depuis votre VortexBox."
     }
   ],
+  "gamesCatalog": [
+    {
+      "title": "Achilles Survivor",
+      "image": "uploads/games-covers/1773030209699-ggxtrg-capture-d-e-cran-2026-03-09-044133.png",
+      "info": "Jouable sans patch"
+    },
+    {
+      "title": "Aefem Fall",
+      "image": "uploads/games-covers/1773030209700-eczmv8-capture-d-e-cran-2026-03-09-044155.png",
+      "info": ""
+    },
+    {
+      "title": "Afterfall",
+      "image": "uploads/games-covers/1773030209701-3rpxe6-capture-d-e-cran-2026-03-09-044207.png",
+      "info": ""
+    },
+    {
+      "title": "Alien 2",
+      "image": "uploads/games-covers/1773030209702-0w2qca-capture-d-e-cran-2026-03-09-044310.png",
+      "info": ""
+    },
+    {
+      "title": "Aliens Fireteam Elite",
+      "image": "uploads/games-covers/1773030209702-3upkfd-capture-d-e-cran-2026-03-09-044248.png",
+      "info": ""
+    },
+    {
+      "title": "Ambush",
+      "image": "uploads/games-covers/1773030209703-cewvpx-capture-d-e-cran-2026-03-09-044322.png",
+      "info": ""
+    },
+    {
+      "title": "Ancetors",
+      "image": "uploads/games-covers/1773030209704-epcz82-capture-d-e-cran-2026-03-09-044334.png",
+      "info": ""
+    },
+    {
+      "title": "Automobilista",
+      "image": "uploads/games-covers/1773030209705-wf7y5k-capture-d-e-cran-2026-03-09-044407.png",
+      "info": "Demandez votre patch gratuitement via Telegram"
+    },
+    {
+      "title": "Ballist Overkill",
+      "image": "uploads/games-covers/1773030209706-ivisp1-capture-d-e-cran-2026-03-09-044419.png",
+      "info": ""
+    },
+    {
+      "title": "Bang Bang Racing",
+      "image": "uploads/games-covers/1773030209706-w0hdbh-capture-d-e-cran-2026-03-09-044431.png",
+      "info": ""
+    },
+    {
+      "title": "Fight Forever",
+      "image": "uploads/games-covers/1773030209701-cxa4jm-capture-d-e-cran-2026-03-09-044223.png",
+      "info": ""
+    },
+    {
+      "title": "Fires of Rubicon",
+      "image": "uploads/games-covers/1773030209705-gqo3e7-capture-d-e-cran-2026-03-09-044355.png",
+      "info": ""
+    },
+    {
+      "title": "Planet Zoo",
+      "image": "uploads/games-covers/1773030209707-0baqlg-capture-d-e-cran-2026-03-09-044517.png",
+      "info": "Demandez votre patch gratuitement via Telegram"
+    }
+  ],
   "supportSav": {
     "badge": "Support & SAV Premium",
     "title": "Support & SAV VortexBox",
     "subtitle": "Un accompagnement rapide et professionnel pour vos questions, diagnostics et retours. Notre équipe vous suit de la première prise de contact jusqu'à la résolution.",
-    "telegramUrl": "https://t.me/vortexboxpro",
+    "telegramUrl": "https://t.me/VortexCore460",
     "cards": [
       {
         "title": "Diagnostic rapide",
@@ -540,7 +656,7 @@
     "components": [
       {
         "id": "categorie-2",
-        "label": "VortexBox Elite (Entrée de gamme gaming performante)",
+        "label": "VortexBox Elite (Entrée de gamme gaming)",
         "options": [
           {
             "name": "Intel I9 * RTX4060 - 32G DDR5 - 1T NVMe",
@@ -600,7 +716,7 @@
       },
       {
         "id": "categorie-4",
-        "label": "VortexBox Premium (Configuration Haut de Gamme)",
+        "label": "VortexBox Premium (Gaming Haut de Gamme)",
         "options": [
           {
             "name": "Intel I9 * RTX4070 - 32G DDR5 - 1T NVMe",
@@ -630,7 +746,7 @@
       },
       {
         "id": "categorie-5",
-        "label": "VortexBox Expert (Des performances Taillées pour la Victoire)",
+        "label": "VortexBox Expert (Gaming Pro)",
         "options": [
           {
             "name": "Intel I9 * RTX5060 TI 16G - 16G DDR5 - 1T NVMe",

@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260308c" />
+    <link rel="stylesheet" href="styles.css?v=20260309c" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -133,25 +133,19 @@
         <div class="nav-links">
           <div class="nav-row nav-row-primary">
             <a id="nav-machines-link" href="#machines" data-icon="🚀" data-menu-key="machines">Top Build</a>
-            <div class="nav-link-item has-mega">
-              <a
-                id="open-configurator-link"
-                class="nav-link-priority"
-                href="#configurateur"
-                data-icon="🧩"
-                data-menu-key="configurateur"
-              >Configurateur</a>
-              <div class="nav-mega">
-                <a href="#configurateur">Configurer ma VortexBox</a>
-                <a href="#guides-fps">Voir les guides FPS</a>
-                <a href="support-sav.html">Besoin d'aide SAV</a>
-              </div>
-            </div>
+            <a
+              id="open-configurator-link"
+              class="nav-link-priority"
+              href="#configurateur"
+              data-icon="🧩"
+              data-menu-key="configurateur"
+            >Configurateur</a>
             <a class="nav-link-priority" href="support-sav.html" data-icon="🛟" data-menu-key="support">Support & SAV</a>
           </div>
           <div class="nav-row nav-row-secondary">
             <a id="nav-fiches-link" href="#fiches-techniques" data-icon="📄" data-menu-key="fiches">Fiches Techniques</a>
             <a href="#guides-fps" data-icon="🎯" data-menu-key="guides">Guides FPS</a>
+            <a href="jeux.html" data-icon="🎮" data-menu-key="jeux">Jeux</a>
             <a href="about.html" data-icon="ℹ️" data-menu-key="about">A propos</a>
             <a href="faq.html" data-icon="❓" data-menu-key="faq">FAQ</a>
           </div>
@@ -172,9 +166,13 @@
               spellcheck="false"
               inputmode="search"
             />
+            <div id="nav-smart-keywords" class="nav-smart-keywords" aria-label="Mots-clés rapides de recherche">
+              <p class="nav-smart-keywords-title">Recherche rapide</p>
+              <div id="nav-smart-keywords-list" class="nav-smart-keywords-list"></div>
+            </div>
             <div id="nav-smart-results" class="nav-smart-results hidden"></div>
           </div>
-          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/vortexboxpro','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
+          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/VortexCore460','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
           <button class="logout-btn nav-icon-btn nav-profile-btn hidden" id="user-profile-toggle" type="button" aria-label="Mon profil" title="Mon profil">
             <img src="nav-profile-premium.svg" alt="" aria-hidden="true" />
           </button>
@@ -185,6 +183,12 @@
         </div>
       </nav>
       <div class="premium-breadcrumb" id="premium-breadcrumb" aria-label="Fil d'ariane"></div>
+      <section class="hero-premium-ticker" aria-label="Offre VortexBox">
+        <div class="hero-premium-ticker-track">
+          <span>Avec VortexBox, l’expérience gaming va plus loin : DLC offerts sur simple demande de votre code promo sur Telegram.</span>
+          <span aria-hidden="true">Avec VortexBox, l’expérience gaming va plus loin : DLC offerts sur simple demande de votre code promo sur Telegram.</span>
+        </div>
+      </section>
 
       <div class="hero-content">
         <p class="badge">Performance premium prête à jouer</p>
@@ -297,7 +301,7 @@
             Option DLC gratuite avec votre code promo personnel sur Telegram.
           </p>
         </div>
-        <a class="cta promo-highlight-cta" href="https://t.me/vortexboxpro" target="_blank" rel="noopener noreferrer">
+        <a class="cta promo-highlight-cta" href="https://t.me/VortexCore460" target="_blank" rel="noopener noreferrer">
           Obtenir mon code promo sur Telegram
         </a>
       </section>
@@ -357,7 +361,7 @@
           </div>
           <a
             class="cta"
-            href="https://t.me/vortexboxpro"
+            href="https://t.me/VortexCore460"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -453,35 +457,25 @@
 
     <section class="vortexbot" id="vortexbot" aria-label="Assistant VortexBot">
       <button class="vortexbot-toggle" id="vortexbot-toggle" type="button" aria-expanded="false" aria-controls="vortexbot-panel">
-        <span class="vortexbot-icon" aria-hidden="true"><span class="vortexbot-icon-text">VB</span></span>
+        <span class="vortexbot-icon" aria-hidden="true"><img src="favicon-vb.svg" alt="" /></span>
         <span>VortexBot</span>
       </button>
       <div class="vortexbot-panel hidden" id="vortexbot-panel">
         <div class="vortexbot-head">
           <div class="vortexbot-head-title">
             <h3>VortexBot</h3>
-            <p>Assistant premium VortexBox</p>
+            <p>Assistant build gaming</p>
           </div>
           <button class="vortexbot-close" id="vortexbot-close" type="button" aria-label="Fermer">×</button>
         </div>
         <div class="vortexbot-messages" id="vortexbot-messages">
-          <p class="vortexbot-msg bot">Bienvenue chez VortexBox. Je vous guide vers le build le plus adapté à vos jeux et à votre budget.</p>
+          <p class="vortexbot-msg bot">Bienvenue chez VortexBox. Je peux vous guider vers le meilleur build.</p>
           <p class="vortexbot-msg bot">Choisissez une action rapide ci-dessous.</p>
         </div>
         <div class="vortexbot-actions">
-          <button type="button" data-bot-intent="advisor">Trouver mon build idéal</button>
-          <button type="button" data-bot-intent="compare">Comparer 2 configs</button>
-          <button type="button" data-bot-intent="services">Services recommandés</button>
-          <button type="button" data-bot-intent="promo">Option DLC promo</button>
-          <button type="button" data-bot-intent="objection">Lever mes doutes</button>
-          <button type="button" data-bot-intent="human">Parler à un expert</button>
-          <button type="button" data-bot-intent="configure">Configurer mon build</button>
-          <button type="button" data-bot-intent="top">Voir les builds stars</button>
-          <button type="button" data-bot-intent="budget">Conseil budget</button>
-          <button type="button" data-bot-intent="garantie">Garantie matériel</button>
-          <button type="button" data-bot-intent="livraison">Délais livraison</button>
-          <button type="button" data-bot-intent="telegram">Finaliser sur Telegram</button>
-          <button type="button" data-bot-intent="faq">Ouvrir la FAQ</button>
+          <button type="button" data-bot-action="go-ai-advisor">Conseil IA instantane</button>
+          <button type="button" data-bot-action="go-configurator">Ouvrir le configurateur</button>
+          <button type="button" data-bot-action="go-telegram">Contacter sur Telegram</button>
         </div>
       </div>
     </section>
@@ -547,6 +541,21 @@
         </section>
 
         <form id="admin-editor" class="hidden">
+          <section class="admin-control-center" aria-label="Control Center">
+            <article class="admin-control-card">
+              <p>Etat serveur</p>
+              <strong id="admin-cc-server">En ligne</strong>
+            </article>
+            <article class="admin-control-card">
+              <p>Heure locale</p>
+              <strong id="admin-cc-time">--:--:--</strong>
+            </article>
+            <article class="admin-control-card">
+              <p>Derniere sauvegarde</p>
+              <strong id="admin-cc-backup">Aucune</strong>
+            </article>
+          </section>
+
           <div class="admin-ux-row">
             <label class="admin-density-control" for="admin-density-toggle">
               Densité admin
@@ -651,6 +660,7 @@
                 <label>Support & SAV<select id="admin-menu-badge-support"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
                 <label>Fiches Techniques<select id="admin-menu-badge-fiches"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
                 <label>Guides FPS<select id="admin-menu-badge-guides"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+                <label>Jeux<select id="admin-menu-badge-jeux"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
                 <label>A propos<select id="admin-menu-badge-about"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
                 <label>FAQ<select id="admin-menu-badge-faq"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
               </div>
@@ -1074,7 +1084,7 @@
               </label>
               <label>
                 URL Telegram (CTA principal)
-                <input id="admin-support-telegram-url" type="url" placeholder="https://t.me/vortexboxpro" />
+                <input id="admin-support-telegram-url" type="url" placeholder="https://t.me/VortexCore460" />
               </label>
             </div>
 
@@ -1202,15 +1212,11 @@
             </div>
 
             <div id="admin-process-editor" class="hidden">
-              <div class="admin-machine-toolbar" id="admin-process-quicklinks">
-                <a class="admin-secondary" href="./index.html?openAdmin=1&adminTab=processus&processSubtab=docs" data-process-link-key="installation">Installation VB</a>
-                <a class="admin-secondary" href="./index.html?openAdmin=1&adminTab=processus&processSubtab=achats" data-process-link-key="fournisseurs">Fournisseurs</a>
-                <a class="admin-secondary" href="./index.html?openAdmin=1&adminTab=processus&processSubtab=crm" data-process-link-key="crm">CRM</a>
-              </div>
               <div class="admin-process-subtabs">
                 <button class="admin-tab" id="admin-process-subtab-docs" type="button" data-process-subtab="docs" draggable="true">Installation VB</button>
                 <button class="admin-tab" id="admin-process-subtab-achats" type="button" data-process-subtab="achats" draggable="true">Fournisseurs</button>
                 <button class="admin-tab active" id="admin-process-subtab-crm" type="button" data-process-subtab="crm" draggable="true">CRM</button>
+                <button class="admin-tab" id="admin-process-subtab-games" type="button" data-process-subtab="games" draggable="true">Games</button>
               </div>
               <div id="admin-process-docs-panel" class="hidden" data-process-section-panel="docs">
                 <div class="admin-machine-toolbar">
@@ -1241,6 +1247,42 @@
                 <div id="admin-process-crm-summary" class="admin-stock-summary"></div>
                 <div id="admin-process-crm-list" class="admin-machines-list"></div>
               </div>
+              <div id="admin-process-games-panel" class="hidden" data-process-section-panel="games">
+                <div class="admin-machine-toolbar">
+                  <button class="admin-secondary" id="admin-add-games-file" type="button">Uploader un ZIP Games</button>
+                  <input id="admin-games-zip-file-input" class="admin-file-input" type="file" accept=".zip,application/zip" />
+                </div>
+                <article class="admin-tech-card">
+                  <h5 class="admin-subtitle">Attribuer un fichier à un utilisateur</h5>
+                  <div class="admin-delivery-grid">
+                    <label>
+                      Utilisateur
+                      <select id="admin-games-assign-user"></select>
+                    </label>
+                    <label>
+                      Fichier ZIP
+                      <select id="admin-games-assign-file"></select>
+                    </label>
+                    <label>
+                      Nom affiché
+                      <input id="admin-games-assign-title" type="text" placeholder="Ex: Pack Retro 1" />
+                    </label>
+                    <label>
+                      Nombre de téléchargements
+                      <input id="admin-games-assign-max-downloads" type="number" min="1" step="1" value="1" />
+                    </label>
+                    <label>
+                      Expiration
+                      <input id="admin-games-assign-expiry" type="date" />
+                    </label>
+                  </div>
+                  <div class="admin-option-actions">
+                    <button class="cta" id="admin-games-assign-btn" type="button">Attribuer le fichier</button>
+                  </div>
+                </article>
+                <div id="admin-process-games-list" class="admin-machines-list"></div>
+                <div id="admin-process-games-assignments-list" class="admin-machines-list"></div>
+              </div>
 
               <section id="admin-process-link-modal" class="admin-process-link-modal hidden" aria-label="Ajouter un lien fournisseur">
                 <article class="admin-process-link-modal-card">
@@ -1270,11 +1312,11 @@
                     <input id="admin-process-file-title-input" type="text" placeholder="Ex: Installation VortexBox v1" />
                   </label>
                   <label>
-                    PDF
+                    Fichier
                     <div class="admin-file-field">
-                      <input id="admin-process-file-input-modal" class="admin-file-input" type="file" accept="application/pdf,.pdf" />
+                      <input id="admin-process-file-input-modal" class="admin-file-input" type="file" accept="application/pdf,.pdf,.zip,.rar,application/zip,application/x-zip-compressed,application/vnd.rar" />
                       <div class="admin-file-picker">
-                        <button class="admin-file-button" id="admin-process-file-pick-modal" type="button">Choisir un PDF</button>
+                        <button class="admin-file-button" id="admin-process-file-pick-modal" type="button">Choisir un fichier</button>
                       </div>
                       <span id="admin-process-file-name-modal" class="admin-file-name">Aucun fichier choisi</span>
                     </div>
@@ -1309,6 +1351,8 @@
             <p id="admin-autosave-status" class="admin-feedback info"></p>
             <select id="admin-history-select" aria-label="Historique des versions"></select>
             <button class="admin-secondary" id="admin-restore-history" type="button">Restaurer la version</button>
+            <button class="admin-secondary" id="admin-delete-history-entry" type="button">Supprimer la version</button>
+            <button class="admin-danger" id="admin-clear-history" type="button">Effacer l'historique</button>
           </div>
           <div id="admin-upload-progress-wrap" class="admin-upload-progress hidden" aria-live="polite">
             <div class="admin-upload-progress-head">
@@ -1427,6 +1471,11 @@
         </article>
 
         <article class="admin-tech-card profile-card">
+          <h5 class="admin-subtitle">Mes téléchargements</h5>
+          <div id="profile-downloads-list"></div>
+        </article>
+
+        <article class="admin-tech-card profile-card">
           <h5 class="admin-subtitle">Mes favoris</h5>
           <div id="profile-favorites-list"></div>
         </article>
@@ -1495,7 +1544,7 @@
       </a>
       <a
         class="mobile-sticky-btn mobile-sticky-telegram"
-        href="https://t.me/vortexboxpro"
+        href="https://t.me/VortexCore460"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -1546,6 +1595,6 @@
 
     <div class="admin-toast-stack" id="admin-toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="script.js?v=20260308c"></script>
+    <script src="script.js?v=20260309b"></script>
   </body>
 </html>

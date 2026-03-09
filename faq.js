@@ -66,6 +66,9 @@ const vortexBotPanelEl = document.getElementById("vortexbot-panel");
 const vortexBotCloseEl = document.getElementById("vortexbot-close");
 const vortexBotMessagesEl = document.getElementById("vortexbot-messages");
 const faqListEl = document.getElementById("faq-list");
+const gamesGridEl = document.getElementById("games-catalog-grid");
+const gamesSearchInputEl = document.getElementById("games-search-input");
+const gamesResultsToolbarEl = document.getElementById("games-results-toolbar");
 const supportSavBadgeEl = document.getElementById("support-sav-badge");
 const supportSavTitleEl = document.getElementById("support-sav-title");
 const supportSavSubtitleEl = document.getElementById("support-sav-subtitle");
@@ -75,6 +78,21 @@ const supportSavCtaEl = document.getElementById("support-sav-cta");
 const BG_MUSIC_KEY = "vortexbox-bg-music-enabled";
 const COOKIE_CONSENT_KEY = "vortexbox-cookie-consent";
 const ADMIN_LIVE_MODE_KEY = "vortexbox-admin-live-mode";
+let gamesCatalogDraft = [];
+let gamesAdminSaving = false;
+let gamesSearchTerm = "";
+let gamesCurrentPage = 1;
+let gamesPageSize = 24;
+let gamesCatalogCache = [];
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 const fallbackFaq = [
   {
@@ -156,7 +174,7 @@ const SUPPORT_SAV_FALLBACK = {
   title: "Support & SAV VortexBox",
   subtitle:
     "Un accompagnement rapide et professionnel pour vos questions, diagnostics et retours. Notre équipe vous suit de la première prise de contact jusqu'à la résolution.",
-  telegramUrl: "https://t.me/vortexboxpro",
+  telegramUrl: "https://t.me/VortexCore460",
   cards: [
     {
       title: "Diagnostic rapide",
@@ -181,6 +199,572 @@ const SUPPORT_SAV_FALLBACK = {
   ],
   faq: fallbackFaq.slice(0, 5),
 };
+
+const GAMES_CATALOG_FALLBACK = [
+  { title: "Jeu 1", image: "uploads/games-covers/1772987532904-j8oqxa-cyber-assault-2026.webp", info: "" },
+  { title: "Jeu 2", image: "uploads/games-covers/1772987833227-1xjipg-jeu-2.webp", info: "" },
+  { title: "Jeu 3", image: "uploads/games-covers/1772987824472-p9qewy-cyber-assault-2026.webp", info: "" },
+];
+const DEFAULT_GAME_INFO_TEXT = "Jouable sans patch.";
+
+function normalizeGameText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function normalizeGamesCatalog(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item, index) => ({
+      title: String(item?.title || `Jeu ${index + 1}`).trim() || `Jeu ${index + 1}`,
+      image: String(item?.image || "").trim(),
+      info: String(item?.info || "").trim(),
+    }))
+    .filter((item) => item.image);
+}
+
+function getStoredContentSnapshot() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+async function saveStoredContentSnapshot(content) {
+  const snapshot = content && typeof content === "object" ? content : {};
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  const response = await fetch("/api/save-content", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: snapshot }),
+  });
+  if (!response.ok) {
+    let message = "Sauvegarde impossible.";
+    try {
+      const payload = await response.json();
+      if (payload?.error) message = payload.error;
+    } catch (error) {}
+    throw new Error(message);
+  }
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Lecture du fichier impossible."));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadGameCoverFile(file) {
+  const dataUrl = await fileToDataUrl(file);
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      kind: "games-covers",
+      fileName: file?.name || "jaquette.webp",
+      dataUrl,
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.path) {
+    throw new Error(payload?.error || "Upload image impossible.");
+  }
+  return String(payload.path || "").trim();
+}
+
+async function uploadGamesZipForImport(file) {
+  const uploadId = `gameszip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const response = await fetch("/api/upload-binary", {
+    method: "POST",
+    headers: {
+      "Content-Type": file?.type || "application/zip",
+      "x-upload-kind": "games-zips",
+      "x-upload-filename": encodeURIComponent(String(file?.name || "games-covers.archive")),
+      "x-upload-id": uploadId,
+    },
+    body: file,
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.path) {
+    const statusText = response.status ? ` (HTTP ${response.status})` : "";
+    throw new Error(payload?.error || `Upload archive impossible${statusText}.`);
+  }
+  return String(payload.path || "").trim();
+}
+
+async function importGamesCoversFromZipPath(zipPath, mode = "replace") {
+  const response = await fetch("/api/import-games-covers-zip", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zipPath, mode }),
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || payload?.ok === false) {
+    let fallbackError = "";
+    if (!payload) {
+      try {
+        const raw = await response.text();
+        fallbackError = String(raw || "").trim();
+      } catch (error) {}
+    }
+    const statusText = response.status ? ` (HTTP ${response.status})` : "";
+    throw new Error(
+      payload?.error ||
+        fallbackError ||
+        `Import des jaquettes impossible${statusText}. Vérifiez le redémarrage du serveur.`
+    );
+  }
+  return payload;
+}
+
+function setGamesAdminNotice(message, tone = "info") {
+  if (!gamesGridEl) return;
+  const noticeEl = gamesGridEl.querySelector("#games-admin-notice");
+  if (!noticeEl) return;
+  noticeEl.textContent = String(message || "");
+  noticeEl.classList.remove("success", "error", "info");
+  noticeEl.classList.add(tone === "error" ? "error" : tone === "success" ? "success" : "info");
+}
+
+async function persistGamesCatalogFromAdmin(nextGames) {
+  const normalized = normalizeGamesCatalog(nextGames);
+  const snapshot = getStoredContentSnapshot();
+  snapshot.gamesCatalog = normalized;
+  await saveStoredContentSnapshot(snapshot);
+  gamesCatalogCache = normalized.map((item) => ({ ...item }));
+  gamesCatalogDraft = normalized.map((item) => ({ ...item }));
+}
+
+function toPublicImageUrl(value) {
+  const raw = String(value || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/\\/g, "/");
+  if (!raw) return "";
+  if (/^(https?:)?\/\//i.test(raw) || raw.startsWith("data:") || raw.startsWith("blob:")) return raw;
+  return encodeURI(`/${raw.replace(/^\/+/, "")}`);
+}
+
+function withImageCacheBuster(url) {
+  const src = String(url || "").trim();
+  if (!src || /^data:|^blob:|^https?:\/\//i.test(src)) return src;
+  const separator = src.includes("?") ? "&" : "?";
+  return `${src}${separator}v=${Date.now()}`;
+}
+
+function openGameCoverModal(imageSrc, title) {
+  const src = String(imageSrc || "").trim();
+  if (!src) return;
+  const modal = document.createElement("div");
+  modal.className = "image-modal";
+  modal.innerHTML = `
+    <button class="image-modal-close" type="button" aria-label="Fermer">×</button>
+    <img src="${escapeHtml(src)}" alt="${escapeHtml(title || "Jaquette")}" />
+    <p>${escapeHtml(title || "Jaquette jeu")}</p>
+  `;
+
+  const close = () => {
+    modal.remove();
+    document.removeEventListener("keydown", onKeydown);
+  };
+
+  const onKeydown = (event) => {
+    if (event.key === "Escape") close();
+  };
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest(".image-modal-close")) close();
+  });
+  document.addEventListener("keydown", onKeydown);
+  document.body.appendChild(modal);
+}
+
+function openGameInfoModal(title, infoText) {
+  const text = String(infoText || "").trim();
+  if (!text) return;
+  const rawTitle = String(title || "Info jeu").trim() || "Info jeu";
+  const normalizeForCompare = (value) =>
+    String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[’']/g, "")
+      .trim()
+      .toLowerCase();
+  const normalizedTitle = normalizeForCompare(rawTitle);
+  const normalizedText = normalizeForCompare(text);
+  const normalizedDefault = normalizeForCompare(DEFAULT_GAME_INFO_TEXT);
+  const isLegacyCaptureTitle = /^capture\s*decran\b/.test(normalizedTitle);
+  const isDefaultText = normalizedText === normalizedDefault;
+  const safeTitle = isLegacyCaptureTitle
+    ? (isDefaultText ? DEFAULT_GAME_INFO_TEXT : "")
+    : rawTitle;
+  const showTitle = Boolean(safeTitle) && normalizeForCompare(safeTitle) !== normalizedText;
+  const modal = document.createElement("div");
+  modal.className = "image-modal game-info-modal";
+  modal.innerHTML = `
+    <button class="image-modal-close" type="button" aria-label="Fermer">×</button>
+    <article class="game-info-modal-card">
+      <div class="game-info-modal-head">
+        <span class="game-info-modal-logo-wrap">
+          <img src="favicon-vb.svg" alt="Logo VortexBox" />
+        </span>
+        <div class="game-info-modal-head-copy">
+          <h3>INFO JEU</h3>
+          <p>VortexBox Premium</p>
+        </div>
+      </div>
+      <div class="game-info-modal-divider"></div>
+      ${showTitle ? `<h4>${escapeHtml(safeTitle)}</h4>` : ""}
+      <div class="game-info-modal-content">${escapeHtml(text).replace(/\n/g, "<br />")}</div>
+    </article>
+  `;
+
+  const close = () => {
+    modal.remove();
+    document.removeEventListener("keydown", onKeydown);
+  };
+
+  const onKeydown = (event) => {
+    if (event.key === "Escape") close();
+  };
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest(".image-modal-close")) close();
+  });
+  document.addEventListener("keydown", onKeydown);
+  document.body.appendChild(modal);
+}
+
+function initializeGamesPremiumEffects() {
+  if (!gamesGridEl || gamesGridEl.dataset.fxBound === "1") return;
+  gamesGridEl.dataset.fxBound = "1";
+
+  gamesGridEl.addEventListener("pointermove", (event) => {
+    const card = event.target.closest(".game-cover-card");
+    if (!card || !gamesGridEl.contains(card)) return;
+    const rect = card.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+    const percentX = rect.width ? offsetX / rect.width : 0.5;
+    const percentY = rect.height ? offsetY / rect.height : 0.5;
+    const tiltY = (percentX - 0.5) * 8;
+    const tiltX = (0.5 - percentY) * 8;
+    card.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
+    card.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
+  });
+
+  gamesGridEl.addEventListener("pointerleave", (event) => {
+    const card = event.target.closest(".game-cover-card");
+    if (!card || !gamesGridEl.contains(card)) return;
+    card.style.setProperty("--tilt-x", "0deg");
+    card.style.setProperty("--tilt-y", "0deg");
+  }, true);
+
+  gamesGridEl.addEventListener("click", (event) => {
+    if (event.target.closest("[data-game-admin-action]")) return;
+    const infoBtn = event.target.closest(".game-cover-info-btn");
+    if (infoBtn) {
+      const title = String(infoBtn.dataset.gameTitle || "").trim() || "Info jeu";
+      const encodedInfo = String(infoBtn.dataset.gameInfo || "");
+      const decodedInfo = encodedInfo ? decodeURIComponent(encodedInfo) : "";
+      if (decodedInfo.trim()) openGameInfoModal(title, decodedInfo);
+      else openGameInfoModal(title, DEFAULT_GAME_INFO_TEXT);
+      return;
+    }
+  });
+
+  gamesGridEl.addEventListener("click", async (event) => {
+    const actionBtn = event.target.closest("[data-game-admin-action]");
+    if (!actionBtn || !isAdminLiveMode()) return;
+    const action = String(actionBtn.dataset.gameAdminAction || "");
+    const index = Number(actionBtn.dataset.gameIndex);
+
+    if (gamesAdminSaving) return;
+
+    if (action === "add") {
+      const picker = gamesGridEl.querySelector("#games-admin-add-file");
+      if (picker) picker.click();
+      return;
+    }
+
+    if (action === "sort-az") {
+      try {
+        gamesAdminSaving = true;
+        setGamesAdminNotice("Tri alphabétique en cours...", "info");
+        const nextGames = gamesCatalogDraft
+          .map((item) => ({ ...item }))
+          .sort((a, b) =>
+            String(a?.title || "").localeCompare(String(b?.title || ""), "fr", {
+              sensitivity: "base",
+              numeric: true,
+            })
+          );
+        await persistGamesCatalogFromAdmin(nextGames);
+        await renderGamesCatalog({ useCache: false, forceReload: true });
+        setGamesAdminNotice("Jaquettes triées par ordre alphabétique (A → Z).", "success");
+      } catch (error) {
+        setGamesAdminNotice(error.message || "Tri alphabétique impossible.", "error");
+      } finally {
+        gamesAdminSaving = false;
+      }
+      return;
+    }
+
+    if (action === "import-zip") {
+      const zipPicker = gamesGridEl.querySelector("#games-admin-import-zip");
+      if (zipPicker) zipPicker.click();
+      return;
+    }
+
+    if (action === "replace") {
+      if (!Number.isInteger(index)) return;
+      const picker = gamesGridEl.querySelector(`#games-admin-file-${index}`);
+      if (picker) picker.click();
+      return;
+    }
+
+    if (action === "rename") {
+      if (!Number.isInteger(index) || !gamesCatalogDraft[index]) return;
+      const current = gamesCatalogDraft[index];
+      const nextTitle = window.prompt("Nouveau titre de la jaquette", String(current.title || "").trim());
+      if (nextTitle === null) return;
+      const cleanTitle = String(nextTitle || "").trim();
+      if (!cleanTitle) {
+        setGamesAdminNotice("Le titre ne peut pas être vide.", "error");
+        return;
+      }
+      const nextGames = gamesCatalogDraft.map((item) => ({ ...item }));
+      nextGames[index].title = cleanTitle;
+      try {
+        gamesAdminSaving = true;
+        setGamesAdminNotice("Sauvegarde en cours...", "info");
+        await persistGamesCatalogFromAdmin(nextGames);
+        await renderGamesCatalog({ useCache: true });
+        setGamesAdminNotice("Titre mis à jour.", "success");
+      } catch (error) {
+        setGamesAdminNotice(error.message || "Erreur de sauvegarde.", "error");
+      } finally {
+        gamesAdminSaving = false;
+      }
+      return;
+    }
+
+    if (action === "info") {
+      if (!Number.isInteger(index) || !gamesCatalogDraft[index]) return;
+      const current = gamesCatalogDraft[index];
+      const nextInfo = window.prompt(
+        "Information premium du jeu (fonctionnement, conseils, prérequis). Laissez vide pour retirer.",
+        String(current.info || DEFAULT_GAME_INFO_TEXT)
+      );
+      if (nextInfo === null) return;
+      const nextGames = gamesCatalogDraft.map((item) => ({ ...item }));
+      nextGames[index].info = String(nextInfo || "").trim();
+      try {
+        gamesAdminSaving = true;
+        setGamesAdminNotice("Sauvegarde info en cours...", "info");
+        await persistGamesCatalogFromAdmin(nextGames);
+        await renderGamesCatalog();
+        setGamesAdminNotice(nextGames[index]?.info ? "Info jeu mise à jour." : "Info jeu retirée.", "success");
+      } catch (error) {
+        setGamesAdminNotice(error.message || "Erreur de sauvegarde.", "error");
+      } finally {
+        gamesAdminSaving = false;
+      }
+      return;
+    }
+
+    if (action === "delete") {
+      if (!Number.isInteger(index) || !gamesCatalogDraft[index]) return;
+      if (gamesCatalogDraft.length <= 1) {
+        setGamesAdminNotice("Gardez au moins une jaquette.", "error");
+        return;
+      }
+      const nextGames = gamesCatalogDraft.filter((_, i) => i !== index);
+      try {
+        gamesAdminSaving = true;
+        setGamesAdminNotice("Suppression en cours...", "info");
+        await persistGamesCatalogFromAdmin(nextGames);
+        await renderGamesCatalog();
+        setGamesAdminNotice("Jaquette supprimée.", "success");
+      } catch (error) {
+        setGamesAdminNotice(error.message || "Erreur de sauvegarde.", "error");
+      } finally {
+        gamesAdminSaving = false;
+      }
+    }
+  });
+
+  gamesGridEl.addEventListener("change", async (event) => {
+    if (!isAdminLiveMode()) return;
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) || target.type !== "file") return;
+    const file = target.files && target.files[0];
+    if (!file || gamesAdminSaving) return;
+
+    if (target.id === "games-admin-import-zip") {
+      if (!/\.(zip|rar)$/i.test(String(file.name || ""))) {
+        setGamesAdminNotice("Sélectionnez un fichier .zip ou .rar valide.", "error");
+        target.value = "";
+        return;
+      }
+      gamesAdminSaving = true;
+      try {
+        setGamesAdminNotice("Upload archive en cours...", "info");
+        const zipPath = await uploadGamesZipForImport(file);
+        setGamesAdminNotice("Import des jaquettes en cours...", "info");
+        const result = await importGamesCoversFromZipPath(zipPath, "append");
+        gamesCatalogCache = [];
+        await renderGamesCatalog({ useCache: false, forceReload: true });
+        const imported = Math.max(0, Number(result?.imported) || 0);
+        const total = Math.max(0, Number(result?.total) || 0);
+        setGamesAdminNotice(`Import terminé: ${imported} jaquettes (${total} au total).`, "success");
+      } catch (error) {
+        setGamesAdminNotice(error.message || "Import ZIP impossible.", "error");
+      } finally {
+        target.value = "";
+        gamesAdminSaving = false;
+      }
+      return;
+    }
+
+    const isAdd = target.id === "games-admin-add-file";
+    const index = Number(target.dataset.gameIndex);
+
+    try {
+      gamesAdminSaving = true;
+      setGamesAdminNotice("Upload image en cours...", "info");
+      const path = await uploadGameCoverFile(file);
+      const nextGames = gamesCatalogDraft.map((item) => ({ ...item }));
+      if (isAdd) {
+        const suggested = `Jeu ${nextGames.length + 1}`;
+        const title = String(window.prompt("Titre de la nouvelle jaquette", suggested) || "").trim() || suggested;
+        nextGames.push({ title, image: path, info: "" });
+      } else if (Number.isInteger(index) && nextGames[index]) {
+        nextGames[index].image = path;
+      }
+      await persistGamesCatalogFromAdmin(nextGames);
+      await renderGamesCatalog();
+      setGamesAdminNotice(isAdd ? "Jaquette ajoutée." : "Image mise à jour.", "success");
+    } catch (error) {
+      setGamesAdminNotice(error.message || "Impossible de mettre à jour la jaquette.", "error");
+    } finally {
+      target.value = "";
+      gamesAdminSaving = false;
+    }
+  });
+}
+
+function canLoadImage(url) {
+  return new Promise((resolve) => {
+    const src = String(url || "").trim();
+    if (!src) {
+      resolve(false);
+      return;
+    }
+    const img = new Image();
+    const done = (ok) => {
+      img.onload = null;
+      img.onerror = null;
+      resolve(ok);
+    };
+    const timer = window.setTimeout(() => done(false), 3500);
+    img.onload = () => {
+      window.clearTimeout(timer);
+      done(true);
+    };
+    img.onerror = () => {
+      window.clearTimeout(timer);
+      done(false);
+    };
+    img.src = src;
+  });
+}
+
+async function ensureRenderableGameCovers(games) {
+  const output = [];
+
+  for (let index = 0; index < games.length; index += 1) {
+    const item = games[index];
+    const primarySrc = toPublicImageUrl(item?.image || "");
+    let finalSrc = primarySrc;
+    let ok = await canLoadImage(primarySrc);
+
+    if (!ok) {
+      const cleaned = String(item?.image || "").replace(/^\/+/, "");
+      const altSrc = toPublicImageUrl(cleaned.replace(/^uploads\/uploads\//, "uploads/"));
+      if (altSrc && altSrc !== primarySrc) {
+        const altOk = await canLoadImage(altSrc);
+        if (altOk) {
+          finalSrc = altSrc;
+          ok = true;
+        }
+      }
+    }
+
+    if (!ok) finalSrc = "/favicon-vb.svg";
+    output.push({
+      title: String(item?.title || `Jeu ${index + 1}`),
+      image: finalSrc,
+    });
+  }
+
+  return output;
+}
+
+function renderGamesCatalogEmptyState() {
+  if (!gamesGridEl) return;
+  gamesGridEl.innerHTML = `
+    <article class="games-empty-state">
+      <h3>Catalogue en cours de mise à jour</h3>
+      <p>Les jaquettes arrivent bientôt. Revenez dans quelques instants.</p>
+    </article>
+  `;
+}
+
+function renderGamesCatalogNoResultState() {
+  if (!gamesGridEl) return;
+  gamesGridEl.innerHTML = `
+    <article class="games-empty-state">
+      <h3>Aucun jeu trouvé</h3>
+      <p>Essayez un autre mot-clé (ex: call, fifa, mario, cyber...).</p>
+    </article>
+  `;
+}
+
+function renderGamesResultsToolbar(totalCount, filteredCount, pageCount, currentPage) {
+  if (!gamesResultsToolbarEl) return;
+  const total = Math.max(0, Number(totalCount) || 0);
+  const filtered = Math.max(0, Number(filteredCount) || 0);
+  const pages = Math.max(1, Number(pageCount) || 1);
+  const page = Math.max(1, Math.min(pages, Number(currentPage) || 1));
+  const from = filtered ? (page - 1) * gamesPageSize + 1 : 0;
+  const to = filtered ? Math.min(filtered, page * gamesPageSize) : 0;
+  gamesResultsToolbarEl.innerHTML = `
+    <div class="games-results-meta">
+      ${filtered} jeu(x) trouvé(s)${filtered !== total ? ` sur ${total}` : ""} • Affichage ${from}-${to}
+    </div>
+    <div class="games-pagination">
+      <label class="games-results-meta" for="games-page-size">Par page</label>
+      <select id="games-page-size" class="games-page-size" aria-label="Nombre de jeux par page">
+        ${[24, 36, 48, 60]
+          .map((size) => `<option value="${size}" ${gamesPageSize === size ? "selected" : ""}>${size}</option>`)
+          .join("")}
+      </select>
+      <button class="games-page-btn" type="button" data-games-page-action="prev" ${page <= 1 ? "disabled" : ""}>Précédent</button>
+      <span class="games-results-meta">Page ${page}/${pages}</span>
+      <button class="games-page-btn" type="button" data-games-page-action="next" ${page >= pages ? "disabled" : ""}>Suivant</button>
+    </div>
+  `;
+}
 
 let authMode = "user";
 let pendingActivationEmail = "";
@@ -482,12 +1066,31 @@ function initializeResponsiveNav() {
     } catch (error) {}
   });
   const path = String(window.location.pathname || "");
-  const label = /support-sav\.html$/i.test(path) ? "Support & SAV" : "FAQ";
+  const label = /support-sav\.html$/i.test(path)
+    ? "Support & SAV"
+    : /jeux\.html$/i.test(path)
+      ? "Jeux"
+      : "FAQ";
   renderPremiumBreadcrumbForPage(label);
 }
 
 function initializeNavSmartSearch() {
   if (!navSmartSearchInputEl || !navSmartResultsEl) return;
+  const navSmartWrapEl = navSmartSearchInputEl.closest(".nav-smart-wrap");
+  let navSmartKeywordsEl = document.getElementById("nav-smart-keywords");
+  let navSmartKeywordsListEl = document.getElementById("nav-smart-keywords-list");
+  if (navSmartWrapEl && (!navSmartKeywordsEl || !navSmartKeywordsListEl)) {
+    navSmartKeywordsEl = document.createElement("div");
+    navSmartKeywordsEl.id = "nav-smart-keywords";
+    navSmartKeywordsEl.className = "nav-smart-keywords";
+    navSmartKeywordsEl.setAttribute("aria-label", "Mots-cles rapides de recherche");
+    navSmartKeywordsEl.innerHTML = `
+      <p class="nav-smart-keywords-title">Recherche rapide</p>
+      <div id="nav-smart-keywords-list" class="nav-smart-keywords-list"></div>
+    `;
+    navSmartWrapEl.appendChild(navSmartKeywordsEl);
+    navSmartKeywordsListEl = navSmartKeywordsEl.querySelector("#nav-smart-keywords-list");
+  }
   navSmartSearchInputEl.value = "";
   navSmartSearchInputEl.setAttribute("name", "menu-search");
   navSmartSearchInputEl.setAttribute("autocomplete", "off");
@@ -495,16 +1098,257 @@ function initializeNavSmartSearch() {
   navSmartSearchInputEl.setAttribute("autocorrect", "off");
   navSmartSearchInputEl.setAttribute("spellcheck", "false");
   navSmartSearchInputEl.setAttribute("inputmode", "search");
+  const normalize = (value) => String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const normalizePath = (value) => {
+    const path = String(value || "").trim() || "/";
+    return path.endsWith("/") && path !== "/" ? path.slice(0, -1) : path;
+  };
+  const validPaths = new Set(["/", "/index.html", "/about.html", "/faq.html", "/jeux.html", "/support-sav.html"]);
+  const validHashesByPath = {
+    "/": new Set(["#machines", "#configurateur", "#fiches-techniques", "#guides-fps", "#contact"]),
+    "/index.html": new Set(["#machines", "#configurateur", "#fiches-techniques", "#guides-fps", "#contact"]),
+    "/about.html": new Set(["#top", "#contact"]),
+    "/faq.html": new Set(["#top", "#contact"]),
+    "/jeux.html": new Set(["#top", "#contact"]),
+    "/support-sav.html": new Set(["#top", "#contact"]),
+  };
+  const isValidSearchTarget = (href) => {
+    const raw = String(href || "").trim();
+    if (!raw) return false;
+    if (/^(https?:)?\/\//i.test(raw)) return true;
+    try {
+      const url = new URL(raw, window.location.origin);
+      const path = normalizePath(url.pathname || "/");
+      if (!validPaths.has(path)) return false;
+      const hash = String(url.hash || "").trim().toLowerCase();
+      if (!hash) return true;
+      return Boolean(validHashesByPath[path]?.has(hash));
+    } catch (error) {
+      return false;
+    }
+  };
+  const isExcludedSearchTerm = (value) => {
+    const text = normalize(value).replace(/[’']/g, "").replace(/\s+/g, " ");
+    return text.includes("capture decran") || text.includes("capture ecran");
+  };
+  const entriesMap = new Map();
+  const addEntry = (label, href, keywords = [], category = "") => {
+    const cleanLabel = String(label || "").trim().replace(/\s+/g, " ");
+    const cleanHref = String(href || "").trim();
+    if (!cleanLabel || !cleanHref || !isValidSearchTarget(cleanHref)) return;
+    if (isExcludedSearchTerm(cleanLabel)) return;
+    const keywordText = Array.isArray(keywords)
+      ? keywords.map((item) => String(item || "").trim()).filter(Boolean).join(" ")
+      : String(keywords || "");
+    if (isExcludedSearchTerm(keywordText)) return;
+    const cleanCategory = String(category || "").trim();
+    const key = `${cleanLabel}|${cleanHref}`;
+    if (entriesMap.has(key)) {
+      const existing = entriesMap.get(key);
+      existing.keywords = `${existing.keywords} ${keywordText}`.trim();
+      if (!existing.category && cleanCategory) existing.category = cleanCategory;
+      existing.haystack = normalize(`${existing.label} ${existing.keywords} ${existing.href} ${existing.category}`);
+      return;
+    }
+    entriesMap.set(key, {
+      label: cleanLabel,
+      href: cleanHref,
+      keywords: keywordText,
+      category: cleanCategory,
+      haystack: normalize(`${cleanLabel} ${keywordText} ${cleanHref} ${cleanCategory}`),
+    });
+  };
 
-  const allLinks = Array.from(document.querySelectorAll(".nav-links a[href]"));
-  const map = new Map();
-  allLinks.forEach((link) => {
+  Array.from(document.querySelectorAll(".nav-links a[href]")).forEach((link) => {
     const label = String(link.textContent || "").trim().replace(/\s+/g, " ");
     const href = String(link.getAttribute("href") || "").trim();
     if (!label || !href) return;
-    map.set(`${label}|${href}`, { label, href });
+    addEntry(label, href, [label, "menu", "navigation"], "Menu");
   });
-  const entries = Array.from(map.values());
+
+  addEntry("Configurateur", "index.html?openConfigurator=1#configurateur", ["build", "composants", "prix", "fps", "services"], "Configurateur");
+  addEntry("Top Build", "index.html#machines", ["meilleurs build", "best seller", "gaming"], "Top Build");
+  addEntry("Fiches Techniques", "index.html#fiches-techniques", ["fiches", "jaquettes", "documentation"], "Fiches");
+  addEntry("Guides FPS", "index.html#guides-fps", ["fps", "performances", "jeux"], "Guides");
+  addEntry("Jeux", "jeux.html", ["catalogue", "jaquettes", "gaming"], "Jeux");
+  addEntry("Support & SAV", "support-sav.html", ["support", "sav", "assistance"], "Support");
+  addEntry("FAQ", "faq.html", ["questions", "reponses", "aide"], "FAQ");
+  addEntry("A propos", "about.html", ["vortexbox", "atelier", "videos"], "A propos");
+
+  let snapshot = {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    snapshot = raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    snapshot = {};
+  }
+  if (Array.isArray(snapshot.machines)) {
+    snapshot.machines.forEach((machine) => {
+      addEntry(
+        machine?.name || machine?.frontName || "Build VortexBox",
+        "index.html#machines",
+        [machine?.description, machine?.frontDescription, machine?.badge, machine?.price, ...(Array.isArray(machine?.specs) ? machine.specs : [])],
+        "Top Build"
+      );
+    });
+  }
+  if (Array.isArray(snapshot.technicalSheets)) {
+    snapshot.technicalSheets.forEach((sheet) => {
+      addEntry(sheet?.title || "Fiche technique", "index.html#fiches-techniques", [sheet?.title], "Fiches");
+    });
+  }
+  loadFaqItems().forEach((faq) => {
+    addEntry(faq?.question || "FAQ", "faq.html", [faq?.answer], "FAQ");
+  });
+  const gamesSource = gamesCatalogDraft.length ? gamesCatalogDraft : normalizeGamesCatalog(snapshot?.gamesCatalog);
+  gamesSource.forEach((game) => {
+    addEntry(game?.title || "Jeu", "jeux.html", [game?.info], "Jeux");
+  });
+  const support = loadSupportSavContent();
+  addEntry(support?.title || "Support & SAV", "support-sav.html", [support?.subtitle, support?.badge], "Support");
+  (Array.isArray(support?.cards) ? support.cards : []).forEach((card) => {
+    addEntry(card?.title || "Support", "support-sav.html", [card?.text, card?.ctaLabel], "Support");
+  });
+  (Array.isArray(support?.steps) ? support.steps : []).forEach((step) => {
+    addEntry(step?.title || "Etape SAV", "support-sav.html", [step?.text], "Support");
+  });
+  if (snapshot.configurator && typeof snapshot.configurator === "object") {
+    (Array.isArray(snapshot.configurator.components) ? snapshot.configurator.components : []).forEach((component) => {
+      addEntry(
+        component?.label || "Composant",
+        "index.html?openConfigurator=1#configurateur",
+        (Array.isArray(component?.options) ? component.options : []).flatMap((option) => [option?.name, option?.description, option?.price]),
+        "Configurateur"
+      );
+    });
+    (Array.isArray(snapshot.configurator.services) ? snapshot.configurator.services : []).forEach((service) => {
+      addEntry(service?.label || "Service", "index.html?openConfigurator=1#configurateur", [service?.description, service?.price], "Configurateur");
+    });
+  }
+
+  const entries = Array.from(entriesMap.values());
+  const keywordMap = new Map();
+  const hiddenKeywordTerms = [
+    "cpu",
+    "gpu",
+    "ram",
+    "xpu",
+    "stockage",
+    "disque dur",
+    "nvme",
+    "mvme",
+    "rtx",
+    "intel i9",
+    "intel 9",
+    "ryzen",
+    "32 go",
+  ];
+  const hasHiddenKeyword = (value) => hiddenKeywordTerms.some((term) => normalize(value).includes(term));
+  const addKeyword = (label, term = "", category = "", href = "") => {
+    const cleanLabel = String(label || "").trim();
+    if (!cleanLabel) return;
+    if (isExcludedSearchTerm(cleanLabel) || isExcludedSearchTerm(term)) return;
+    if (hasHiddenKeyword(cleanLabel) || hasHiddenKeyword(term || cleanLabel)) return;
+    const normalizedLabel = normalize(cleanLabel);
+    const cleanTerm = String(term || cleanLabel).trim();
+    const cleanCategory = String(category || "").trim();
+    const cleanHref = String(href || "").trim();
+    const key = normalizedLabel;
+    if (!key || keywordMap.has(key)) return;
+    keywordMap.set(key, { label: cleanLabel, term: cleanTerm, category: cleanCategory, href: cleanHref });
+  };
+
+  const configuratorHref = "index.html?openConfigurator=1#configurateur";
+  [
+    ["Top Build", "top build", "Menu", "index.html#machines"],
+    ["Configurateur", "configurateur", "Menu", configuratorHref],
+    ["Fiches Techniques", "fiches techniques", "Menu", "index.html#fiches-techniques"],
+    ["Guides FPS", "guides fps", "Menu", "index.html#guides-fps"],
+    ["Support SAV", "support sav", "Menu", "support-sav.html"],
+    ["FAQ", "faq", "Menu", "faq.html"],
+    ["Telegram", "telegram", "Contact", "https://t.me/VortexCore460"],
+    ["Promo DLC", "promo dlc", "Promo", configuratorHref],
+  ].forEach((entry) => addKeyword(entry[0], entry[1], entry[2], entry[3]));
+
+  entries.forEach((item) => {
+    addKeyword(item.label, item.label, item.category || "", item.href || "");
+  });
+
+  if (snapshot.configurator && typeof snapshot.configurator === "object") {
+    const components = Array.isArray(snapshot.configurator.components) ? snapshot.configurator.components : [];
+    components.forEach((component) => {
+      const componentLabel = String(component?.label || "").trim();
+      if (componentLabel) addKeyword(componentLabel, componentLabel, "Configurateur", configuratorHref);
+      const options = Array.isArray(component?.options) ? component.options : [];
+      options.slice(0, 8).forEach((option) => {
+        const optionName = String(option?.name || "").trim();
+        if (optionName) addKeyword(optionName, optionName, "Configurateur", configuratorHref);
+      });
+    });
+  }
+
+  const premiumKeywords = Array.from(keywordMap.values()).slice(0, 120);
+  if (navSmartKeywordsEl && navSmartKeywordsListEl) {
+    if (!premiumKeywords.length) {
+      navSmartKeywordsEl.classList.add("hidden");
+    } else {
+      navSmartKeywordsEl.classList.remove("hidden");
+      const categoryOrder = ["Menu", "Gaming", "Configurateur", "Support", "FAQ", "Promo", "Contact", "Stockage", "A propos", "Jeux", "Fiches", "Guides"];
+      const grouped = premiumKeywords.reduce((acc, item) => {
+        const category = String(item.category || "Autres").trim() || "Autres";
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(item);
+        return acc;
+      }, {});
+      const sortedCategories = Object.keys(grouped).sort((a, b) => {
+        const ai = categoryOrder.indexOf(a);
+        const bi = categoryOrder.indexOf(b);
+        if (ai === -1 && bi === -1) return a.localeCompare(b, "fr");
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+      const sanitizeCategory = (value) =>
+        `kw-${String(value || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "autres"}`;
+      navSmartKeywordsListEl.innerHTML = sortedCategories
+        .map((category) => {
+          const safeCategory = sanitizeCategory(category);
+          const chips = grouped[category]
+            .map(
+              (item) =>
+                `<button class="nav-smart-keyword cat-${escapeHtml(safeCategory)}" type="button" data-term="${escapeHtml(item.term)}" data-href="${escapeHtml(item.href || "")}" title="${escapeHtml(
+                  item.category ? `${item.label} · ${item.category}` : item.label
+                )}">${escapeHtml(item.label)}</button>`
+            )
+            .join("");
+          return `
+            <section class="nav-smart-keyword-group">
+              <p class="nav-smart-keyword-group-title">${escapeHtml(category)}</p>
+              <div class="nav-smart-keyword-group-chips">${chips}</div>
+            </section>
+          `;
+        })
+        .join("");
+      navSmartKeywordsListEl.addEventListener("click", (event) => {
+        const chip = event.target.closest("button[data-term]");
+        if (!chip) return;
+        const href = String(chip.dataset.href || "").trim();
+        if (href) {
+          openHref(href);
+          return;
+        }
+        navSmartSearchInputEl.value = String(chip.dataset.term || "").trim();
+        navSmartSearchInputEl.dispatchEvent(new Event("input", { bubbles: true }));
+        navSmartSearchInputEl.focus();
+      });
+    }
+  }
+
   let activeIndex = -1;
   let visible = [];
 
@@ -521,7 +1365,7 @@ function initializeNavSmartSearch() {
   };
 
   const render = (items) => {
-    visible = items.slice(0, 6);
+    visible = items.slice(0, 8);
     if (!visible.length) {
       close();
       return;
@@ -533,7 +1377,7 @@ function initializeNavSmartSearch() {
       button.className = `nav-smart-item${index === activeIndex ? " active" : ""}`;
       button.dataset.index = String(index);
       button.dataset.href = item.href;
-      button.textContent = item.label;
+      button.textContent = item.category ? `${item.label} · ${item.category}` : item.label;
       navSmartResultsEl.appendChild(button);
     });
     navSmartResultsEl.classList.remove("hidden");
@@ -543,13 +1387,41 @@ function initializeNavSmartSearch() {
     if (String(navSmartSearchInputEl.value || "").includes("@")) {
       navSmartSearchInputEl.value = "";
     }
-    const query = String(navSmartSearchInputEl.value || "").trim().toLowerCase();
+    const query = normalize(navSmartSearchInputEl.value || "");
     if (query.length < 2) {
       close();
       return;
     }
-    activeIndex = 0;
-    const items = entries.filter((item) => item.label.toLowerCase().includes(query) || item.href.toLowerCase().includes(query));
+    const terms = query.split(/\s+/).filter((term) => term.length > 0);
+    const items = entries
+      .map((item) => {
+        let matched = 0;
+        let score = 0;
+        terms.forEach((term) => {
+          if (normalize(item.label).includes(term)) {
+            matched += 1;
+            score += 120;
+            return;
+          }
+          if (normalize(item.keywords).includes(term)) {
+            matched += 1;
+            score += 65;
+            return;
+          }
+          if (item.haystack.includes(term)) {
+            matched += 1;
+            score += 35;
+          }
+        });
+        if (!matched) return null;
+        if (normalize(item.label) === query) score += 180;
+        if (normalize(item.label).startsWith(query)) score += 80;
+        return { item, score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score)
+      .map((result) => result.item);
+    activeIndex = items.length ? 0 : -1;
     render(items);
   });
 
@@ -618,6 +1490,7 @@ function normalizeMenuBadges(value) {
     support: normalize("support"),
     fiches: normalize("fiches"),
     guides: normalize("guides"),
+    jeux: normalize("jeux"),
     about: normalize("about"),
     faq: normalize("faq"),
   };
@@ -646,6 +1519,12 @@ function renderPremiumBreadcrumbForPage(currentLabel) {
   const el = document.getElementById("premium-breadcrumb");
   if (!el) return;
   const safeCurrent = String(currentLabel || "").trim() || "Page";
+  if (safeCurrent.toLowerCase() === "faq") {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+  el.classList.remove("hidden");
   el.innerHTML = `<a class="crumb" href="index.html">Accueil</a><span class="sep">›</span><span class="crumb current">${escapeHtml(
     safeCurrent
   )}</span>`;
@@ -658,7 +1537,7 @@ function initializePageTransitions() {
     window.setTimeout(() => {
       document.body.classList.remove("page-enter");
       document.body.classList.remove("page-enter-active");
-    }, 320);
+    }, 620);
   });
 
   document.addEventListener(
@@ -681,7 +1560,7 @@ function initializePageTransitions() {
       document.body.classList.add("page-exit");
       window.setTimeout(() => {
         window.location.href = targetUrl.href;
-      }, 190);
+      }, 320);
     },
     true
   );
@@ -797,28 +1676,125 @@ function isAdminEmail(email) {
   return String(email || "").trim().toLowerCase() === ADMIN_EMAIL;
 }
 
-function refreshNavSessionButtons() {
+function getCurrentAuthEmail() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
-  const isLoggedIn = isAllowedOutlookEmail(sessionEmail);
+  if (isAllowedOutlookEmail(sessionEmail)) return sessionEmail;
+  const rememberedEmail = getRememberedAuthEmail();
+  return isAllowedOutlookEmail(rememberedEmail) ? rememberedEmail : "";
+}
+
+function refreshNavSessionButtons() {
+  const authEmail = getCurrentAuthEmail();
+  const isLoggedIn = isAllowedOutlookEmail(authEmail);
   if (userProfileToggleBtn) userProfileToggleBtn.classList.toggle("hidden", !isLoggedIn);
-  if (adminToggle) adminToggle.classList.toggle("hidden", !(isLoggedIn && isAdminEmail(sessionEmail)));
+  if (adminToggle) adminToggle.classList.toggle("hidden", !(isLoggedIn && isAdminEmail(authEmail)));
+  refreshNavAssignedFilesBadge();
+}
+
+function refreshNavAssignedFilesBadge() {
+  const gamesMenuLink = document.querySelector('.nav-links a[data-menu-key="jeux"]');
+  if (!gamesMenuLink) return;
+
+  gamesMenuLink.querySelectorAll(".nav-assigned-file-badge").forEach((el) => el.remove());
+  delete gamesMenuLink.dataset.assignedFilesCount;
+  gamesMenuLink.classList.remove("has-assigned-files");
+
+  const email = getCurrentAuthEmail();
+  if (!isAllowedOutlookEmail(email)) {
+    gamesMenuLink.title = "Jeux";
+    return;
+  }
+
+  let assignments = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    assignments = Array.isArray(parsed?.processus?.gamesAssignments) ? parsed.processus.gamesAssignments : [];
+  } catch (error) {
+    assignments = [];
+  }
+
+  const now = Date.now();
+  const availableCount = assignments.filter((item) => {
+    const owner = String(item?.email || "").trim().toLowerCase();
+    if (!owner || owner !== email) return false;
+    if (Boolean(item?.revoked)) return false;
+    const maxDownloads = Math.max(1, Math.round(Number(item?.maxDownloads) || 1));
+    const done = Math.max(0, Math.round(Number(item?.downloadCount) || 0));
+    if (done >= maxDownloads) return false;
+    if (item?.expiresAt) {
+      const expiresAt = new Date(item.expiresAt).getTime();
+      if (Number.isFinite(expiresAt) && expiresAt > 0 && expiresAt < now) return false;
+    }
+    return Boolean(String(item?.filePath || "").trim());
+  }).length;
+
+  if (availableCount <= 0) {
+    gamesMenuLink.title = "Jeux";
+    return;
+  }
+
+  gamesMenuLink.dataset.assignedFilesCount = String(availableCount);
+  gamesMenuLink.classList.add("has-assigned-files");
+  gamesMenuLink.title = `Jeux - ${availableCount} fichier ZIP disponible${availableCount > 1 ? "s" : ""}`;
+
+  const badge = document.createElement("span");
+  badge.className = "nav-assigned-file-badge";
+  badge.textContent = `ZIP ${availableCount}`;
+  badge.setAttribute("aria-hidden", "true");
+  gamesMenuLink.appendChild(badge);
+
+  const dot = document.createElement("span");
+  dot.className = "nav-assigned-file-dot";
+  dot.setAttribute("aria-hidden", "true");
+  gamesMenuLink.appendChild(dot);
 }
 
 function updateAdminToggleVisibility() {
   if (!adminToggle) return;
-  const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
-  adminToggle.classList.toggle("hidden", !isAdminEmail(sessionEmail));
+  const authEmail = getCurrentAuthEmail();
+  adminToggle.classList.toggle("hidden", !isAdminEmail(authEmail));
   refreshAdminLiveMode();
 }
 
 function isAdminLiveMode() {
-  const email = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
+  const email = getCurrentAuthEmail();
   return isAdminEmail(email) && sessionStorage.getItem(ADMIN_LIVE_MODE_KEY) !== "0";
 }
 
 function refreshAdminLiveMode() {
-  if (!adminLiveExitBtn) return;
-  adminLiveExitBtn.classList.toggle("hidden", !isAdminLiveMode());
+  const isLive = isAdminLiveMode();
+  if (adminLiveExitBtn) adminLiveExitBtn.classList.toggle("hidden", !isLive);
+  renderGamesAdminDebug();
+  if (gamesGridEl) {
+    renderGamesCatalog().catch(() => {});
+  }
+}
+
+function renderGamesAdminDebug() {
+  const debugEl = document.getElementById("games-admin-debug");
+  if (!debugEl) return;
+  const email = getCurrentAuthEmail();
+  const isLogged = isAllowedOutlookEmail(email);
+  const isAdmin = isAdminEmail(email);
+  if (!isAdmin) {
+    debugEl.classList.add("hidden");
+    debugEl.innerHTML = "";
+    return;
+  }
+  debugEl.classList.remove("hidden");
+  const liveKey = String(sessionStorage.getItem(ADMIN_LIVE_MODE_KEY) || "(vide)");
+  const live = isAdminLiveMode();
+  const state = live ? "ON" : "OFF";
+  debugEl.classList.remove("ok", "ko");
+  debugEl.classList.add(live ? "ok" : "ko");
+  debugEl.innerHTML = `
+    <strong>ADMIN DEBUG: ${state}</strong>
+    <span>Email: ${escapeHtml(email || "aucun")}</span>
+    <span>Outlook: ${isLogged ? "oui" : "non"}</span>
+    <span>Admin: ${isAdmin ? "oui" : "non"}</span>
+    <span>LIVE_KEY: ${escapeHtml(liveKey)}</span>
+  `;
 }
 
 function loadUserLog() {
@@ -866,7 +1842,16 @@ function loadSiteUsers() {
 }
 
 function saveSiteUsers(users) {
-  localStorage.setItem(SITE_USERS_KEY, JSON.stringify(users));
+  const source = Array.isArray(users) ? users : [];
+  const seen = new Set();
+  const deduped = [];
+  source.forEach((item) => {
+    const email = String(item?.email || "").trim().toLowerCase();
+    if (!email || seen.has(email)) return;
+    seen.add(email);
+    deduped.push({ ...item, email });
+  });
+  localStorage.setItem(SITE_USERS_KEY, JSON.stringify(deduped));
   persistUserStateToDiskAuto();
 }
 
@@ -1255,6 +2240,7 @@ function initializeForgotPasswordFlow() {
 }
 
 function unlockSite() {
+  document.documentElement.classList.add("vb-auth-ok");
   document.body.classList.remove("site-locked");
   if (authGateEl) authGateEl.classList.add("hidden");
   if (userLogoutBtn) userLogoutBtn.classList.remove("hidden");
@@ -1266,9 +2252,13 @@ function unlockSite() {
   updateAdminToggleVisibility();
   applyBackgroundMusicAccess();
   refreshAdminLiveMode();
+  if (gamesGridEl) {
+    renderGamesCatalog().catch(() => {});
+  }
 }
 
 function lockSite() {
+  document.documentElement.classList.remove("vb-auth-ok");
   document.body.classList.add("site-locked");
   if (authGateEl) authGateEl.classList.remove("hidden");
   if (userLogoutBtn) userLogoutBtn.classList.add("hidden");
@@ -1276,6 +2266,9 @@ function lockSite() {
   if (adminLiveExitBtn) adminLiveExitBtn.classList.add("hidden");
   sessionStorage.removeItem(ADMIN_LIVE_MODE_KEY);
   applyBackgroundMusicAccess();
+  if (gamesGridEl) {
+    renderGamesCatalog().catch(() => {});
+  }
 }
 
 function initializeSiteAuth() {
@@ -1392,28 +2385,32 @@ function loadSupportSavContent() {
 
 async function hydrateContentFromDiskIfMissing() {
   const rawStored = localStorage.getItem(STORAGE_KEY);
+  let parsedStored = null;
   let shouldHydrate = !rawStored;
 
   if (!shouldHydrate) {
     try {
-      const parsed = JSON.parse(rawStored);
+      parsedStored = JSON.parse(rawStored);
       const hasRequiredStructure =
-        parsed &&
-        typeof parsed === "object" &&
-        Array.isArray(parsed.faq);
+        parsedStored &&
+        typeof parsedStored === "object" &&
+        (Array.isArray(parsedStored.faqItems) || Array.isArray(parsedStored.gamesCatalog));
       if (!hasRequiredStructure) shouldHydrate = true;
     } catch (error) {
       shouldHydrate = true;
     }
   }
 
-  if (!shouldHydrate) return false;
-
   try {
     const response = await fetch("/api/content", { cache: "no-store" });
     if (!response.ok) return false;
     const payload = await response.json();
     if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return false;
+    if (!shouldHydrate && parsedStored) {
+      try {
+        if (JSON.stringify(parsedStored) === JSON.stringify(payload.content)) return false;
+      } catch (error) {}
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.content));
     return true;
   } catch (error) {
@@ -1445,12 +2442,197 @@ function renderFaq() {
     .join("");
 }
 
+async function renderGamesCatalog(options = {}) {
+  if (!gamesGridEl) return;
+  const previousMarkup = String(gamesGridEl.innerHTML || "");
+  const useCache = Boolean(options?.useCache);
+  let games = [];
+  let loaded = false;
+
+  if (useCache && Array.isArray(gamesCatalogCache) && gamesCatalogCache.length) {
+    games = normalizeGamesCatalog(gamesCatalogCache);
+    loaded = true;
+  } else if (useCache) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      const localGames = normalizeGamesCatalog(parsed?.gamesCatalog);
+      if (localGames.length) {
+        games = localGames;
+        loaded = true;
+      }
+    } catch (error) {}
+  } else {
+    try {
+      const response = await fetch(`/api/games-catalog?ts=${Date.now()}`, { cache: "no-store" });
+      if (response.ok) {
+        const payload = await response.json();
+        games = normalizeGamesCatalog(payload?.gamesCatalog);
+        loaded = true;
+      }
+    } catch (error) {}
+  }
+
+  // Fallback 1: read static content file directly.
+  if (!games.length) {
+    try {
+      const response = await fetch(`/data/site-content.json?ts=${Date.now()}`, { cache: "no-store" });
+      if (response.ok) {
+        const content = await response.json();
+        games = normalizeGamesCatalog(content?.gamesCatalog);
+        loaded = true;
+      }
+    } catch (error) {}
+  }
+
+  // Fallback 2: legacy API.
+  if (!games.length) {
+    try {
+      const response = await fetch(`/api/content?ts=${Date.now()}`, { cache: "no-store" });
+      if (response.ok) {
+        const payload = await response.json();
+        games = normalizeGamesCatalog(payload?.content?.gamesCatalog);
+        loaded = true;
+      }
+    } catch (error) {}
+  }
+
+  // Fallback 3: local cache only if server sources unavailable.
+  if (!games.length) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      games = normalizeGamesCatalog(parsed?.gamesCatalog);
+    } catch (error) {}
+  }
+
+  if (!games.length) {
+    renderGamesResultsToolbar(0, 0, 1, 1);
+    renderGamesCatalogEmptyState();
+    return;
+  }
+
+  gamesCatalogCache = games.map((item) => ({ ...item }));
+  gamesCatalogDraft = normalizeGamesCatalog(games).map((item) => ({ ...item }));
+  const adminEditable = isAdminLiveMode();
+
+  try {
+    const renderableGames = await ensureRenderableGameCovers(games);
+    const source = renderableGames.length ? renderableGames : games;
+    const indexedSource = source.map((item, index) => ({ item, index }));
+    const needle = normalizeGameText(gamesSearchTerm);
+    const displaySource = needle
+      ? indexedSource.filter(({ item }) => normalizeGameText(item?.title || "").includes(needle))
+      : indexedSource;
+
+    if (!displaySource.length) {
+      renderGamesResultsToolbar(source.length, 0, 1, 1);
+      renderGamesCatalogNoResultState();
+      return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(displaySource.length / gamesPageSize));
+    if (gamesCurrentPage > totalPages) gamesCurrentPage = totalPages;
+    if (gamesCurrentPage < 1) gamesCurrentPage = 1;
+    const startIndex = (gamesCurrentPage - 1) * gamesPageSize;
+    const pagedSource = displaySource.slice(startIndex, startIndex + gamesPageSize);
+    renderGamesResultsToolbar(source.length, displaySource.length, totalPages, gamesCurrentPage);
+
+    gamesGridEl.classList.remove("is-ready");
+    const cardsMarkup = pagedSource
+      .map(({ item, index }) => {
+        const current = gamesCatalogDraft[index] || item;
+        const hasInfo = Boolean(String(current.info || "").trim());
+        const infoEncoded = encodeURIComponent(String(current.info || ""));
+        const titleValue = String(current.title || item.title || "Info jeu");
+        return `
+        <article class="game-cover-card" data-game-index="${index}" style="--game-stagger:${index}">
+          ${
+            adminEditable
+              ? `
+          <div class="games-admin-card-tools">
+            <button class="games-admin-btn" type="button" data-game-admin-action="replace" data-game-index="${index}">Image</button>
+            <button class="games-admin-btn" type="button" data-game-admin-action="rename" data-game-index="${index}">Titre</button>
+            <button class="games-admin-btn" type="button" data-game-admin-action="info" data-game-index="${index}">I</button>
+            <button class="games-admin-btn danger" type="button" data-game-admin-action="delete" data-game-index="${index}">X</button>
+            <input class="games-admin-file-input" id="games-admin-file-${index}" type="file" accept="image/*" data-game-index="${index}" />
+          </div>
+          `
+              : ""
+          }
+          <div class="game-cover-topbar">
+            <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
+            <span>VortexBox Premium</span>
+          </div>
+          <div class="game-cover-media-wrap" data-game-title="${escapeHtml(current.title || item.title)}" style="--cover-url:url('${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image))).replace(/'/g, "%27")}')">
+            <button class="game-cover-info-btn ${hasInfo ? "" : "is-empty"}" type="button" data-game-index="${index}" data-game-title="${escapeHtml(titleValue)}" data-game-info="${escapeHtml(infoEncoded)}" aria-label="Information jeu">i</button>
+            <img
+              class="game-cover-media"
+              src="${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image)))}"
+              alt="${escapeHtml(item.title)}"
+              loading="${index < 3 ? "eager" : "lazy"}"
+              decoding="async"
+              onerror="this.onerror=null;this.src='/favicon-vb.svg';"
+            />
+          </div>
+          <p class="game-cover-title">${escapeHtml(current.title || item.title || `Jeu ${index + 1}`)}</p>
+        </article>
+      `;
+      })
+      .join("");
+    const toolbarMarkup = adminEditable
+      ? `
+      <div class="games-admin-toolbar">
+        <button class="games-admin-btn" type="button" data-game-admin-action="add">+ Ajouter jaquette</button>
+        <button class="games-admin-btn" type="button" data-game-admin-action="sort-az">Trier A → Z</button>
+        <button class="games-admin-btn" type="button" data-game-admin-action="import-zip">Importer ZIP/RAR jaquettes</button>
+        <input id="games-admin-add-file" class="games-admin-file-input" type="file" accept="image/*" />
+        <input id="games-admin-import-zip" class="games-admin-file-input" type="file" accept=".zip,.rar,application/zip,application/vnd.rar,application/x-rar-compressed" />
+        <span class="games-admin-notice info" id="games-admin-notice">Mode admin actif: modifiez les jaquettes directement ici.</span>
+      </div>
+    `
+      : "";
+    gamesGridEl.innerHTML = `${toolbarMarkup}${cardsMarkup}`;
+  } catch (error) {
+    // Keep the static HTML cards if dynamic rendering fails for any reason.
+    if (previousMarkup.trim()) gamesGridEl.innerHTML = previousMarkup;
+  }
+  initializeGamesPremiumEffects();
+  window.requestAnimationFrame(() => gamesGridEl.classList.add("is-ready"));
+}
+
+if (gamesSearchInputEl) {
+  gamesSearchInputEl.addEventListener("input", () => {
+    gamesSearchTerm = String(gamesSearchInputEl.value || "").trim();
+    gamesCurrentPage = 1;
+    renderGamesCatalog({ useCache: true }).catch(() => {});
+  });
+}
+
+if (gamesResultsToolbarEl) {
+  gamesResultsToolbarEl.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-games-page-action]");
+    if (!button) return;
+    const action = String(button.dataset.gamesPageAction || "");
+    if (action === "prev") gamesCurrentPage = Math.max(1, gamesCurrentPage - 1);
+    if (action === "next") gamesCurrentPage += 1;
+    renderGamesCatalog({ useCache: true }).catch(() => {});
+  });
+  gamesResultsToolbarEl.addEventListener("change", (event) => {
+    const select = event.target.closest("#games-page-size");
+    if (!select) return;
+    gamesPageSize = Math.max(12, Math.min(120, Number(select.value) || 24));
+    gamesCurrentPage = 1;
+    renderGamesCatalog({ useCache: true }).catch(() => {});
+  });
+}
+
 function renderSupportSav() {
   const content = loadSupportSavContent();
   if (supportSavBadgeEl) supportSavBadgeEl.textContent = content.badge;
   if (supportSavTitleEl) supportSavTitleEl.textContent = content.title;
   if (supportSavSubtitleEl) supportSavSubtitleEl.textContent = content.subtitle;
-  if (supportSavCtaEl) supportSavCtaEl.setAttribute("href", content.telegramUrl || "https://t.me/vortexboxpro");
+  if (supportSavCtaEl) supportSavCtaEl.setAttribute("href", content.telegramUrl || "https://t.me/VortexCore460");
 
   if (supportSavCardsEl) {
     supportSavCardsEl.innerHTML = content.cards
@@ -1459,7 +2641,7 @@ function renderSupportSav() {
         <article class="about-card">
           <h3>${escapeHtml(item.title)}</h3>
           <p>${escapeHtml(item.text)}</p>
-          <a class="cta" href="${escapeHtml(content.telegramUrl || "https://t.me/vortexboxpro")}" target="_blank" rel="noopener noreferrer">${escapeHtml(
+          <a class="cta" href="${escapeHtml(content.telegramUrl || "https://t.me/VortexCore460")}" target="_blank" rel="noopener noreferrer">${escapeHtml(
             item.ctaLabel || "En savoir plus"
           )}</a>
         </article>
@@ -1534,12 +2716,17 @@ function initializeVortexBot() {
 
     if (action === "go-configurator") {
       addVortexBotMessage("J'ouvre le configurateur.", "bot");
-      window.location.href = "index.html#configurateur";
+      window.location.href = "index.html?openConfigurator=1#configurateur";
+      return;
+    }
+    if (action === "go-ai-advisor") {
+      addVortexBotMessage("Je lance votre conseiller IA.", "bot");
+      window.location.href = "index.html?openConfigurator=1&aiAdvisor=1#configurateur";
       return;
     }
     if (action === "go-telegram") {
       addVortexBotMessage("Je vous redirige vers Telegram.", "bot");
-      window.open("https://t.me/vortexboxpro", "_blank", "noopener,noreferrer");
+      window.open("https://t.me/VortexCore460", "_blank", "noopener,noreferrer");
     }
   });
 }
@@ -1616,17 +2803,6 @@ if (siteLoginFormEl) {
         return;
       }
       if (existing && existing.isActive) {
-        if (existing.password === password) {
-          setPendingActivation("");
-          showActivationStep(false);
-          sessionStorage.setItem(AUTH_SESSION_KEY, email);
-          sessionStorage.removeItem(SESSION_KEY);
-          syncRememberPreference(email);
-          recordUserLogin(email);
-          unlockSite();
-          setAuthFeedback("");
-          return;
-        }
         setAuthFeedback("Ce compte existe déjà. Passez sur Utilisateur pour vous connecter.", "error");
         return;
       }
@@ -1652,6 +2828,11 @@ if (siteLoginFormEl) {
       saveSiteUsers(users);
       setPendingActivation(email);
       showActivationStep(true);
+      if (siteActivationCodeEl) {
+        siteActivationCodeEl.value = code;
+        siteActivationCodeEl.focus();
+        siteActivationCodeEl.select();
+      }
       setAuthFeedback(`Code d'activation: ${code} (10 caractères). Conservez-le pour activer le compte.`, "success");
       return;
     }
@@ -1764,12 +2945,83 @@ if (userProfileToggleBtn) {
   });
 }
 
+function mountPremiumPreloader() {
+  if (document.querySelector(".vb-preloader")) return;
+  const preloader = document.createElement("div");
+  preloader.className = "vb-preloader";
+  preloader.innerHTML = `
+    <div class="vb-preloader-core">
+      <div class="vb-preloader-logo"><img src="favicon-vb.svg" alt="VB" /></div>
+      <div class="vb-preloader-text">VortexBox Premium</div>
+    </div>
+  `;
+  document.body.appendChild(preloader);
+  requestAnimationFrame(() => preloader.classList.add("is-ready"));
+  const hide = () => {
+    preloader.classList.add("is-hidden");
+    window.setTimeout(() => preloader.remove(), 450);
+  };
+  window.addEventListener("load", hide, { once: true });
+  window.setTimeout(hide, 1400);
+}
+
+function initializePremiumRevealAndSpotlight() {
+  const revealTargets = Array.from(
+    document.querySelectorAll("main section, .faq-hero, .support-sav-hero, .support-sav-grid, .games-catalog-wrap")
+  );
+  revealTargets.forEach((el) => {
+    if (el.classList.contains("vb-reveal")) return;
+    el.classList.add("vb-reveal");
+  });
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.14, rootMargin: "0px 0px -8% 0px" }
+    );
+    revealTargets.forEach((el) => observer.observe(el));
+  } else {
+    revealTargets.forEach((el) => el.classList.add("is-visible"));
+  }
+
+  const spotTargets = Array.from(
+    document.querySelectorAll(".about-card, .games-empty-state, .game-cover-card, .faq-item, .support-sav-card")
+  );
+  spotTargets.forEach((el) => {
+    el.classList.add("vb-spotlight-target");
+    el.addEventListener("pointermove", (event) => {
+      const rect = el.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      const y = ((event.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
+      el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
+      el.style.setProperty("--vb-spot-a", "1");
+    });
+    el.addEventListener("pointerleave", () => {
+      el.style.setProperty("--vb-spot-a", "0");
+    });
+  });
+}
+
+function initializeUltraPremiumVisuals() {
+  mountPremiumPreloader();
+  initializePremiumRevealAndSpotlight();
+}
+
 async function initializeFaqPage() {
+  refreshNavSessionButtons();
   const hydratedUserState = await hydrateUserStateFromDisk();
   if (!hydratedUserState) persistUserStateToDiskAuto();
   applyNavThemeFromStorage();
   await hydrateContentFromDiskIfMissing();
-  if (faqListEl && !supportSavCardsEl) {
+  if (gamesGridEl) {
+    await renderGamesCatalog();
+  } else if (faqListEl && !supportSavCardsEl) {
     renderFaq();
   } else {
     renderSupportSav();
@@ -1785,11 +3037,15 @@ async function initializeFaqPage() {
   initializePasswordStrengthMeter();
   initializeForgotPasswordFlow();
   initializePageTransitions();
+  initializeUltraPremiumVisuals();
   initializeSiteAuth();
+  renderGamesAdminDebug();
   refreshNavSessionButtons();
   window.addEventListener("pageshow", refreshNavSessionButtons);
   window.addEventListener("storage", (event) => {
-    if (event.key === AUTH_SESSION_KEY) refreshNavSessionButtons();
+    if (event.key === AUTH_SESSION_KEY || event.key === AUTH_REMEMBER_KEY || event.key === STORAGE_KEY) {
+      refreshNavSessionButtons();
+    }
   });
   initializeVortexBot();
 }

@@ -12,28 +12,49 @@ const ROOT_DIR = process.cwd();
 const UPLOADS_DIR = path.join(ROOT_DIR, "uploads");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const CONTENT_FILE = path.join(DATA_DIR, "site-content.json");
+const CONTENT_BACKUPS_DIR = path.join(DATA_DIR, "content-backups");
 const USER_STATE_FILE = path.join(DATA_DIR, "user-state.json");
 const MAX_JSON_BYTES = 15 * 1024 * 1024;
 const MAX_BINARY_UPLOAD_BYTES = 1 * 1024 * 1024 * 1024;
 const ENV_FILE = path.join(ROOT_DIR, ".env");
-const ALLOWED_UPLOAD_EXTENSIONS = new Set([
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".webp",
-  ".svg",
-  ".gif",
-  ".heic",
-  ".heif",
-  ".mp4",
-  ".webm",
-  ".m4v",
-  ".mov",
-  ".qt",
-  ".mp3",
-  ".pdf",
-  ".ico",
+const ALLOWED_UPLOAD_KINDS = new Set([
+  "showcase",
+  "technical-images",
+  "technical-docs",
+  "processus",
+  "configurator",
+  "component-images",
+  "about-videos",
+  "about-gallery",
+  "machine-images",
+  "machine-videos",
+  "games-covers",
+  "games-zips",
 ]);
+const UPLOAD_KIND_EXTENSIONS = {
+  image: new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".heic", ".heif", ".avif", ".bmp", ".jfif"]),
+  video: new Set([".mp4", ".webm", ".m4v", ".mov", ".qt"]),
+  doc: new Set([".pdf"]),
+  archive: new Set([".zip", ".rar"]),
+  audio: new Set([".mp3"]),
+  icon: new Set([".ico"]),
+};
+const ALLOWED_UPLOAD_EXTENSIONS = new Set([
+  ...UPLOAD_KIND_EXTENSIONS.image,
+  ...UPLOAD_KIND_EXTENSIONS.video,
+  ...UPLOAD_KIND_EXTENSIONS.doc,
+  ...UPLOAD_KIND_EXTENSIONS.archive,
+  ...UPLOAD_KIND_EXTENSIONS.audio,
+  ...UPLOAD_KIND_EXTENSIONS.icon,
+]);
+const UPLOAD_MAX_BYTES_BY_TYPE = {
+  image: 25 * 1024 * 1024,
+  video: 1 * 1024 * 1024 * 1024,
+  doc: 30 * 1024 * 1024,
+  archive: 1 * 1024 * 1024 * 1024,
+  audio: 30 * 1024 * 1024,
+  icon: 5 * 1024 * 1024,
+};
 
 function loadDotEnvFile() {
   try {
@@ -80,6 +101,9 @@ const MIME_TYPES = {
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
   ".gif": "image/gif",
+  ".avif": "image/avif",
+  ".bmp": "image/bmp",
+  ".jfif": "image/jpeg",
   ".heic": "image/heic",
   ".heif": "image/heif",
   ".mp4": "video/mp4",
@@ -89,6 +113,8 @@ const MIME_TYPES = {
   ".qt": "video/quicktime",
   ".mp3": "audio/mpeg",
   ".pdf": "application/pdf",
+  ".zip": "application/zip",
+  ".rar": "application/vnd.rar",
   ".ico": "image/x-icon",
 };
 
@@ -202,6 +228,8 @@ function extFromMime(mime) {
   const type = String(mime || "").toLowerCase();
   if (type.includes("png")) return ".png";
   if (type.includes("jpeg") || type.includes("jpg")) return ".jpg";
+  if (type.includes("avif")) return ".avif";
+  if (type.includes("bmp")) return ".bmp";
   if (type.includes("webp")) return ".webp";
   if (type.includes("svg")) return ".svg";
   if (type.includes("gif")) return ".gif";
@@ -213,6 +241,8 @@ function extFromMime(mime) {
   if (type.includes("quicktime")) return ".mov";
   if (type.includes("mpeg")) return ".mp3";
   if (type.includes("pdf")) return ".pdf";
+  if (type.includes("zip")) return ".zip";
+  if (type.includes("rar")) return ".rar";
   return ".bin";
 }
 
@@ -222,6 +252,51 @@ function isAllowedUploadExtension(ext) {
 
 function isVideoExtension(ext) {
   return [".mp4", ".mov", ".m4v", ".qt", ".webm"].includes(String(ext || "").toLowerCase());
+}
+
+function resolveUploadTypeFromExt(ext) {
+  const normalized = String(ext || "").toLowerCase();
+  if (UPLOAD_KIND_EXTENSIONS.image.has(normalized)) return "image";
+  if (UPLOAD_KIND_EXTENSIONS.video.has(normalized)) return "video";
+  if (UPLOAD_KIND_EXTENSIONS.doc.has(normalized)) return "doc";
+  if (UPLOAD_KIND_EXTENSIONS.archive.has(normalized)) return "archive";
+  if (UPLOAD_KIND_EXTENSIONS.audio.has(normalized)) return "audio";
+  if (UPLOAD_KIND_EXTENSIONS.icon.has(normalized)) return "icon";
+  return "";
+}
+
+function isAllowedUploadKind(kind) {
+  return ALLOWED_UPLOAD_KINDS.has(String(kind || "").toLowerCase());
+}
+
+function isExtensionAllowedForKind(kind, ext) {
+  const safeKind = String(kind || "").toLowerCase();
+  const safeExt = String(ext || "").toLowerCase();
+  if (!isAllowedUploadKind(safeKind)) return false;
+  if (safeKind === "about-videos" || safeKind === "machine-videos") {
+    return UPLOAD_KIND_EXTENSIONS.video.has(safeExt);
+  }
+  if (safeKind === "technical-docs") {
+    return UPLOAD_KIND_EXTENSIONS.doc.has(safeExt);
+  }
+  if (safeKind === "processus") {
+    return UPLOAD_KIND_EXTENSIONS.doc.has(safeExt) || UPLOAD_KIND_EXTENSIONS.archive.has(safeExt);
+  }
+  if (safeKind === "games-zips") {
+    return UPLOAD_KIND_EXTENSIONS.archive.has(safeExt);
+  }
+  if (safeKind === "showcase" || safeKind === "technical-images" || safeKind === "configurator" || safeKind === "component-images" || safeKind === "about-gallery" || safeKind === "machine-images" || safeKind === "games-covers") {
+    return UPLOAD_KIND_EXTENSIONS.image.has(safeExt);
+  }
+  return isAllowedUploadExtension(safeExt);
+}
+
+function isFileSizeAllowedByExt(ext, bytes) {
+  const type = resolveUploadTypeFromExt(ext);
+  if (!type) return false;
+  const maxBytes = Number(UPLOAD_MAX_BYTES_BY_TYPE[type] || 0);
+  if (!maxBytes) return false;
+  return Number(bytes || 0) <= maxBytes;
 }
 
 function runFfmpeg(args) {
@@ -242,6 +317,83 @@ function runFfmpeg(args) {
       reject(new Error(stderr || `ffmpeg a échoué (code ${code})`));
     });
   });
+}
+
+function runCommand(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args);
+    let stderr = "";
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString("utf8");
+    });
+    child.on("error", (error) => {
+      reject(new Error(error.message || `${command} indisponible`));
+    });
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+      reject(new Error(stderr || `${command} a échoué (code ${code})`));
+    });
+  });
+}
+
+async function runCommandCandidates(candidates, args) {
+  let lastError = null;
+  for (const command of candidates) {
+    if (!command) continue;
+    try {
+      await runCommand(command, args);
+      return command;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("Commande indisponible.");
+}
+
+async function walkDirRecursive(dirPath) {
+  const output = [];
+  let entries = [];
+  try {
+    entries = await fsp.readdir(dirPath, { withFileTypes: true });
+  } catch (error) {
+    return output;
+  }
+  for (const entry of entries) {
+    const abs = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      const nested = await walkDirRecursive(abs);
+      output.push(...nested);
+      continue;
+    }
+    if (entry.isFile()) output.push(abs);
+  }
+  return output;
+}
+
+function buildGameTitleFromPath(relativePath, fallbackIndex = 1) {
+  const base = path.basename(String(relativePath || ""), path.extname(String(relativePath || "")));
+  const cleaned = String(base || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return `Jeu ${fallbackIndex}`;
+  return cleaned
+    .split(" ")
+    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : ""))
+    .join(" ");
+}
+
+async function loadContentFileSafe() {
+  try {
+    const raw = await fsp.readFile(CONTENT_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    return {};
+  }
 }
 
 function runSipsConvertToJpeg(inputAbsolute, outputAbsolute) {
@@ -418,7 +570,10 @@ function parseDataUrl(dataUrl) {
   if (!match) return null;
   const mime = match[1] || "application/octet-stream";
   const base64 = match[2].replace(/\s+/g, "");
-  return { mime, buffer: Buffer.from(base64, "base64") };
+  if (!/^[a-z0-9+/=]+$/i.test(base64)) return null;
+  const buffer = Buffer.from(base64, "base64");
+  if (!buffer || !buffer.length) return null;
+  return { mime, buffer };
 }
 
 async function readJsonBody(req) {
@@ -446,6 +601,11 @@ async function readJsonBody(req) {
   });
 }
 
+function hasJsonContentType(req) {
+  const contentType = String(req.headers["content-type"] || "").toLowerCase();
+  return contentType.includes("application/json");
+}
+
 function resolveSafePath(urlPath) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
   const clean = decoded === "/" ? "/index.html" : decoded;
@@ -457,6 +617,10 @@ function resolveSafePath(urlPath) {
 async function handleUpload(req, res) {
   const body = await readJsonBody(req);
   const kind = sanitizeName(body.kind || "misc", "misc");
+  if (!isAllowedUploadKind(kind)) {
+    sendJson(res, 400, { ok: false, error: "Dossier upload non autorisé." });
+    return;
+  }
   const originalName = sanitizeName(body.fileName || "file", "file");
   const parsed = parseDataUrl(body.dataUrl);
   if (!parsed) {
@@ -467,6 +631,14 @@ async function handleUpload(req, res) {
   const ext = (path.extname(originalName) || extFromMime(parsed.mime)).toLowerCase();
   if (!isAllowedUploadExtension(ext)) {
     sendJson(res, 400, { ok: false, error: "Type de fichier non autorisé." });
+    return;
+  }
+  if (!isExtensionAllowedForKind(kind, ext)) {
+    sendJson(res, 400, { ok: false, error: "Extension non autorisée pour ce dossier." });
+    return;
+  }
+  if (!isFileSizeAllowedByExt(ext, parsed.buffer.length)) {
+    sendJson(res, 413, { ok: false, error: "Fichier trop volumineux pour ce type." });
     return;
   }
   const base = path.basename(originalName, path.extname(originalName)) || "file";
@@ -504,6 +676,10 @@ async function handleUpload(req, res) {
 
 async function handleBinaryUpload(req, res) {
   const kind = sanitizeName(req.headers["x-upload-kind"] || "misc", "misc");
+  if (!isAllowedUploadKind(kind)) {
+    sendJson(res, 400, { ok: false, error: "Dossier upload non autorisé." });
+    return;
+  }
   const uploadId = sanitizeName(req.headers["x-upload-id"] || "", "");
   let fileName = String(req.headers["x-upload-filename"] || "file");
   try {
@@ -521,6 +697,16 @@ async function handleBinaryUpload(req, res) {
       message: "Upload refusé",
     });
     sendJson(res, 400, { ok: false, error: "Type de fichier non autorisé." });
+    return;
+  }
+  if (!isExtensionAllowedForKind(kind, ext)) {
+    setUploadStatus(uploadId, {
+      phase: "error",
+      progress: 100,
+      error: "Extension non autorisée pour ce dossier.",
+      message: "Upload refusé",
+    });
+    sendJson(res, 400, { ok: false, error: "Extension non autorisée pour ce dossier." });
     return;
   }
   const base = path.basename(originalName, path.extname(originalName)) || "file";
@@ -553,6 +739,11 @@ async function handleBinaryUpload(req, res) {
 
       req.on("data", (chunk) => {
         bytes += chunk.length;
+        if (!isFileSizeAllowedByExt(ext, bytes)) {
+          fail(new Error("Fichier trop volumineux pour ce type."));
+          req.destroy();
+          return;
+        }
         if (MAX_BINARY_UPLOAD_BYTES > 0) {
           const ratio = Math.min(1, bytes / MAX_BINARY_UPLOAD_BYTES);
           setUploadStatus(uploadId, {
@@ -679,8 +870,205 @@ async function handleSaveContent(req, res) {
     return;
   }
   await fsp.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fsp.access(CONTENT_FILE, fs.constants.F_OK);
+    await fsp.mkdir(CONTENT_BACKUPS_DIR, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const backupFile = path.join(CONTENT_BACKUPS_DIR, `site-content-${stamp}.json`);
+    await fsp.copyFile(CONTENT_FILE, backupFile);
+  } catch (error) {
+    // No previous file yet or backup issue: continue save to avoid blocking edits.
+  }
   await writeJsonAtomic(CONTENT_FILE, content);
   sendJson(res, 200, { ok: true, file: "data/site-content.json" });
+}
+
+async function handleDeleteUpload(req, res) {
+  const body = await readJsonBody(req);
+  const rawPath = String(body?.path || "").trim().replace(/\\/g, "/");
+  if (!rawPath) {
+    sendJson(res, 400, { ok: false, error: "Chemin fichier manquant." });
+    return;
+  }
+  const relativePath = rawPath.replace(/^\/+/, "");
+  if (!relativePath.startsWith("uploads/")) {
+    sendJson(res, 400, { ok: false, error: "Chemin non autorisé." });
+    return;
+  }
+
+  const absolute = path.resolve(ROOT_DIR, relativePath);
+  if (!absolute.startsWith(UPLOADS_DIR) || !absolute.startsWith(ROOT_DIR)) {
+    sendJson(res, 400, { ok: false, error: "Chemin non autorisé." });
+    return;
+  }
+
+  try {
+    const stat = await fsp.stat(absolute);
+    if (!stat.isFile()) {
+      sendJson(res, 400, { ok: false, error: "Le chemin ne cible pas un fichier." });
+      return;
+    }
+    await fsp.unlink(absolute);
+    sendJson(res, 200, { ok: true, deleted: true, path: relativePath });
+  } catch (error) {
+    if (error && error.code === "ENOENT") {
+      sendJson(res, 200, { ok: true, deleted: false, path: relativePath });
+      return;
+    }
+    sendJson(res, 500, { ok: false, error: "Suppression fichier impossible." });
+  }
+}
+
+async function extractGamesArchiveToDir(archiveAbsolute, destinationDir) {
+  const extension = String(path.extname(archiveAbsolute) || "").toLowerCase();
+  if (extension === ".zip") {
+    await runCommandCandidates(
+      [
+        "unzip",
+        "/usr/bin/unzip",
+      ],
+      ["-oq", archiveAbsolute, "-d", destinationDir]
+    );
+    return;
+  }
+  if (extension === ".rar") {
+    // Prefer unar on macOS, fallback to bsdtar if available.
+    try {
+      await runCommandCandidates(
+        [
+          "unar",
+          "/opt/homebrew/bin/unar",
+          "/usr/local/bin/unar",
+        ],
+        ["-q", "-f", "-o", destinationDir, archiveAbsolute]
+      );
+      return;
+    } catch (error) {}
+    try {
+      await runCommandCandidates(
+        [
+          "7z",
+          "/opt/homebrew/bin/7z",
+          "/opt/homebrew/bin/7zz",
+          "/usr/local/bin/7z",
+        ],
+        ["x", "-y", `-o${destinationDir}`, archiveAbsolute]
+      );
+      return;
+    } catch (error) {}
+    await runCommandCandidates(
+      [
+        "bsdtar",
+        "/usr/bin/bsdtar",
+      ],
+      ["-xf", archiveAbsolute, "-C", destinationDir]
+    );
+    return;
+  }
+  throw new Error("Archive non supportée.");
+}
+
+async function handleImportGamesCoversZip(req, res) {
+  const body = await readJsonBody(req);
+  const rawZipPath = String(body?.zipPath || "").trim().replace(/\\/g, "/");
+  const mode = String(body?.mode || "replace").trim().toLowerCase();
+  const shouldReplace = mode !== "append";
+  if (!rawZipPath) {
+    sendJson(res, 400, { ok: false, error: "Fichier archive manquant (.zip/.rar)." });
+    return;
+  }
+
+  const relativeZipPath = rawZipPath.replace(/^\/+/, "");
+  if (!relativeZipPath.startsWith("uploads/games-zips/") || !/\.(zip|rar)$/i.test(relativeZipPath)) {
+    sendJson(res, 400, { ok: false, error: "Chemin archive invalide (.zip/.rar)." });
+    return;
+  }
+
+  const zipAbsolute = path.resolve(ROOT_DIR, relativeZipPath);
+  if (!zipAbsolute.startsWith(UPLOADS_DIR) || !zipAbsolute.startsWith(ROOT_DIR)) {
+    sendJson(res, 400, { ok: false, error: "Chemin archive non autorisé." });
+    return;
+  }
+  if (!fs.existsSync(zipAbsolute)) {
+    sendJson(res, 404, { ok: false, error: "Archive introuvable sur le disque." });
+    return;
+  }
+
+  const coversDir = path.join(UPLOADS_DIR, "games-covers");
+  await fsp.mkdir(coversDir, { recursive: true });
+  const importTempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vortexbox-games-import-"));
+
+  try {
+    await extractGamesArchiveToDir(zipAbsolute, importTempDir);
+  } catch (error) {
+    await fsp.rm(importTempDir, { recursive: true, force: true }).catch(() => {});
+    sendJson(
+      res,
+      500,
+      {
+        ok: false,
+        error:
+          String(error?.message || "").trim() ||
+          "Extraction archive impossible (installez unzip/unar/bsdtar, ou vérifiez le fichier).",
+      }
+    );
+    return;
+  }
+
+  let importedCatalog = [];
+  try {
+    const allFiles = await walkDirRecursive(importTempDir);
+    const validFiles = allFiles
+      .filter((abs) => /\.(png|jpe?g|webp|gif|heic|heif|avif|bmp|jfif)$/i.test(abs))
+      .sort((a, b) => a.localeCompare(b, "fr"));
+
+    if (!validFiles.length) {
+      sendJson(res, 400, { ok: false, error: "Aucune image valide trouvée dans le ZIP." });
+      return;
+    }
+
+    importedCatalog = [];
+    for (let index = 0; index < validFiles.length; index += 1) {
+      const abs = validFiles[index];
+      const ext = String(path.extname(abs) || "").toLowerCase();
+      const sourceBase = sanitizeName(path.basename(abs, ext), `game-${index + 1}`);
+      const finalName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${sourceBase}${ext}`;
+      const targetAbs = path.join(coversDir, finalName);
+      await fsp.copyFile(abs, targetAbs);
+      importedCatalog.push({
+        title: buildGameTitleFromPath(path.relative(importTempDir, abs), index + 1),
+        image: `uploads/games-covers/${finalName}`.replace(/\\/g, "/"),
+        info: "",
+      });
+    }
+  } finally {
+    await fsp.rm(importTempDir, { recursive: true, force: true }).catch(() => {});
+  }
+
+  const currentContent = await loadContentFileSafe();
+  const existingCatalog = normalizeGamesCatalogForApi(currentContent?.gamesCatalog).map((item, index) => ({
+    title: String(item?.title || `Jeu ${index + 1}`).trim() || `Jeu ${index + 1}`,
+    image: String(item?.image || "").trim().replace(/\\/g, "/"),
+    info: String(item?.info || "").trim(),
+  }));
+
+  const nextCatalog = shouldReplace
+    ? importedCatalog
+    : [...existingCatalog, ...importedCatalog];
+
+  const nextContent = {
+    ...(currentContent && typeof currentContent === "object" ? currentContent : {}),
+    gamesCatalog: nextCatalog,
+  };
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await writeJsonAtomic(CONTENT_FILE, nextContent);
+
+  sendJson(res, 200, {
+    ok: true,
+    imported: importedCatalog.length,
+    total: nextCatalog.length,
+    mode: shouldReplace ? "replace" : "append",
+  });
 }
 
 async function handleGetContent(res) {
@@ -690,6 +1078,60 @@ async function handleGetContent(res) {
     sendJson(res, 200, { ok: true, content });
   } catch (error) {
     sendJson(res, 404, { ok: false, error: "Aucun contenu sauvegardé sur disque." });
+  }
+}
+
+function normalizeGamesCatalogForApi(items) {
+  const diskFallback = (() => {
+    try {
+      const dir = path.join(UPLOADS_DIR, "games-covers");
+      if (!fs.existsSync(dir)) return [];
+      return fs
+        .readdirSync(dir)
+        .filter((name) => /\.(png|jpe?g|webp|gif|svg)$/i.test(name))
+        .sort((a, b) => a.localeCompare(b, "fr"))
+        .map((name, index) => ({
+          title: `Jeu ${index + 1}`,
+          image: `uploads/games-covers/${name}`.replace(/\\/g, "/"),
+          info: "",
+        }));
+    } catch (error) {
+      return [];
+    }
+  })();
+
+  if (!Array.isArray(items)) return diskFallback;
+  const normalized = items
+    .map((item, index) => ({
+      title: String(item?.title || `Jeu ${index + 1}`).trim() || `Jeu ${index + 1}`,
+      image: String(item?.image || "").trim().replace(/\\/g, "/"),
+      info: String(item?.info || "").trim(),
+    }))
+    .filter((item) => item.image)
+    .map((item) => {
+      const cleanRelative = item.image.replace(/^\/+/, "").replace(/^uploads\/uploads\//, "uploads/");
+      const absolute = path.resolve(ROOT_DIR, cleanRelative);
+      const exists = absolute.startsWith(ROOT_DIR) && fs.existsSync(absolute);
+      return {
+        title: item.title,
+        image: exists ? cleanRelative : "",
+        info: item.info,
+      };
+    })
+    .filter((item) => item.image);
+
+  if (normalized.length) return normalized;
+  return diskFallback;
+}
+
+async function handleGetGamesCatalog(res) {
+  try {
+    const raw = await fsp.readFile(CONTENT_FILE, "utf8");
+    const content = JSON.parse(raw);
+    const gamesCatalog = normalizeGamesCatalogForApi(content?.gamesCatalog);
+    sendJson(res, 200, { ok: true, gamesCatalog });
+  } catch (error) {
+    sendJson(res, 200, { ok: true, gamesCatalog: [] });
   }
 }
 
@@ -1234,14 +1676,45 @@ async function handleAiRecommendation(req, res) {
   }
 }
 
-const server = http.createServer(async (req, res) => {
+let maintenanceTimersStarted = false;
+function ensureMaintenanceTimers() {
+  if (maintenanceTimersStarted) return;
+  maintenanceTimersStarted = true;
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, hits] of RATE_LIMIT_STORE.entries()) {
+      if (!Array.isArray(hits) || hits.length === 0) {
+        RATE_LIMIT_STORE.delete(key);
+        continue;
+      }
+      const valid = hits.filter((ts) => now - ts < 10 * 60 * 1000);
+      if (valid.length === 0) RATE_LIMIT_STORE.delete(key);
+      else RATE_LIMIT_STORE.set(key, valid);
+    }
+  }, 5 * 60 * 1000).unref();
+
+  setInterval(() => {
+    cleanupUploadStatusStore();
+  }, 10 * 60 * 1000).unref();
+}
+
+async function requestListener(req, res) {
+  ensureMaintenanceTimers();
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
+    if (req.method === "GET" && url.pathname === "/health") {
+      sendJson(res, 200, { ok: true, service: "vortexbox", uptime: Math.round(process.uptime()) });
+      return;
+    }
     if (req.method === "GET" && url.pathname === "/api/ping") {
       sendJson(res, 200, { ok: true });
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/upload") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
       if (!isTrustedOrigin(req)) {
         sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
         return;
@@ -1270,22 +1743,66 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/save-content") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
       if (!isTrustedOrigin(req)) {
         sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
         return;
       }
-      if (isRateLimited(req, "save-content", 20, 60 * 1000)) {
+      if (isRateLimited(req, "save-content", 240, 60 * 1000)) {
         sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
         return;
       }
       await handleSaveContent(req, res);
       return;
     }
+    if (req.method === "POST" && url.pathname === "/api/delete-upload") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "delete-upload", 40, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de suppressions. Réessayez dans 1 minute." });
+        return;
+      }
+      await handleDeleteUpload(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/import-games-covers-zip") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "import-games-covers-zip", 8, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop d'imports. Réessayez dans 1 minute." });
+        return;
+      }
+      await handleImportGamesCoversZip(req, res);
+      return;
+    }
     if (req.method === "GET" && url.pathname === "/api/content") {
       await handleGetContent(res);
       return;
     }
+    if (req.method === "GET" && url.pathname === "/api/games-catalog") {
+      await handleGetGamesCatalog(res);
+      return;
+    }
     if (req.method === "POST" && url.pathname === "/api/save-user-state") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
       if (!isTrustedOrigin(req)) {
         sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
         return;
@@ -1310,6 +1827,10 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/send-auth-code") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
       if (isRateLimited(req, "send-auth-code", 6, 10 * 60 * 1000)) {
         sendJson(res, 429, { ok: false, error: "Trop de tentatives. Réessayez dans quelques minutes." });
         return;
@@ -1318,6 +1839,10 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/ai/recommend") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
       if (isRateLimited(req, "ai-recommend", 30, 60 * 1000)) {
         sendJson(res, 429, { ok: false, error: "Trop de requêtes IA. Réessayez dans 1 minute." });
         return;
@@ -1329,28 +1854,17 @@ const server = http.createServer(async (req, res) => {
   } catch (error) {
     sendJson(res, 500, { error: error.message || "Erreur serveur." });
   }
-});
+}
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, hits] of RATE_LIMIT_STORE.entries()) {
-    if (!Array.isArray(hits) || hits.length === 0) {
-      RATE_LIMIT_STORE.delete(key);
-      continue;
+if (require.main === module) {
+  const server = http.createServer(requestListener);
+  server.listen(PORT, HOST, () => {
+    console.log(`VortexBox server running: http://${HOST}:${PORT}`);
+    if (!RESEND_API_KEY && (!MAIL_FROM || !SMTP_USER || !SMTP_PASS)) {
+      console.log("Email auth non configure. Ajoutez RESEND_API_KEY ou MAIL_FROM+SMTP_USER+SMTP_PASS dans .env");
     }
-    const valid = hits.filter((ts) => now - ts < 10 * 60 * 1000);
-    if (valid.length === 0) RATE_LIMIT_STORE.delete(key);
-    else RATE_LIMIT_STORE.set(key, valid);
-  }
-}, 5 * 60 * 1000).unref();
+  });
+}
 
-setInterval(() => {
-  cleanupUploadStatusStore();
-}, 10 * 60 * 1000).unref();
-
-server.listen(PORT, HOST, () => {
-  console.log(`VortexBox server running: http://${HOST}:${PORT}`);
-  if (!RESEND_API_KEY && (!MAIL_FROM || !SMTP_USER || !SMTP_PASS)) {
-    console.log("Email auth non configure. Ajoutez RESEND_API_KEY ou MAIL_FROM+SMTP_USER+SMTP_PASS dans .env");
-  }
-});
+module.exports = requestListener;
+module.exports.handler = requestListener;
