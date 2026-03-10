@@ -1,20 +1,6 @@
 {
-  "updatedAt": "2026-03-10T13:24:20.223Z",
-  "users": [
-    {
-      "email": "brunsoler@outlook.fr",
-      "displayName": "",
-      "profilePhoto": "",
-      "password": "Audric460&Qp46uqv",
-      "totalConnectionSeconds": 0,
-      "lastSeenAt": "",
-      "isActive": true,
-      "activationCode": "",
-      "activationSentAt": "",
-      "revoked": false,
-      "blacklisted": false
-    }
-  ],
+  "updatedAt": "2026-03-10T16:12:35.552Z",
+  "users": [],
   "userLog": [
     {
       "email": "vortexcore@outlook.fr",

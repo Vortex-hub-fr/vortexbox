@@ -6032,7 +6032,7 @@ function renderConfigurator() {
                 <strong>${escapeHtml(option.name)}</strong>
                 <small>${escapeHtml(component.label)}</small>
               </div>
-              <span class="config-option-price">+${Number(option.price)} €</span>
+              <span class="config-option-price">+${Number(option.price)} € <span class="price-ttc">TTC</span></span>
             </label>
           `;
         })
@@ -6120,7 +6120,7 @@ function renderConfigurator() {
           ${service.isPromo ? "disabled" : ""}
         />
         <span class="config-service-label">${escapeHtml(service.label)}</span>
-        <span class="config-service-price">+${Number(service.price)} €</span>
+        <span class="config-service-price">+${Number(service.price)} € <span class="price-ttc">TTC</span></span>
       </label>
     `
       }
@@ -9179,7 +9179,7 @@ function updateSummary() {
   summaryList.innerHTML = entries.length
     ? entries.map((item) => `<li>${item}</li>`).join("")
     : '<li class="summary-empty">Aucune sélection pour le moment.</li>';
-  totalPrice.textContent = formatEuro(total);
+  totalPrice.innerHTML = `${formatEuro(total)} <span class="price-ttc">TTC</span>`;
   setSummarySaveFeedback("");
   updateFpsEstimator();
 }
