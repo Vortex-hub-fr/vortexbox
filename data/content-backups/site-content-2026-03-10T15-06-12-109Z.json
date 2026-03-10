@@ -6,10 +6,10 @@
   "navTheme": "aurora",
   "menuBadges": {
     "machines": "hot",
-    "configurateur": "promo",
+    "configurateur": "nouveau",
     "support": "",
     "fiches": "",
-    "guides": "nouveau",
+    "guides": "",
     "jeux": "Triple-A",
     "about": "",
     "faq": ""
@@ -432,7 +432,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-07T16:20:15.183Z",
-        "updatedAt": "2026-03-10T15:07:32.100Z"
+        "updatedAt": "2026-03-10T14:51:31.669Z"
       },
       {
         "id": "crm-1772995291080-2",
@@ -466,7 +466,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-08T18:41:31.080Z",
-        "updatedAt": "2026-03-10T15:07:32.100Z"
+        "updatedAt": "2026-03-10T14:51:31.669Z"
       }
     ],
     "gamesFiles": [

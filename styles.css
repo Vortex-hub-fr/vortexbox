@@ -4227,25 +4227,28 @@ textarea {
   position: absolute;
   top: 0.35rem;
   bottom: 0.35rem;
-  width: 28px;
+  width: 16px;
   border-radius: 0.55rem;
   pointer-events: none;
-  z-index: 2;
+  z-index: 0;
+  opacity: 0.55;
 }
 
 .admin-tabs.is-scrollable::before {
   left: 0.24rem;
-  background: linear-gradient(90deg, rgba(6, 24, 44, 0.92), rgba(6, 24, 44, 0));
+  background: linear-gradient(90deg, rgba(6, 24, 44, 0.68), rgba(6, 24, 44, 0));
 }
 
 .admin-tabs.is-scrollable::after {
   right: 0.24rem;
-  background: linear-gradient(270deg, rgba(6, 24, 44, 0.92), rgba(6, 24, 44, 0));
+  background: linear-gradient(270deg, rgba(6, 24, 44, 0.68), rgba(6, 24, 44, 0));
 }
 
 .admin-tabs .admin-tab {
   flex: 0 0 auto;
   white-space: nowrap;
+  position: relative;
+  z-index: 1;
 }
 
 .admin-tabs,
@@ -4282,6 +4285,7 @@ textarea {
 }
 
 .admin-tab {
+  position: relative;
   border: 1px solid rgba(127, 231, 255, 0.3);
   background: linear-gradient(180deg, rgba(15, 44, 77, 0.9), rgba(10, 31, 56, 0.9));
   color: #d7ebff;
@@ -4293,10 +4297,18 @@ textarea {
   user-select: none;
   font-size: 0.84rem;
   letter-spacing: 0.005em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  z-index: 0;
 }
 
 .admin-tab::before {
   content: attr(data-icon);
+  position: relative;
+  z-index: 1;
   margin-right: 0.34rem;
   opacity: 0.9;
 }
@@ -10226,6 +10238,8 @@ h1 {
   box-shadow:
     0 14px 22px rgba(2, 10, 24, 0.24),
     inset 0 1px 0 rgba(242, 252, 255, 0.08);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .admin-tabs .admin-tab::before {
@@ -10247,6 +10261,19 @@ h1 {
     0 16px 28px rgba(3, 12, 24, 0.38),
     0 0 22px rgba(var(--tab-rgb), 0.18),
     inset 0 1px 0 rgba(250, 254, 255, 0.14);
+}
+
+.admin-tabs .admin-tab > * {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-tabs .admin-tab[data-tab="support-sav"] {
+  min-width: 168px;
+}
+
+.admin-tabs .admin-tab[data-tab]::after {
+  z-index: 0;
 }
 
 .admin-content-panel {
