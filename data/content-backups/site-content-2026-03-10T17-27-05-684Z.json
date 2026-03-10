@@ -195,7 +195,7 @@
   ],
   "aboutVideos": [
     {
-      "title": "La performance ultime, prête à jouer",
+      "title": "La performance gaming prête à jouer.",
       "fileName": "xx.mp4",
       "videoData": "uploads/about-videos/1772747556977-8vbuzu-xx-opt.mp4",
       "videoWebm": "",
@@ -211,7 +211,7 @@
       "videoKey": ""
     },
     {
-      "title": "Intel i9 : la performance ultime.",
+      "title": "Performance Processeur I9 Intel",
       "fileName": "intel-i9-14900f-vs-intel-i9-14900kf-vs-intel-i9-14900k.mp4",
       "videoData": "uploads/about-videos/1772806990210-vftlqj-intel-i9-14900f-vs-intel-i9-14900kf-vs-intel-i9-14900k-__-pc-games-test-__.mp4",
       "videoWebm": "",
@@ -219,7 +219,7 @@
       "videoKey": ""
     },
     {
-      "title": "4070 vs 4070 Ti : le duel du ray tracing.",
+      "title": "RTX 4070 12g / RTX 4070 TI 12G",
       "fileName": "",
       "videoData": "",
       "videoWebm": "",
@@ -235,7 +235,7 @@
       "videoKey": ""
     },
     {
-      "title": "RTX : la puissance du vrai gaming",
+      "title": "La puissance RTX au service de votre jeu.",
       "fileName": "",
       "videoData": "",
       "videoWebm": "",
@@ -432,7 +432,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-07T16:20:15.183Z",
-        "updatedAt": "2026-03-10T17:27:05.666Z"
+        "updatedAt": "2026-03-10T16:39:52.639Z"
       },
       {
         "id": "crm-1772995291080-2",
@@ -466,7 +466,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-08T18:41:31.080Z",
-        "updatedAt": "2026-03-10T17:27:05.666Z"
+        "updatedAt": "2026-03-10T16:39:52.639Z"
       }
     ],
     "gamesFiles": [

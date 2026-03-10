@@ -195,7 +195,7 @@
   ],
   "aboutVideos": [
     {
-      "title": "La performance ultime, prête à jouer",
+      "title": "La performance gaming prête à jouer.",
       "fileName": "xx.mp4",
       "videoData": "uploads/about-videos/1772747556977-8vbuzu-xx-opt.mp4",
       "videoWebm": "",
@@ -211,7 +211,7 @@
       "videoKey": ""
     },
     {
-      "title": "Intel i9 : la performance ultime.",
+      "title": "Performance Processeur I9 Intel",
       "fileName": "intel-i9-14900f-vs-intel-i9-14900kf-vs-intel-i9-14900k.mp4",
       "videoData": "uploads/about-videos/1772806990210-vftlqj-intel-i9-14900f-vs-intel-i9-14900kf-vs-intel-i9-14900k-__-pc-games-test-__.mp4",
       "videoWebm": "",
@@ -219,7 +219,7 @@
       "videoKey": ""
     },
     {
-      "title": "4070 vs 4070 Ti : le duel du ray tracing.",
+      "title": "RTX 4070 12g / RTX 4070 TI 12G",
       "fileName": "",
       "videoData": "",
       "videoWebm": "",
@@ -235,7 +235,7 @@
       "videoKey": ""
     },
     {
-      "title": "RTX : la puissance du vrai gaming",
+      "title": "La puissance RTX au service de votre jeu.",
       "fileName": "",
       "videoData": "",
       "videoWebm": "",
@@ -432,7 +432,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-07T16:20:15.183Z",
-        "updatedAt": "2026-03-10T17:27:05.666Z"
+        "updatedAt": "2026-03-10T16:35:35.333Z"
       },
       {
         "id": "crm-1772995291080-2",
@@ -466,7 +466,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-08T18:41:31.080Z",
-        "updatedAt": "2026-03-10T17:27:05.666Z"
+        "updatedAt": "2026-03-10T16:35:35.333Z"
       }
     ],
     "gamesFiles": [
@@ -486,52 +486,48 @@
   },
   "faqItems": [
     {
-      "question": "Pourquoi choisir une VortexBox plutôt qu’un PC gaming classique ?",
-      "answer": "Une VortexBox n’est pas pensée comme un simple ordinateur assemblé, mais comme une solution gaming prête à l’emploi, testée et optimisée avant livraison.\nChaque build est sélectionné pour offrir un excellent équilibre entre performances, stabilité, silence et évolutivité.\nVous gagnez du temps, vous évitez les erreurs de compatibilité, et vous profitez d’une machine immédiatement exploitable.\nL’objectif est clair : vous livrer une expérience premium, fluide et rassurante dès le premier démarrage."
+      "question": "Pourquoi choisir une VortexBox ?",
+      "answer": "La VortexBox est une machine gaming conçue pour offrir puissance, fiabilité et simplicité d’utilisation.\nChaque configuration est soigneusement assemblée avec des composants performants, testée sous charge et optimisée pour offrir une expérience de jeu fluide dès la première utilisation.\n\nContrairement aux PC standards, Chaque VortexBox est montée, configurée et testée par des passionnés de gaming afin de garantir des performances optimales."
     },
     {
       "question": "La VortexBox est-elle prête à jouer dès la réception ?",
-      "answer": "Oui, votre VortexBox arrive configurée pour être utilisée immédiatement dans les meilleures conditions.\nLe système, les pilotes essentiels et l’environnement de jeu sont préparés pour offrir un démarrage simple et rapide.\nVous n’avez pas à passer des heures à installer ou à optimiser la machine avant d’en profiter.\nUne fois connectée, vous pouvez finaliser vos comptes et commencer à jouer sans procédure complexe."
+      "answer": "Oui. Votre VortexBox arrive prête à jouer :\n\t•\tsystème installé et configuré\n\t•\tpilotes optimisés\n\t•\tplateforme Steam installée\n\t•\tparamètres performance ajustés\n\nIl vous suffit de connecter votre compte Steam pour commencer à jouer."
     },
     {
-      "question": "Puis-je personnaliser ma configuration avant l’achat ?",
-      "answer": "Oui, le configurateur VortexBox est justement conçu pour vous permettre de sélectionner les composants et options qui correspondent à votre usage.\nVous pouvez choisir votre base matérielle, vos références, vos services complémentaires et ajuster le projet selon votre budget.\nCette approche permet de construire un build plus cohérent avec vos jeux, votre résolution cible et vos attentes en confort.\nSi besoin, nous pouvons aussi vous guider pour éviter un choix trop faible ou au contraire inutilement surdimensionné."
+      "question": "Quel est le délai de préparation d’une VortexBox ?",
+      "answer": "Chaque VortexBox est assemblée et testée individuellement afin de garantir une qualité optimale.\n\nLe délai moyen de préparation est de 3 à 7 jours ouvrés après validation de la commande.\n\nChaque machine passe par plusieurs étapes :\n\t•\tassemblage professionnel\n\t•\tinstallation et configuration du système\n\t•\ttests de stabilité CPU / GPU\n\t•\tvalidation des performances"
     },
     {
-      "question": "Quels délais faut-il prévoir pour la préparation et l’expédition ?",
-      "answer": "Chaque VortexBox est préparée avec une logique qualité, ce qui implique assemblage, configuration et validation avant départ.\nEn moyenne, il faut compter entre 3 et 7 jours ouvrés selon la complexité de la configuration et les composants retenus.\nCe délai permet d’effectuer les réglages et les tests nécessaires pour éviter les mauvaises surprises à la réception.\nNous privilégions une machine bien préparée plutôt qu’un envoi trop rapide sans contrôle sérieux."
+      "question": "Puis-je faire évoluer ma VortexBox dans le futur ?",
+      "answer": "Oui. Les VortexBox sont conçues pour être évolutives.\n\nVous pouvez notamment :\n\t•\taugmenter la mémoire vive\n\t•\tajouter des disques SSD supplémentaires\n\t•\tmettre à jour la carte WiFi\n\t•\tconnecter des périphériques ou stockage externe\n\nVotre machine peut donc évoluer avec vos besoins."
     },
     {
-      "question": "Quels contrôles sont réalisés avant l’envoi d’un build ?",
-      "answer": "Avant expédition, chaque build passe par une série de vérifications visant à garantir sa stabilité et sa cohérence globale.\nLes performances, les températures, le comportement en charge et le bon fonctionnement des composants sont contrôlés avec attention.\nCette phase permet de confirmer que la machine est réellement prête à être utilisée dans de bonnes conditions.\nC’est un point essentiel de l’expérience VortexBox : livrer un build validé, pas seulement monté."
+      "question": "Quels tests sont réalisés avant l’envoi ?",
+      "answer": "Chaque VortexBox subit une série de tests de stabilité et de performance :\n\t•\tstress test CPU\n\t•\tstress test GPU\n\t•\ttests mémoire\n\t•\tvérification des températures\n\t•\ttests de stabilité globale\n\nCela garantit une machine stable et prête à jouer dès la réception."
     },
     {
-      "question": "La garantie VortexBox couvre-t-elle bien le matériel ?",
-      "answer": "Oui, les VortexBox bénéficient d’une garantie matérielle de 2 ans conformément à ce qui est affiché sur le site.\nCette garantie concerne le matériel dans le cadre d’un usage normal et selon les conditions prévues par la boutique.\nEn cas de doute, notre équipe peut vous orienter vers la bonne procédure afin d’ouvrir un dossier proprement.\nL’objectif est d’assurer un suivi sérieux, compréhensible et professionnel après votre achat."
+      "question": "Le support technique est-il disponible ?",
+      "answer": "Oui. Notre équipe technique est disponible pour vous accompagner en cas de besoin.\n\nNous proposons :\n\t•\tassistance technique\n\t•\tdiagnostic à distance\n\t•\tconseils pour l’utilisation ou l’évolution de votre machine."
     },
     {
-      "question": "Le support technique reste-t-il disponible après la livraison ?",
-      "answer": "Oui, l’accompagnement ne s’arrête pas au moment où la machine est expédiée.\nNous pouvons vous aider pour la prise en main, les questions techniques, les vérifications de base et les conseils d’évolution.\nLe support a été pensé pour rassurer les utilisateurs qui veulent un interlocuteur clair et réactif.\nVous n’êtes donc pas laissé seul après l’achat : le suivi fait partie de l’expérience VortexBox."
+      "question": "La VortexBox convient-elle pour les jeux récents ?",
+      "answer": "Oui. Les configurations VortexBox sont conçues pour faire fonctionner les jeux récents et exigeants avec une excellente fluidité.\n\nNos machines sont pensées pour offrir un équilibre entre puissance, silence et stabilité, afin de profiter pleinement de votre expérience gaming."
     },
     {
-      "question": "La VortexBox convient-elle réellement aux jeux récents et exigeants ?",
-      "answer": "Oui, les configurations proposées sont orientées pour répondre aux attentes du gaming moderne, y compris sur des titres récents plus lourds.\nLe but n’est pas seulement d’obtenir des FPS, mais de proposer une machine équilibrée, stable et agréable à utiliser dans la durée.\nLes composants sont choisis pour préserver un bon niveau de fluidité, de confort thermique et de fiabilité générale.\nVous profitez ainsi d’un build crédible pour jouer aujourd’hui, mais aussi pour rester pertinent dans le temps."
+      "question": "La VortexBox est-elle silencieuse ?",
+      "answer": "Oui. Les VortexBox sont conçues pour offrir un excellent équilibre entre puissance et silence.\nLe système de refroidissement est optimisé afin de maintenir des températures stables tout en limitant le bruit, même lors des sessions de jeu intensives."
     },
     {
-      "question": "Est-ce une machine adaptée à un utilisateur débutant ?",
-      "answer": "Oui, une VortexBox est pensée pour être simple à prendre en main, même si vous n’avez pas l’habitude du matériel informatique.\nLa préparation en amont réduit fortement les manipulations techniques souvent sources d’erreurs ou de stress.\nVous bénéficiez d’un système plus lisible, plus prêt, et d’un accompagnement si vous avez besoin d’être guidé.\nCela permet de profiter d’un vrai PC gaming sans devoir devenir expert dès le premier jour."
+      "question": "Est-ce que la VortexBox est facile à utiliser pour un débutant ?",
+      "answer": "Oui. La machine est conçue pour être simple à utiliser dès le premier démarrage.\nTout est déjà configuré afin que vous puissiez profiter de votre ordinateur sans manipulation technique complexe"
     },
     {
-      "question": "Puis-je enregistrer ma configuration ou la reprendre plus tard ?",
-      "answer": "Oui, votre espace utilisateur permet de sauvegarder vos configurations pour les retrouver ultérieurement.\nC’est utile si vous comparez plusieurs versions, si vous hésitez encore, ou si vous souhaitez reprendre votre projet plus tard.\nCette fonction vous aide à construire votre build sans pression et sans perdre vos sélections précédentes.\nVous gardez ainsi une continuité claire entre votre réflexion, vos essais et votre décision finale."
+      "question": "Puis-je connecter mes accessoires gaming ?",
+      "answer": "Oui. Les VortexBox sont compatibles avec tous les périphériques gaming standards :\n\t•\tclavier et souris gaming\n\t•\tmanettes\n\t•\tcasques audio\n\t•\tcasques VR."
     },
     {
-      "question": "Comment fonctionne l’offre Option DLC via code promo ?",
-      "answer": "L’Option DLC gratuite fonctionne via un code promo personnel demandé sur Telegram puis saisi dans le configurateur.\nCe code est associé à votre adresse email et son usage est contrôlé afin d’éviter les activations multiples non prévues.\nUne fois le code validé, l’option concernée est automatiquement prise en compte dans votre configuration.\nLe système a été conçu pour rester simple côté utilisateur, tout en gardant une logique propre côté administration."
-    },
-    {
-      "question": "Les fiches techniques et informations produit sont-elles consultables avant achat ?",
-      "answer": "Oui, le site met à disposition des fiches techniques, des visuels, des informations détaillées et des éléments de comparaison pour vous aider à choisir.\nCes contenus ont pour but de rendre la décision plus claire, plus transparente et plus professionnelle.\nVous pouvez ainsi mieux comprendre la logique de chaque build avant de passer à l’étape de commande.\nCela participe à une expérience d’achat plus rassurante et plus qualitative."
+      "question": "Que comprend le pack « accès à plus de 15 000 jeux » ?",
+      "answer": "Les VortexBox sont configurées pour fonctionner parfaitement avec la plateforme Steam, l’une des plus grandes bibliothèques de jeux PC au monde.\n\nGrâce à votre VortexBox, vous pouvez accéder à plus de 15 000 jeux disponibles sur Steam, couvrant tous les styles de jeu : FPS, RPG, stratégie, simulation, aventure ou encore jeux indépendants.\n\nVotre machine est optimisée pour :\n\t•\tinstaller et gérer facilement vos jeux via Steam\n\t•\taccéder rapidement à votre bibliothèque de jeux\n\t•\tprofiter d’une expérience de jeu fluide et performante.\n\nUne fois votre compte Steam connecté, vous pouvez télécharger, installer et jouer à vos jeux directement depuis votre VortexBox."
     }
   ],
   "gamesCatalog": [

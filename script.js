@@ -488,48 +488,52 @@ const DEFAULT_CONTENT = {
   },
   faqItems: [
     {
-      question: "Quel est le délai de préparation d'une VortexBox ?",
-      answer: "Le délai moyen est de 3 à 7 jours ouvrés selon la configuration choisie.",
+      question: "Pourquoi choisir une VortexBox plutôt qu’un PC gaming classique ?",
+      answer: "Une VortexBox n’est pas pensée comme un simple ordinateur assemblé, mais comme une solution gaming prête à l’emploi, testée et optimisée avant livraison.\nChaque build est sélectionné pour offrir un excellent équilibre entre performances, stabilité, silence et évolutivité.\nVous gagnez du temps, vous évitez les erreurs de compatibilité, et vous profitez d’une machine immédiatement exploitable.\nL’objectif est clair : vous livrer une expérience premium, fluide et rassurante dès le premier démarrage.",
     },
     {
-      question: "Puis-je personnaliser ma configuration avant achat ?",
-      answer: "Oui, le configurateur vous permet de choisir vos composants et services selon vos besoins.",
+      question: "La VortexBox est-elle prête à jouer dès la réception ?",
+      answer: "Oui, votre VortexBox arrive configurée pour être utilisée immédiatement dans les meilleures conditions.\nLe système, les pilotes essentiels et l’environnement de jeu sont préparés pour offrir un démarrage simple et rapide.\nVous n’avez pas à passer des heures à installer ou à optimiser la machine avant d’en profiter.\nUne fois connectée, vous pouvez finaliser vos comptes et commencer à jouer sans procédure complexe.",
     },
     {
-      question: "Proposez-vous une assistance après la livraison ?",
-      answer: "Oui, nous assurons un support technique et des conseils d'évolution pour votre build.",
+      question: "Puis-je personnaliser ma configuration avant l’achat ?",
+      answer: "Oui, le configurateur VortexBox est justement conçu pour vous permettre de sélectionner les composants et options qui correspondent à votre usage.\nVous pouvez choisir votre base matérielle, vos références, vos services complémentaires et ajuster le projet selon votre budget.\nCette approche permet de construire un build plus cohérent avec vos jeux, votre résolution cible et vos attentes en confort.\nSi besoin, nous pouvons aussi vous guider pour éviter un choix trop faible ou au contraire inutilement surdimensionné.",
     },
     {
-      question: "Quelle est la garantie matérielle VortexBox ?",
-      answer: "Toutes nos VortexBox sont couvertes par une garantie matérielle de 2 ans.",
+      question: "Quels délais faut-il prévoir pour la préparation et l’expédition ?",
+      answer: "Chaque VortexBox est préparée avec une logique qualité, ce qui implique assemblage, configuration et validation avant départ.\nEn moyenne, il faut compter entre 3 et 7 jours ouvrés selon la complexité de la configuration et les composants retenus.\nCe délai permet d’effectuer les réglages et les tests nécessaires pour éviter les mauvaises surprises à la réception.\nNous privilégions une machine bien préparée plutôt qu’un envoi trop rapide sans contrôle sérieux.",
     },
     {
-      question: "Comment activer l'option DLC gratuite ?",
-      answer: "Demandez votre code promo personnel sur Telegram, puis saisissez-le dans le configurateur.",
+      question: "Quels contrôles sont réalisés avant l’envoi d’un build ?",
+      answer: "Avant expédition, chaque build passe par une série de vérifications visant à garantir sa stabilité et sa cohérence globale.\nLes performances, les températures, le comportement en charge et le bon fonctionnement des composants sont contrôlés avec attention.\nCette phase permet de confirmer que la machine est réellement prête à être utilisée dans de bonnes conditions.\nC’est un point essentiel de l’expérience VortexBox : livrer un build validé, pas seulement monté.",
     },
     {
-      question: "Le code promo DLC peut-il être utilisé plusieurs fois ?",
-      answer: "Non, chaque code promo est à usage unique et lié à une seule adresse email.",
+      question: "La garantie VortexBox couvre-t-elle bien le matériel ?",
+      answer: "Oui, les VortexBox bénéficient d’une garantie matérielle de 2 ans conformément à ce qui est affiché sur le site.\nCette garantie concerne le matériel dans le cadre d’un usage normal et selon les conditions prévues par la boutique.\nEn cas de doute, notre équipe peut vous orienter vers la bonne procédure afin d’ouvrir un dossier proprement.\nL’objectif est d’assurer un suivi sérieux, compréhensible et professionnel après votre achat.",
     },
     {
-      question: "Puis-je sauvegarder ma configuration dans mon profil ?",
-      answer: "Oui, vous pouvez enregistrer vos configurations dans Mes configurations pour les retrouver plus tard.",
+      question: "Le support technique reste-t-il disponible après la livraison ?",
+      answer: "Oui, l’accompagnement ne s’arrête pas au moment où la machine est expédiée.\nNous pouvons vous aider pour la prise en main, les questions techniques, les vérifications de base et les conseils d’évolution.\nLe support a été pensé pour rassurer les utilisateurs qui veulent un interlocuteur clair et réactif.\nVous n’êtes donc pas laissé seul après l’achat : le suivi fait partie de l’expérience VortexBox.",
     },
     {
-      question: "Quels moyens de paiement acceptez-vous ?",
-      answer: "Nous proposons des moyens de paiement sécurisés. Contactez-nous sur Telegram pour finaliser la commande.",
+      question: "La VortexBox convient-elle réellement aux jeux récents et exigeants ?",
+      answer: "Oui, les configurations proposées sont orientées pour répondre aux attentes du gaming moderne, y compris sur des titres récents plus lourds.\nLe but n’est pas seulement d’obtenir des FPS, mais de proposer une machine équilibrée, stable et agréable à utiliser dans la durée.\nLes composants sont choisis pour préserver un bon niveau de fluidité, de confort thermique et de fiabilité générale.\nVous profitez ainsi d’un build crédible pour jouer aujourd’hui, mais aussi pour rester pertinent dans le temps.",
     },
     {
-      question: "Puis-je demander des conseils avant d'acheter ?",
-      answer: "Oui, notre équipe vous guide selon votre budget, vos jeux et votre résolution cible.",
+      question: "Est-ce une machine adaptée à un utilisateur débutant ?",
+      answer: "Oui, une VortexBox est pensée pour être simple à prendre en main, même si vous n’avez pas l’habitude du matériel informatique.\nLa préparation en amont réduit fortement les manipulations techniques souvent sources d’erreurs ou de stress.\nVous bénéficiez d’un système plus lisible, plus prêt, et d’un accompagnement si vous avez besoin d’être guidé.\nCela permet de profiter d’un vrai PC gaming sans devoir devenir expert dès le premier jour.",
     },
     {
-      question: "Les fiches techniques sont-elles téléchargeables ?",
-      answer: "Oui, chaque fiche technique peut être consultée et téléchargée au format PDF.",
+      question: "Puis-je enregistrer ma configuration ou la reprendre plus tard ?",
+      answer: "Oui, votre espace utilisateur permet de sauvegarder vos configurations pour les retrouver ultérieurement.\nC’est utile si vous comparez plusieurs versions, si vous hésitez encore, ou si vous souhaitez reprendre votre projet plus tard.\nCette fonction vous aide à construire votre build sans pression et sans perdre vos sélections précédentes.\nVous gardez ainsi une continuité claire entre votre réflexion, vos essais et votre décision finale.",
     },
     {
-      question: "Livrez-vous les builds déjà testés ?",
-      answer: "Oui, chaque build est monté, validé et stress-testé avant expédition.",
+      question: "Comment fonctionne l’offre Option DLC via code promo ?",
+      answer: "L’Option DLC gratuite fonctionne via un code promo personnel demandé sur Telegram puis saisi dans le configurateur.\nCe code est associé à votre adresse email et son usage est contrôlé afin d’éviter les activations multiples non prévues.\nUne fois le code validé, l’option concernée est automatiquement prise en compte dans votre configuration.\nLe système a été conçu pour rester simple côté utilisateur, tout en gardant une logique propre côté administration.",
+    },
+    {
+      question: "Les fiches techniques et informations produit sont-elles consultables avant achat ?",
+      answer: "Oui, le site met à disposition des fiches techniques, des visuels, des informations détaillées et des éléments de comparaison pour vous aider à choisir.\nCes contenus ont pour but de rendre la décision plus claire, plus transparente et plus professionnelle.\nVous pouvez ainsi mieux comprendre la logique de chaque build avant de passer à l’étape de commande.\nCela participe à une expérience d’achat plus rassurante et plus qualitative.",
     },
   ],
   gamesCatalog: [
