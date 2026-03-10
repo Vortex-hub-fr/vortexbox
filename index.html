@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260309c" />
+    <link rel="stylesheet" href="styles.css?v=20260310premium11" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -121,7 +121,12 @@
     </div>
 
     <header class="hero" id="top">
-      <div class="hero-video-wrap" aria-hidden="true"></div>
+      <div class="hero-video-wrap" aria-hidden="true">
+        <div class="hero-cinema-rays hero-cinema-rays-left"></div>
+        <div class="hero-cinema-rays hero-cinema-rays-right"></div>
+        <div class="hero-cinema-overlay"></div>
+        <div class="hero-cinema-grid"></div>
+      </div>
       <nav class="nav">
         <a class="logo" href="index.html" aria-label="VortexBox accueil">
           <img src="favicon-vb.svg" alt="VortexBox Pro" />
@@ -482,8 +487,18 @@
 
     <section class="admin-panel hidden" id="admin-panel">
       <div class="admin-box">
-        <h3>Administration VortexBox</h3>
-        <p>Modifiez le contenu du site.</p>
+        <div class="admin-shell-head">
+          <div class="admin-shell-head-copy">
+            <p class="admin-shell-kicker">VortexBox Control Center</p>
+            <h3>Administration VortexBox</h3>
+            <p>Modifiez le contenu du site.</p>
+          </div>
+          <div class="admin-shell-head-status" aria-label="Statut administration">
+            <span class="admin-shell-pill">Live</span>
+            <span class="admin-shell-pill">Premium</span>
+            <span class="admin-shell-pill">Secure</span>
+          </div>
+        </div>
 
         <div id="admin-login">
           <label>
@@ -655,14 +670,14 @@
             <div class="admin-tech-card">
               <h5 class="admin-subtitle">Badges dynamiques du menu</h5>
               <div class="admin-config-images-grid">
-                <label>Top Build<select id="admin-menu-badge-machines"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
-                <label>Configurateur<select id="admin-menu-badge-configurateur"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
-                <label>Support & SAV<select id="admin-menu-badge-support"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
-                <label>Fiches Techniques<select id="admin-menu-badge-fiches"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
-                <label>Guides FPS<select id="admin-menu-badge-guides"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
-                <label>Jeux<select id="admin-menu-badge-jeux"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
-                <label>A propos<select id="admin-menu-badge-about"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
-                <label>FAQ<select id="admin-menu-badge-faq"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option></select></label>
+                <label>Top Build<select id="admin-menu-badge-machines"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option><option value="custom">Personnalisé</option></select><input id="admin-menu-badge-machines-custom" type="text" maxlength="18" placeholder="Badge perso" /></label>
+                <label>Configurateur<select id="admin-menu-badge-configurateur"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option><option value="custom">Personnalisé</option></select><input id="admin-menu-badge-configurateur-custom" type="text" maxlength="18" placeholder="Badge perso" /></label>
+                <label>Support & SAV<select id="admin-menu-badge-support"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option><option value="custom">Personnalisé</option></select><input id="admin-menu-badge-support-custom" type="text" maxlength="18" placeholder="Badge perso" /></label>
+                <label>Fiches Techniques<select id="admin-menu-badge-fiches"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option><option value="custom">Personnalisé</option></select><input id="admin-menu-badge-fiches-custom" type="text" maxlength="18" placeholder="Badge perso" /></label>
+                <label>Guides FPS<select id="admin-menu-badge-guides"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option><option value="custom">Personnalisé</option></select><input id="admin-menu-badge-guides-custom" type="text" maxlength="18" placeholder="Badge perso" /></label>
+                <label>Jeux<select id="admin-menu-badge-jeux"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option><option value="custom">Personnalisé</option></select><input id="admin-menu-badge-jeux-custom" type="text" maxlength="18" placeholder="Badge perso" /></label>
+                <label>A propos<select id="admin-menu-badge-about"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option><option value="custom">Personnalisé</option></select><input id="admin-menu-badge-about-custom" type="text" maxlength="18" placeholder="Badge perso" /></label>
+                <label>FAQ<select id="admin-menu-badge-faq"><option value="">Aucun</option><option value="nouveau">Nouveau</option><option value="promo">Promo</option><option value="hot">Hot</option><option value="custom">Personnalisé</option></select><input id="admin-menu-badge-faq-custom" type="text" maxlength="18" placeholder="Badge perso" /></label>
               </div>
             </div>
             <div class="admin-tech-card">
@@ -1620,6 +1635,6 @@
 
     <div class="admin-toast-stack" id="admin-toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="script.js?v=20260309b"></script>
+    <script src="script.js?v=20260310premium10"></script>
   </body>
 </html>

@@ -6,11 +6,11 @@
   "navTheme": "aurora",
   "menuBadges": {
     "machines": "hot",
-    "configurateur": "nouveau",
+    "configurateur": "promo",
     "support": "",
-    "fiches": "",
+    "fiches": "nouveau",
     "guides": "",
-    "jeux": "Triple-A",
+    "jeux": "",
     "about": "",
     "faq": ""
   },
@@ -432,7 +432,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-07T16:20:15.183Z",
-        "updatedAt": "2026-03-10T14:12:05.348Z"
+        "updatedAt": "2026-03-10T10:56:50.908Z"
       },
       {
         "id": "crm-1772995291080-2",
@@ -444,11 +444,11 @@
         "budget": 2999,
         "dealValue": 2999,
         "owner": "Administrateur",
-        "priority": "Haute",
+        "priority": "Normale",
         "nextReminder": "",
         "configRef": "Recommandation VortexBot IA",
         "lostReason": "",
-        "note": "Lead score: 87/100\nLead score: 75/100\nLead score: 91/100\nRecommandation: Recommandation VortexBot IA",
+        "note": "Lead score: 75/100\nLead score: 91/100\nRecommandation: Recommandation VortexBot IA",
         "activities": [
           {
             "at": "2026-03-08T18:41:31.080Z",
@@ -457,16 +457,12 @@
           {
             "at": "2026-03-09T13:07:49.571Z",
             "text": "Interaction VortexBot (Lead score: 75/100)"
-          },
-          {
-            "at": "2026-03-10T12:18:34.258Z",
-            "text": "Interaction VortexBot (Lead score: 87/100)"
           }
         ],
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-08T18:41:31.080Z",
-        "updatedAt": "2026-03-10T14:12:05.348Z"
+        "updatedAt": "2026-03-10T10:56:50.908Z"
       }
     ],
     "gamesFiles": [

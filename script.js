@@ -125,6 +125,7 @@ const adminMenuBadgeGuidesSelect = document.getElementById("admin-menu-badge-gui
 const adminMenuBadgeJeuxSelect = document.getElementById("admin-menu-badge-jeux");
 const adminMenuBadgeAboutSelect = document.getElementById("admin-menu-badge-about");
 const adminMenuBadgeFaqSelect = document.getElementById("admin-menu-badge-faq");
+const MENU_BADGE_KEYS = ["machines", "configurateur", "support", "fiches", "guides", "jeux", "about", "faq"];
 const adminMachinesList = document.getElementById("admin-machines-list");
 const adminAddMachineBtn = document.getElementById("admin-add-machine");
 const adminTechnicalSheetsList = document.getElementById("admin-technical-sheets-list");
@@ -4229,11 +4230,15 @@ function normalizeMenuBadges(value) {
   const allowed = new Set(["", "nouveau", "promo", "hot"]);
   const base = DEFAULT_CONTENT.menuBadges || {};
   const source = value && typeof value === "object" ? value : {};
-  const keys = ["machines", "configurateur", "support", "fiches", "guides", "jeux", "about", "faq"];
   const output = {};
-  keys.forEach((key) => {
-    const raw = String(source[key] ?? base[key] ?? "").trim().toLowerCase();
-    output[key] = allowed.has(raw) ? raw : "";
+  MENU_BADGE_KEYS.forEach((key) => {
+    const rawValue = String(source[key] ?? base[key] ?? "").trim();
+    const rawLower = rawValue.toLowerCase();
+    if (!rawValue) {
+      output[key] = "";
+      return;
+    }
+    output[key] = allowed.has(rawLower) ? rawLower : rawValue.slice(0, 18);
   });
   return output;
 }
@@ -5286,12 +5291,16 @@ function renderTechnicalSheets() {
         String(sheet?.fileName || `fiche-technique-${index + 1}.pdf`),
         `fiche-technique-${index + 1}.pdf`
       );
-      const downloadBtn = downloadHref
-        ? `<a class="download-btn technical-download-btn" href="${escapeHtml(downloadHref)}" download="${escapeHtml(downloadFileName)}">Télécharger</a>`
-        : `<span class="download-btn technical-download-btn disabled" aria-disabled="true">Fiche indisponible</span>`;
+      const downloadIcon = downloadHref
+        ? `<a class="technical-download-icon" href="${escapeHtml(downloadHref)}" download="${escapeHtml(downloadFileName)}" aria-label="Télécharger la fiche technique" title="Télécharger la fiche technique">
+            <span class="technical-download-icon-glyph" aria-hidden="true">↓</span>
+          </a>`
+        : `<span class="technical-download-icon disabled" aria-disabled="true" title="Fiche indisponible">
+            <span class="technical-download-icon-glyph" aria-hidden="true">↓</span>
+          </span>`;
 
       return `
-        <article class="technical-card" data-tech-index="${index}">
+        <article class="technical-card" data-tech-index="${index}" role="button" tabindex="0" aria-label="Agrandir la fiche technique ${escapeHtml(sheet.title)}">
           <div class="technical-jacket-shell">
             <div class="technical-admin-controls">
               <button class="showcase-admin-btn" type="button" data-action="tech-left" data-tech-index="${index}" aria-label="Déplacer à gauche">◀</button>
@@ -5300,11 +5309,9 @@ function renderTechnicalSheets() {
             <div class="technical-flip technical-flip-static">
               <div class="technical-face technical-face-front technical-face-single">
                 <img class="technical-media" src="${imageMedia}" alt="${escapeHtml(sheet.title)}" />
+                ${downloadIcon}
               </div>
             </div>
-          </div>
-          <div class="technical-actions">
-            ${downloadBtn}
           </div>
         </article>
       `;
@@ -6243,10 +6250,33 @@ function applyMenuBadges(menuBadges) {
     const badge = String(normalized[key] || "");
     if (!badge) return;
     const span = document.createElement("span");
-    span.className = `nav-link-badge badge-${badge}`;
-    span.textContent = badge === "hot" ? "HOT" : badge === "promo" ? "PROMO" : "NOUVEAU";
+    const preset = ["hot", "promo", "nouveau"].includes(badge.toLowerCase()) ? badge.toLowerCase() : "custom";
+    span.className = `nav-link-badge badge-${preset}`;
+    span.textContent =
+      preset === "hot" ? "HOT" : preset === "promo" ? "PROMO" : preset === "nouveau" ? "NOUVEAU" : badge;
     link.appendChild(span);
   });
+}
+
+function getAdminMenuBadgeCustomInput(key) {
+  return document.getElementById(`admin-menu-badge-${key}-custom`);
+}
+
+function getAdminMenuBadgeValue(key, selectEl) {
+  const customInput = getAdminMenuBadgeCustomInput(key);
+  const selectValue = String(selectEl?.value || "").trim().toLowerCase();
+  if (!selectValue) return "";
+  if (selectValue === "custom") return String(customInput?.value || "").trim().slice(0, 18);
+  return selectValue;
+}
+
+function syncAdminMenuBadgeCustomState(key, selectedValue, customValue) {
+  const customInput = getAdminMenuBadgeCustomInput(key);
+  if (!customInput) return;
+  const isCustom = String(selectedValue || "").trim().toLowerCase() === "custom";
+  customInput.disabled = !isCustom;
+  customInput.classList.toggle("is-disabled", !isCustom);
+  if (!isCustom && !customValue) customInput.value = "";
 }
 
 function applyNavTheme(theme) {
@@ -6272,9 +6302,18 @@ function renderPremiumBreadcrumb() {
   const path = window.location.pathname;
   const pageTitle = getPageTitleFromPath(path);
   const isIndex = /(^|\/)index\.html$/.test(path) || path === "/" || path === "";
+  const hasHash = Boolean(window.location.hash);
+
+  if (isIndex) {
+    el.innerHTML = "";
+    el.classList.add("is-empty");
+    return;
+  }
+
+  el.classList.remove("is-empty");
   if (!isIndex) {
     crumbs.push({ label: pageTitle, href: "", current: true });
-  } else if (window.location.hash) {
+  } else if (hasHash) {
     const section = document.querySelector(window.location.hash);
     const navLink = document.querySelector(`.nav-links a[href="${window.location.hash}"]`);
     const sectionTitle =
@@ -6550,8 +6589,8 @@ function openMachineModal(machine) {
         </div>
         <div class="machine-modal-media-controls">
           <input class="machine-modal-image-input" id="machine-modal-image-input" type="file" accept="image/*" multiple />
-          <button class="showcase-admin-btn" type="button" data-action="machine-modal-image-pick" aria-label="Choisir des images" title="Choisir des images">＋</button>
-          ${image ? '<button class="showcase-admin-btn" type="button" data-action="machine-modal-image-remove">X</button>' : ""}
+          <button class="showcase-admin-btn" type="button" data-action="machine-modal-image-pick" aria-label="Ajouter une image" title="Ajouter une image">+</button>
+          ${image ? '<button class="showcase-admin-btn" type="button" data-action="machine-modal-image-remove" aria-label="Supprimer l&rsquo;image" title="Supprimer l&rsquo;image">×</button>' : ""}
         </div>
         ${images.length ? `<div class="machine-modal-thumbs">${thumbs}</div>` : ""}
         ${imageSlogan ? `<p class="machine-modal-media-slogan">${escapeHtml(imageSlogan)}</p>` : ""}
@@ -8222,14 +8261,25 @@ function fillAdminFields() {
       : "aurora";
   }
   const menuBadges = normalizeMenuBadges(siteContent.menuBadges);
-  if (adminMenuBadgeMachinesSelect) adminMenuBadgeMachinesSelect.value = menuBadges.machines || "";
-  if (adminMenuBadgeConfiguratorSelect) adminMenuBadgeConfiguratorSelect.value = menuBadges.configurateur || "";
-  if (adminMenuBadgeSupportSelect) adminMenuBadgeSupportSelect.value = menuBadges.support || "";
-  if (adminMenuBadgeFichesSelect) adminMenuBadgeFichesSelect.value = menuBadges.fiches || "";
-  if (adminMenuBadgeGuidesSelect) adminMenuBadgeGuidesSelect.value = menuBadges.guides || "";
-  if (adminMenuBadgeJeuxSelect) adminMenuBadgeJeuxSelect.value = menuBadges.jeux || "";
-  if (adminMenuBadgeAboutSelect) adminMenuBadgeAboutSelect.value = menuBadges.about || "";
-  if (adminMenuBadgeFaqSelect) adminMenuBadgeFaqSelect.value = menuBadges.faq || "";
+  const badgeSelects = {
+    machines: adminMenuBadgeMachinesSelect,
+    configurateur: adminMenuBadgeConfiguratorSelect,
+    support: adminMenuBadgeSupportSelect,
+    fiches: adminMenuBadgeFichesSelect,
+    guides: adminMenuBadgeGuidesSelect,
+    jeux: adminMenuBadgeJeuxSelect,
+    about: adminMenuBadgeAboutSelect,
+    faq: adminMenuBadgeFaqSelect,
+  };
+  MENU_BADGE_KEYS.forEach((key) => {
+    const value = String(menuBadges[key] || "");
+    const select = badgeSelects[key];
+    const customInput = getAdminMenuBadgeCustomInput(key);
+    const isPreset = ["", "nouveau", "promo", "hot"].includes(value.toLowerCase());
+    if (select) select.value = isPreset ? value.toLowerCase() : "custom";
+    if (customInput) customInput.value = isPreset ? "" : value;
+    syncAdminMenuBadgeCustomState(key, select?.value || "", customInput?.value || "");
+  });
   if (adminFooterEmailInput) {
     adminFooterEmailInput.value = siteContent.footerContactEmail || DEFAULT_CONTENT.footerContactEmail;
   }
@@ -11109,13 +11159,42 @@ technicalSheetsGridEl.addEventListener("click", (event) => {
     return;
   }
 
-  if (event.target.closest(".download-btn")) return;
+  if (event.target.closest(".download-btn, .technical-download-icon")) return;
+  const card = event.target.closest(".technical-card");
+  if (!card) return;
+  const index = Number(card.dataset.techIndex);
+  if (Number.isNaN(index) || !siteContent.technicalSheets[index]) return;
+  openTechnicalSheetModal(siteContent.technicalSheets[index], index);
+});
+
+technicalSheetsGridEl.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  if (event.target.closest(".download-btn, .technical-download-icon")) return;
+  const card = event.target.closest(".technical-card");
+  if (!card) return;
+  event.preventDefault();
+  const index = Number(card.dataset.techIndex);
+  if (Number.isNaN(index) || !siteContent.technicalSheets[index]) return;
+  openTechnicalSheetModal(siteContent.technicalSheets[index], index);
 });
 
 imageModalCloseEl.addEventListener("click", closeImageModal);
 machineModalCloseEl.addEventListener("click", closeMachineModal);
 configInfoModalCloseEl?.addEventListener("click", closeConfigInfoModal);
 legalModalCloseEl?.addEventListener("click", closeLegalModal);
+
+MENU_BADGE_KEYS.forEach((key) => {
+  const select = document.getElementById(`admin-menu-badge-${key}`);
+  const customInput = getAdminMenuBadgeCustomInput(key);
+  select?.addEventListener("change", () => {
+    syncAdminMenuBadgeCustomState(key, select.value, customInput?.value || "");
+  });
+  customInput?.addEventListener("input", () => {
+    if (String(select?.value || "") === "custom") {
+      customInput.value = customInput.value.slice(0, 18);
+    }
+  });
+});
 
 footerLegalMentionsBtnEl?.addEventListener("click", () => openLegalModal("mentions"));
 footerLegalCgvBtnEl?.addEventListener("click", () => openLegalModal("cgv"));
@@ -12359,14 +12438,14 @@ adminEditor.addEventListener("submit", async (event) => {
         ? String(adminNavThemeSelect.value || "aurora")
         : DEFAULT_CONTENT.navTheme,
     menuBadges: normalizeMenuBadges({
-      machines: adminMenuBadgeMachinesSelect?.value || "",
-      configurateur: adminMenuBadgeConfiguratorSelect?.value || "",
-      support: adminMenuBadgeSupportSelect?.value || "",
-      fiches: adminMenuBadgeFichesSelect?.value || "",
-      guides: adminMenuBadgeGuidesSelect?.value || "",
-      jeux: adminMenuBadgeJeuxSelect?.value || "",
-      about: adminMenuBadgeAboutSelect?.value || "",
-      faq: adminMenuBadgeFaqSelect?.value || "",
+      machines: getAdminMenuBadgeValue("machines", adminMenuBadgeMachinesSelect),
+      configurateur: getAdminMenuBadgeValue("configurateur", adminMenuBadgeConfiguratorSelect),
+      support: getAdminMenuBadgeValue("support", adminMenuBadgeSupportSelect),
+      fiches: getAdminMenuBadgeValue("fiches", adminMenuBadgeFichesSelect),
+      guides: getAdminMenuBadgeValue("guides", adminMenuBadgeGuidesSelect),
+      jeux: getAdminMenuBadgeValue("jeux", adminMenuBadgeJeuxSelect),
+      about: getAdminMenuBadgeValue("about", adminMenuBadgeAboutSelect),
+      faq: getAdminMenuBadgeValue("faq", adminMenuBadgeFaqSelect),
     }),
     footerContactEmail: (adminFooterEmailInput?.value || "").trim() || DEFAULT_CONTENT.footerContactEmail,
     legal: {
