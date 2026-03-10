@@ -27,7 +27,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260310premium14" />
+    <link rel="stylesheet" href="styles.css?v=20260310premium18" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -79,24 +79,61 @@
       .faq-hero {
         margin-top: 1rem;
         border: 1px solid rgba(127, 231, 255, 0.35);
-        border-radius: 1.1rem;
-        padding: 1.2rem;
+        border-radius: 1.35rem;
+        padding: 1.35rem 1.35rem 1.2rem;
         background:
-          radial-gradient(circle at 90% 0%, rgba(127, 231, 255, 0.2), transparent 38%),
-          linear-gradient(155deg, rgba(20, 53, 90, 0.92), rgba(8, 25, 46, 0.92));
+          radial-gradient(circle at 90% 0%, rgba(127, 231, 255, 0.26), transparent 38%),
+          radial-gradient(circle at 10% 12%, rgba(90, 198, 255, 0.12), transparent 28%),
+          linear-gradient(155deg, rgba(20, 53, 90, 0.94), rgba(8, 25, 46, 0.94));
+        box-shadow:
+          0 24px 48px rgba(1, 8, 20, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.12);
       }
 
       .faq-grid {
-        margin-top: 1rem;
+        margin-top: 1.15rem;
         display: grid;
-        gap: 0.75rem;
+        gap: 0.95rem;
       }
 
       .faq-item {
+        position: relative;
         border: 1px solid rgba(127, 231, 255, 0.28);
-        border-radius: 0.9rem;
-        background: linear-gradient(170deg, rgba(19, 50, 84, 0.9), rgba(9, 27, 49, 0.9));
+        border-radius: 1.05rem;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(123, 230, 255, 0.14), transparent 34%),
+          linear-gradient(170deg, rgba(19, 50, 84, 0.94), rgba(9, 27, 49, 0.94));
         overflow: hidden;
+        box-shadow:
+          0 16px 34px rgba(1, 9, 22, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+      }
+
+      .faq-item::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(110deg, transparent 0%, rgba(190, 244, 255, 0.07) 28%, transparent 56%);
+        opacity: 0;
+        transform: translateX(-24%);
+        transition: opacity 260ms ease, transform 420ms ease;
+      }
+
+      .faq-item:hover {
+        transform: translateY(-3px);
+        border-color: rgba(127, 231, 255, 0.45);
+        box-shadow:
+          0 22px 42px rgba(1, 9, 22, 0.34),
+          0 0 24px rgba(112, 226, 255, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.09);
+      }
+
+      .faq-item:hover::before,
+      .faq-item.open::before {
+        opacity: 1;
+        transform: translateX(0);
       }
 
       .faq-question {
@@ -106,43 +143,64 @@
         color: #e5f4ff;
         text-align: left;
         cursor: pointer;
-        padding: 0.95rem;
+        padding: 1.12rem 1.1rem 1rem;
         font-family: "Sora", sans-serif;
-        font-weight: 700;
-        font-size: 0.98rem;
+        font-weight: 800;
+        font-size: 1.04rem;
+        line-height: 1.35;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.8rem;
+        gap: 1rem;
       }
 
       .faq-question .faq-icon {
-        color: #9ddcff;
-        font-size: 1.1rem;
-        transition: transform 220ms ease;
+        flex: 0 0 auto;
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid rgba(127, 231, 255, 0.34);
+        color: #dff7ff;
+        font-size: 1rem;
+        background: linear-gradient(165deg, rgba(60, 153, 227, 0.26), rgba(7, 34, 63, 0.28));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        transition: transform 220ms ease, background 220ms ease, border-color 220ms ease;
       }
 
       .faq-item.open .faq-question .faq-icon {
         transform: rotate(45deg);
+        background: linear-gradient(165deg, rgba(92, 193, 255, 0.34), rgba(7, 34, 63, 0.34));
+        border-color: rgba(127, 231, 255, 0.56);
       }
 
       .faq-answer {
         max-height: 0;
         overflow: hidden;
-        padding: 0 0.95rem;
+        padding: 0 1.1rem;
         color: #cde5f9;
-        transition: max-height 280ms ease, padding-bottom 280ms ease;
+        transition: max-height 340ms ease, padding-bottom 340ms ease;
+      }
+
+      .faq-answer p {
+        margin: 0;
+        font-size: 0.98rem;
+        line-height: 1.78;
+        color: #d4eafb;
+        text-wrap: pretty;
       }
 
       .faq-item.open .faq-answer {
-        max-height: 260px;
-        padding-bottom: 0.95rem;
+        max-height: 360px;
+        padding-bottom: 1.18rem;
       }
 
       .faq-empty {
         border: 1px solid rgba(127, 231, 255, 0.28);
-        border-radius: 0.9rem;
-        padding: 1rem;
+        border-radius: 1rem;
+        padding: 1.05rem;
         color: #d2e8fb;
         background: rgba(10, 28, 49, 0.86);
       }
@@ -261,7 +319,6 @@
           <button class="admin-live-exit hidden" id="admin-live-exit" type="button" aria-label="Sortir du mode admin">×</button>
         </div>
       </nav>
-      <div class="premium-breadcrumb" id="premium-breadcrumb" aria-label="Fil d'ariane"></div>
     </header>
 
     <main class="faq-page">
@@ -364,6 +421,6 @@
       </div>
     </section>
 
-    <script src="faq.js?v=20260310faq1"></script>
+    <script src="faq.js?v=20260310faq2"></script>
   </body>
 </html>
