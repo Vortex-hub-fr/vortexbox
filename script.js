@@ -5281,6 +5281,14 @@ function renderTechnicalSheets() {
       const imageMedia = sheet.image
         ? sheet.image
         : PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length];
+      const downloadHref = resolveTechnicalSheetHref(sheet, index);
+      const downloadFileName = sanitizeFileName(
+        String(sheet?.fileName || `fiche-technique-${index + 1}.pdf`),
+        `fiche-technique-${index + 1}.pdf`
+      );
+      const downloadBtn = downloadHref
+        ? `<a class="download-btn technical-download-btn" href="${escapeHtml(downloadHref)}" download="${escapeHtml(downloadFileName)}">Télécharger</a>`
+        : `<span class="download-btn technical-download-btn disabled" aria-disabled="true">Fiche indisponible</span>`;
 
       return `
         <article class="technical-card" data-tech-index="${index}">
@@ -5292,11 +5300,11 @@ function renderTechnicalSheets() {
             <div class="technical-flip technical-flip-static">
               <div class="technical-face technical-face-front technical-face-single">
                 <img class="technical-media" src="${imageMedia}" alt="${escapeHtml(sheet.title)}" />
-                <div class="technical-info-slide" aria-hidden="true">
-                  <h3>${escapeHtml(sheet.title || `Fiche ${index + 1}`)}</h3>
-                </div>
               </div>
             </div>
+          </div>
+          <div class="technical-actions">
+            ${downloadBtn}
           </div>
         </article>
       `;
@@ -5304,6 +5312,17 @@ function renderTechnicalSheets() {
     .join("");
 
   initializeTechnicalPremiumEffects();
+}
+
+function resolveTechnicalSheetHref(sheet, index) {
+  if (!sheet || typeof sheet !== "object") return "";
+  const memoryHref = String(technicalSheetDownloadUrls[String(index)] || "").trim();
+  if (memoryHref) return memoryHref;
+
+  const raw = String(sheet.fileData || "").trim();
+  if (!raw) return "";
+  if (/^(data:|blob:|https?:\/\/|\/)/i.test(raw)) return raw;
+  return `/${raw.replace(/^\/+/, "")}`;
 }
 
 function initializeTechnicalPremiumEffects() {

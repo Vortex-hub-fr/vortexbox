@@ -1,0 +1,180 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Length 2292 >>
+stream
+0.02 0.07 0.15 rg
+0 0 595 842 re f
+0.03 0.18 0.32 rg
+0 746 595 96 re f
+0.03 0.18 0.32 rg
+0 0 595 34 re f
+BT /F2 20 Tf 0.62 0.94 1 rg 40 788 Td (VORTEXBOX - TUTO COMPLET RAILWAY) Tj ET
+BT /F1 11 Tf 0.82 0.93 1 rg 40 770 Td (Installation production complete de votre site VortexBox) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 716 Td (DEPLOIEMENT RAILWAY - VORTEXBOX) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 702 m 555 702 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 682 Td (Ce guide installe votre site VortexBox en production sur Railway, pas a pas.) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 661 Td (1\) PRE-REQUIS) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 647 m 555 647 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 627 Td (1. Compte Railway actif + compte GitHub connecte.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 614 Td (2. Repository: Vortex-hub-fr/vortexbox.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 601 Td (3. Branche de deploy: main.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 588 Td (4. Projet local: /Users/brunosoler/Documents/Playground) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 567 Td (2\) CREER LE SERVICE) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 553 m 555 553 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 533 Td (1. Railway > New Project > Deploy from GitHub repo.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 520 Td (2. Selectionner: Vortex-hub-fr/vortexbox.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 507 Td (3. Ouvrir la carte du service vortexbox.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 494 Td (4. Settings > Start Command: npm start) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 481 Td (5. Root Directory: vide \(racine du repo\).) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 460 Td (3\) VARIABLES D'ENVIRONNEMENT) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 446 m 555 446 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 426 Td (Ajouter dans Railway > Variables:) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 413 Td (- NODE_ENV=production) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 400 Td (- HOST=0.0.0.0) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 387 Td (- PORT=${RAILWAY_PORT}) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 374 Td (Email \(si OTP actif\): SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / MAIL_FROM) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 361 Td (IA \(optionnel\): OPENAI_API_KEY + OPENAI_MODEL=gpt-4.1-mini) Tj ET
+BT /F1 9 Tf 0.74 0.88 0.98 rg 40 14 Td (Page 1) Tj ET
+endstream
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 10 0 R /F2 11 0 R >> >> /Contents 3 0 R >>
+endobj
+5 0 obj
+<< /Length 2468 >>
+stream
+0.02 0.07 0.15 rg
+0 0 595 842 re f
+0.03 0.18 0.32 rg
+0 746 595 96 re f
+0.03 0.18 0.32 rg
+0 0 595 34 re f
+BT /F2 20 Tf 0.62 0.94 1 rg 40 788 Td (VORTEXBOX - TUTO COMPLET RAILWAY) Tj ET
+BT /F1 11 Tf 0.82 0.93 1 rg 40 770 Td (Installation production complete de votre site VortexBox) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 716 Td (4\) VOLUMES PERSISTANTS \(OBLIGATOIRE\)) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 702 m 555 702 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 682 Td (Pour conserver vos fichiers et donnees admin apres redeploy:) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 669 Td (- Volume #1 monte sur /app/uploads) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 656 Td (- Volume #2 monte sur /app/data) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 643 Td (Verification: uploader une image, redeployer, verifier qu'elle est toujours presente.) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 622 Td (5\) NETWORKING + DOMAINE) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 608 m 555 608 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 588 Td (1. Settings > Networking > Generate Domain.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 575 Td (2. Port cible: 8080.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 562 Td (3. Railway genere une URL publique \(ex: vortexbox-production.up.railway.app\).) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 549 Td (4. Domaine perso \(optionnel\): Custom Domain + DNS chez votre registrar.) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 528 Td (6\) CHECK DEPLOIEMENT) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 514 m 555 514 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 494 Td (Dans Deployments, verifier: Build OK, Runtime OK, Health OK.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 481 Td (Endpoint sante: /health) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 468 Td (Tester ensuite: connexion utilisateur, connexion admin, upload image/video, page Jeux.) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 447 Td (7\) MISE A JOUR DU SITE \(MAC\)) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 433 m 555 433 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 413 Td (Commande complete:) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 400 Td (cd /Users/brunosoler/Documents/Playground) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 387 Td (git add .) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 374 Td (git commit -m "MAJ VortexBox" || echo "Aucun changement a commit") Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 361 Td (git push origin main) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 348 Td (Railway redeploie automatiquement apres le push.) Tj ET
+BT /F1 9 Tf 0.74 0.88 0.98 rg 40 14 Td (Page 2) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 10 0 R /F2 11 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 2333 >>
+stream
+0.02 0.07 0.15 rg
+0 0 595 842 re f
+0.03 0.18 0.32 rg
+0 746 595 96 re f
+0.03 0.18 0.32 rg
+0 0 595 34 re f
+BT /F2 20 Tf 0.62 0.94 1 rg 40 788 Td (VORTEXBOX - TUTO COMPLET RAILWAY) Tj ET
+BT /F1 11 Tf 0.82 0.93 1 rg 40 770 Td (Installation production complete de votre site VortexBox) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 716 Td (8\) DEPANNAGE RAPIDE) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 702 m 555 702 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 682 Td (- Si l'admin ne passe pas: verifier variables + code admin email + cache navigateur.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 669 Td (- Si donnees perdues: verifier les mounts /app/uploads et /app/data.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 656 Td (- Si upload KO: verifier format/taille + logs server + logs Railway.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 643 Td (- Si deploiement KO: Deployments > View logs, corriger puis repush.) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 622 Td (9\) SECURITE) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 608 m 555 608 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 588 Td (- Ne jamais mettre les secrets dans le code.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 575 Td (- Utiliser mot de passe d'application pour SMTP Outlook.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 562 Td (- Faire une sauvegarde ZIP reguliere via l'admin.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 549 Td (- Garder un seul compte admin maitre.) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 528 Td (10\) CHECKLIST FINALE AVANT VENTE) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 514 m 555 514 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 494 Td (- Page accueil OK, Configurateur OK, FAQ/Jeux/Support OK) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 481 Td (- Upload images/videos OK) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 468 Td (- Processus/CRM/Fournisseurs/Games OK) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 455 Td (- Profil utilisateur + deconnexion OK) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 442 Td (- Cookies + mentions legales + RGPD OK) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 429 Td (- Performance mobile/desktop validee) Tj ET
+BT /F2 14 Tf 0.58 0.92 1 rg 40 408 Td (VORTEXBOX) Tj ET
+0.08 0.56 0.76 RG
+0.8 w
+40 394 m 555 394 l S
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 374 Td (Guide Railway premium termine.) Tj ET
+BT /F1 11 Tf 0.83 0.93 0.99 rg 40 361 Td (Version: 09/03/2026) Tj ET
+BT /F1 9 Tf 0.74 0.88 0.98 rg 40 14 Td (Page 3) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 10 0 R /F2 11 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+10 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+xref
+0 11
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000133 00000 n 
+0000002477 00000 n 
+0000002615 00000 n 
+0000005135 00000 n 
+0000005273 00000 n 
+0000007658 00000 n 
+0000007796 00000 n 
+0000007866 00000 n 
+trailer
+<< /Size 11 /Root 1 0 R >>
+startxref
+7942
+%%EOF

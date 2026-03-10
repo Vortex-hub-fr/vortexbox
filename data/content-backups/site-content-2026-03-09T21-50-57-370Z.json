@@ -385,15 +385,7 @@
     }
   ],
   "processus": {
-    "files": [
-      {
-        "title": "Tuto Installation VB Railway",
-        "fileName": "VortexBox-Tuto-Complet-Railway-Premium-v2.pdf",
-        "fileData": "uploads/processus/1773093108770-qzzcet-vortexbox-tuto-complet-railway-premium-v2.pdf",
-        "path": "",
-        "fileMime": "application/pdf"
-      }
-    ],
+    "files": [],
     "purchases": [
       {
         "label": "VortexBox Pro",
@@ -432,7 +424,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-07T16:20:15.183Z",
-        "updatedAt": "2026-03-09T21:51:48.774Z"
+        "updatedAt": "2026-03-09T21:40:40.247Z"
       },
       {
         "id": "crm-1772995291080-2",
@@ -462,7 +454,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-08T18:41:31.080Z",
-        "updatedAt": "2026-03-09T21:51:48.774Z"
+        "updatedAt": "2026-03-09T21:40:40.247Z"
       }
     ],
     "gamesFiles": [

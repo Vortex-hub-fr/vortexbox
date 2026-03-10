@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-09T21:21:31.601Z",
+  "updatedAt": "2026-03-10T09:27:37.951Z",
   "users": [
     {
       "email": "brunsoler@outlook.fr",
@@ -16,6 +16,10 @@
     }
   ],
   "userLog": [
+    {
+      "email": "vortexcore@outlook.fr",
+      "date": "2026-03-10T09:27:37.769Z"
+    },
     {
       "email": "vortexcore@outlook.fr",
       "date": "2026-03-09T21:21:31.419Z"
