@@ -1,7 +1,19 @@
 {
-  "updatedAt": "2026-03-11T09:58:02.599Z",
+  "updatedAt": "2026-03-11T16:09:13.955Z",
   "users": [],
   "userLog": [
+    {
+      "email": "vortexcore@outlook.fr",
+      "date": "2026-03-11T16:09:13.773Z"
+    },
+    {
+      "email": "vortexcore@outlook.fr",
+      "date": "2026-03-11T16:09:01.477Z"
+    },
+    {
+      "email": "vortexcore@outlook.fr",
+      "date": "2026-03-11T15:22:15.743Z"
+    },
     {
       "email": "vortexcore@outlook.fr",
       "date": "2026-03-11T09:58:02.418Z"
@@ -296,39 +308,7 @@
     }
   ],
   "userConfigs": {
-    "vortexcore@outlook.fr": [
-      {
-        "id": "cfg-1772913880741-ws8os6",
-        "title": "Config du 07/03/2026 21:04:40",
-        "createdAt": "2026-03-07T20:04:40.741Z",
-        "total": 2234,
-        "components": [
-          {
-            "label": "VortexBox Elite (Entrée de Gamme Gaming Performant",
-            "optionName": "Intel I9 * RTX4060 - 32G DDR5 - 1T MVME",
-            "price": 2154
-          }
-        ],
-        "services": [
-          {
-            "label": "Montage pro et tests stabilité",
-            "price": 80
-          },
-          {
-            "label": "Windows 11 inclus version Professionnelle",
-            "price": 0
-          },
-          {
-            "label": "Pack + 15 000 jeux compris",
-            "price": 0
-          },
-          {
-            "label": "Garantie incluse 2 ans sur nos VortexBox",
-            "price": 0
-          }
-        ]
-      }
-    ]
+    "vortexcore@outlook.fr": []
   },
   "promoCodes": [],
   "doneKpiRecommendations": [],

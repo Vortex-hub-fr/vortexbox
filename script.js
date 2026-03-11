@@ -5,6 +5,7 @@ const totalPrice = document.getElementById("total-price");
 const summarySaveConfigBtn = document.getElementById("summary-save-config");
 const summarySaveFeedbackEl = document.getElementById("summary-save-feedback");
 const summaryTelegramImageEl = document.getElementById("summary-telegram-image");
+const summaryExtraImagesEl = document.getElementById("summary-extra-images");
 const fpsFortniteEl = document.getElementById("fps-fortnite");
 const fpsWarzoneEl = document.getElementById("fps-warzone");
 const fpsGtaEl = document.getElementById("fps-gta");
@@ -246,6 +247,7 @@ const adminConfigImageFileInputs = [0, 1, 2].map((i) => document.getElementById(
 const adminConfigImageNameEls = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-name-${i}`));
 const adminConfigImagePreviewEls = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-preview-${i}`));
 const adminConfigImageRemoveBtns = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-remove-${i}`));
+const adminConfigSummaryTitleInput = document.getElementById("admin-config-summary-title");
 const adminAboutVideoTitleInputs = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById(`admin-about-video-title-${i}`));
 const adminAboutVideoFileInputs = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById(`admin-about-video-file-${i}`));
 const adminAboutVideoNameEls = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById(`admin-about-video-name-${i}`));
@@ -529,16 +531,36 @@ const DEFAULT_CONTENT = {
   },
   faqItems: [
     {
+      question: "VortexBox, c’est quoi exactement ?",
+      answer: "VortexBox est une expérience gaming premium pensée pour offrir bien plus qu’un simple PC assemblé.\nChaque machine est conçue, optimisée et préparée pour proposer un haut niveau de performance, de stabilité et de confort dès la réception.\nL’objectif est de vous faire gagner du temps, d’éviter les choix techniques hasardeux et de vous livrer une solution prête à jouer dans les meilleures conditions.\nVortexBox, c’est donc un univers complet mêlant puissance, finition, accompagnement et vraie exigence premium.",
+    },
+    {
       question: "Pourquoi choisir une VortexBox plutôt qu’un PC gaming classique ?",
       answer: "Une VortexBox n’est pas pensée comme un simple ordinateur assemblé, mais comme une solution gaming prête à l’emploi, testée et optimisée avant livraison.\nChaque build est sélectionné pour offrir un excellent équilibre entre performances, stabilité, silence et évolutivité.\nVous gagnez du temps, vous évitez les erreurs de compatibilité, et vous profitez d’une machine immédiatement exploitable.\nL’objectif est clair : vous livrer une expérience premium, fluide et rassurante dès le premier démarrage.",
+    },
+    {
+      question: "La VortexBox convient-elle réellement aux jeux récents et exigeants ?",
+      answer: "Oui, les configurations proposées sont orientées pour répondre aux attentes du gaming moderne, y compris sur des titres récents plus lourds.\nLe but n’est pas seulement d’obtenir des FPS, mais de proposer une machine équilibrée, stable et agréable à utiliser dans la durée.\nLes composants sont choisis pour préserver un bon niveau de fluidité, de confort thermique et de fiabilité générale.\nVous profitez ainsi d’un build crédible pour jouer aujourd’hui, mais aussi pour rester pertinent dans le temps.",
     },
     {
       question: "La VortexBox est-elle prête à jouer dès la réception ?",
       answer: "Oui, votre VortexBox arrive configurée pour être utilisée immédiatement dans les meilleures conditions.\nLe système, les pilotes essentiels et l’environnement de jeu sont préparés pour offrir un démarrage simple et rapide.\nVous n’avez pas à passer des heures à installer ou à optimiser la machine avant d’en profiter.\nUne fois connectée, vous pouvez finaliser vos comptes et commencer à jouer sans procédure complexe.",
     },
     {
+      question: "Est-ce une machine adaptée à un utilisateur débutant ?",
+      answer: "Oui, une VortexBox est pensée pour être simple à prendre en main, même si vous n’avez pas l’habitude du matériel informatique.\nLa préparation en amont réduit fortement les manipulations techniques souvent sources d’erreurs ou de stress.\nVous bénéficiez d’un système plus lisible, plus prêt, et d’un accompagnement si vous avez besoin d’être guidé.\nCela permet de profiter d’un vrai PC gaming sans devoir devenir expert dès le premier jour.",
+    },
+    {
       question: "Puis-je personnaliser ma configuration avant l’achat ?",
       answer: "Oui, le configurateur VortexBox est justement conçu pour vous permettre de sélectionner les composants et options qui correspondent à votre usage.\nVous pouvez choisir votre base matérielle, vos références, vos services complémentaires et ajuster le projet selon votre budget.\nCette approche permet de construire un build plus cohérent avec vos jeux, votre résolution cible et vos attentes en confort.\nSi besoin, nous pouvons aussi vous guider pour éviter un choix trop faible ou au contraire inutilement surdimensionné.",
+    },
+    {
+      question: "Puis-je enregistrer ma configuration ou la reprendre plus tard ?",
+      answer: "Oui, votre espace utilisateur permet de sauvegarder vos configurations pour les retrouver ultérieurement.\nC’est utile si vous comparez plusieurs versions, si vous hésitez encore, ou si vous souhaitez reprendre votre projet plus tard.\nCette fonction vous aide à construire votre build sans pression et sans perdre vos sélections précédentes.\nVous gardez ainsi une continuité claire entre votre réflexion, vos essais et votre décision finale.",
+    },
+    {
+      question: "Les fiches techniques et informations produit sont-elles consultables avant achat ?",
+      answer: "Oui, le site met à disposition des fiches techniques, des visuels, des informations détaillées et des éléments de comparaison pour vous aider à choisir.\nCes contenus ont pour but de rendre la décision plus claire, plus transparente et plus professionnelle.\nVous pouvez ainsi mieux comprendre la logique de chaque build avant de passer à l’étape de commande.\nCela participe à une expérience d’achat plus rassurante et plus qualitative.",
     },
     {
       question: "Quels délais faut-il prévoir pour la préparation et l’expédition ?",
@@ -557,24 +579,16 @@ const DEFAULT_CONTENT = {
       answer: "Oui, l’accompagnement ne s’arrête pas au moment où la machine est expédiée.\nNous pouvons vous aider pour la prise en main, les questions techniques, les vérifications de base et les conseils d’évolution.\nLe support a été pensé pour rassurer les utilisateurs qui veulent un interlocuteur clair et réactif.\nVous n’êtes donc pas laissé seul après l’achat : le suivi fait partie de l’expérience VortexBox.",
     },
     {
-      question: "La VortexBox convient-elle réellement aux jeux récents et exigeants ?",
-      answer: "Oui, les configurations proposées sont orientées pour répondre aux attentes du gaming moderne, y compris sur des titres récents plus lourds.\nLe but n’est pas seulement d’obtenir des FPS, mais de proposer une machine équilibrée, stable et agréable à utiliser dans la durée.\nLes composants sont choisis pour préserver un bon niveau de fluidité, de confort thermique et de fiabilité générale.\nVous profitez ainsi d’un build crédible pour jouer aujourd’hui, mais aussi pour rester pertinent dans le temps.",
+      question: "Le pack jeux me permet-il de télécharger gratuitement les derniers jeux ?",
+      answer: "Oui, le pack jeux vous donne accès à une solution pensée pour profiter plus librement d’un très large catalogue, y compris des titres récents selon les disponibilités et le suivi proposé.\nL’objectif est de vous offrir une expérience plus riche, plus confortable et plus avantageuse, sans multiplier les achats au fil du temps.\nL’activation reste encadrée afin de garantir un accès clair, propre et cohérent avec votre dossier client.\nVous bénéficiez ainsi d’un accompagnement premium pour profiter de vos jeux dans les meilleures conditions, avec plus de simplicité et de valeur.",
     },
     {
-      question: "Est-ce une machine adaptée à un utilisateur débutant ?",
-      answer: "Oui, une VortexBox est pensée pour être simple à prendre en main, même si vous n’avez pas l’habitude du matériel informatique.\nLa préparation en amont réduit fortement les manipulations techniques souvent sources d’erreurs ou de stress.\nVous bénéficiez d’un système plus lisible, plus prêt, et d’un accompagnement si vous avez besoin d’être guidé.\nCela permet de profiter d’un vrai PC gaming sans devoir devenir expert dès le premier jour.",
-    },
-    {
-      question: "Puis-je enregistrer ma configuration ou la reprendre plus tard ?",
-      answer: "Oui, votre espace utilisateur permet de sauvegarder vos configurations pour les retrouver ultérieurement.\nC’est utile si vous comparez plusieurs versions, si vous hésitez encore, ou si vous souhaitez reprendre votre projet plus tard.\nCette fonction vous aide à construire votre build sans pression et sans perdre vos sélections précédentes.\nVous gardez ainsi une continuité claire entre votre réflexion, vos essais et votre décision finale.",
+      question: "Comment puis-je obtenir mon patch pour les jeux ?",
+      answer: "Pour obtenir votre patch jeux, il vous suffit de contacter l’équipe VortexBox via Telegram avec votre référence de commande ou l’email utilisé lors de l’achat.\nNous vérifions ensuite votre dossier pour confirmer l’éligibilité et préparer l’activation dans les bonnes conditions.\nUne fois la demande validée, vous recevez la procédure à suivre ainsi que les indications nécessaires pour appliquer le patch simplement.\nSi vous avez le moindre doute pendant l’installation, le support peut aussi vous accompagner étape par étape pour que tout soit clair et rapide.",
     },
     {
       question: "Comment fonctionne l’offre Option DLC via code promo ?",
       answer: "L’Option DLC gratuite fonctionne via un code promo personnel demandé sur Telegram puis saisi dans le configurateur.\nCe code est associé à votre adresse email et son usage est contrôlé afin d’éviter les activations multiples non prévues.\nUne fois le code validé, l’option concernée est automatiquement prise en compte dans votre configuration.\nLe système a été conçu pour rester simple côté utilisateur, tout en gardant une logique propre côté administration.",
-    },
-    {
-      question: "Les fiches techniques et informations produit sont-elles consultables avant achat ?",
-      answer: "Oui, le site met à disposition des fiches techniques, des visuels, des informations détaillées et des éléments de comparaison pour vous aider à choisir.\nCes contenus ont pour but de rendre la décision plus claire, plus transparente et plus professionnelle.\nVous pouvez ainsi mieux comprendre la logique de chaque build avant de passer à l’étape de commande.\nCela participe à une expérience d’achat plus rassurante et plus qualitative.",
     },
   ],
   gamesCatalog: [
@@ -643,6 +657,8 @@ const DEFAULT_CONTENT = {
     categoryFillImage: "",
     categoryFillImageSecondary: "",
     summaryTelegramImage: "",
+    summaryTelegramTitle: "",
+    summaryExtraImages: ["", ""],
     components: [
       {
         id: "cpu",
@@ -2384,6 +2400,7 @@ function isAdminCredential(email, password) {
 async function requestAdminSessionLogin(email, password) {
   const response = await fetch("/api/admin/session", {
     method: "POST",
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email: String(email || "").trim().toLowerCase(),
@@ -2401,6 +2418,7 @@ async function requestAdminSessionLogout() {
   try {
     await fetch("/api/admin/logout", {
       method: "POST",
+      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: "{}",
     });
@@ -2410,6 +2428,16 @@ async function requestAdminSessionLogout() {
 function isAdminSessionAuthorized() {
   const email = getCurrentAuthEmail();
   return isAdminEmail(email) && sessionStorage.getItem(SESSION_KEY) === "1";
+}
+
+function handleExpiredAdminSession(message = "Session administrateur expiree. Reconnectez-vous dans l'admin.") {
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "0");
+  if (adminPanel) adminPanel.classList.add("hidden");
+  refreshAdminLiveMode();
+  setAdminState(false);
+  setFeedback(message, "error");
+  return message;
 }
 
 function isAdminLiveMode() {
@@ -2899,6 +2927,58 @@ function setPromoFeedback(message, tone = "") {
   promoFeedbackEl.classList.remove("success", "error", "info");
   if (!message) return;
   promoFeedbackEl.classList.add(tone || "info");
+}
+
+function getConfiguratorOptionTag(optionIndex, optionCount) {
+  if (optionCount <= 1) return { label: "Choix cible", tone: "focus", note: "Une base claire pour construire votre configuration." };
+  if (optionIndex === 0) {
+    return {
+      label: "Equilibre conseille",
+      tone: "recommended",
+      note: "Un choix rassurant pour viser la coherence globale."
+    };
+  }
+  if (optionIndex === optionCount - 1) {
+    return {
+      label: "Performance max",
+      tone: "performance",
+      note: "Le niveau le plus ambitieux pour aller chercher plus de marge."
+    };
+  }
+  return {
+    label: "Signature premium",
+    tone: "premium",
+    note: "Une option haut de gamme pour monter en standing sans desequilibre."
+  };
+}
+
+function getConfiguratorServiceTag(service, serviceIndex) {
+  if (service?.isPromo) return { label: "Offert", tone: "recommended" };
+  if (serviceIndex === 0) return { label: "Recommande", tone: "recommended" };
+  if (/support|sav|telegram|accompagnement/i.test(String(service?.label || ""))) {
+    return { label: "Accompagnement", tone: "focus" };
+  }
+  if (/test|stabil|optim|atelier/i.test(String(service?.label || "") + " " + String(service?.description || ""))) {
+    return { label: "Fiabilite", tone: "premium" };
+  }
+  return { label: "Option premium", tone: "premium" };
+}
+
+function getConfiguratorPanelLead(label) {
+  const safeLabel = String(label || "").toLowerCase();
+  if (/carte graphique|gpu|graphique/.test(safeLabel)) {
+    return "Commencez ici pour definir le niveau visuel, la fluidite cible et la marge de confort en jeu.";
+  }
+  if (/processeur|cpu/.test(safeLabel)) {
+    return "Choisissez le bon niveau de reactivite pour soutenir votre carte graphique, vos jeux et vos usages polyvalents.";
+  }
+  if (/ram|memoire/.test(safeLabel)) {
+    return "Ajustez la memoire selon votre niveau de multitache, de streaming et de confort sur la duree.";
+  }
+  if (/stockage|ssd|nvme/.test(safeLabel)) {
+    return "Dimensionnez votre stockage pour garder vos jeux, vos projets et votre systeme rapides et sereins.";
+  }
+  return "Choisissez le niveau qui correspond le mieux a votre budget, a vos jeux et au confort que vous attendez au quotidien.";
 }
 
 function setAdminPromoFeedback(message, tone = "") {
@@ -4770,12 +4850,23 @@ function normalizeConfigurator(configurator) {
     typeof configurator.summaryTelegramImage === "string" && configurator.summaryTelegramImage.trim()
       ? configurator.summaryTelegramImage
       : "";
+  const summaryTelegramTitle =
+    typeof configurator.summaryTelegramTitle === "string" ? configurator.summaryTelegramTitle.trim() : "";
+  const summaryExtraImages = Array.isArray(configurator.summaryExtraImages)
+    ? [0, 1].map((i) =>
+        typeof configurator.summaryExtraImages[i] === "string" && configurator.summaryExtraImages[i].trim()
+          ? configurator.summaryExtraImages[i]
+          : ""
+      )
+    : ["", ""];
 
   return {
     visualImages,
     categoryFillImage,
     categoryFillImageSecondary,
     summaryTelegramImage,
+    summaryTelegramTitle,
+    summaryExtraImages,
     components: components.length ? components : fallback.components,
     services,
   };
@@ -5247,6 +5338,24 @@ async function hydrateContentFromDiskIfMissing() {
     if (Array.isArray(content.configurator?.images)) {
       count += content.configurator.images.filter((image) => typeof image === "string" && image.trim()).length;
     }
+    if (Array.isArray(content.configurator?.visualImages)) {
+      count += content.configurator.visualImages.filter((image) => typeof image === "string" && image.trim()).length;
+    }
+    if (typeof content.configurator?.categoryFillImage === "string" && content.configurator.categoryFillImage.trim()) {
+      count += 1;
+    }
+    if (
+      typeof content.configurator?.categoryFillImageSecondary === "string" &&
+      content.configurator.categoryFillImageSecondary.trim()
+    ) {
+      count += 1;
+    }
+    if (typeof content.configurator?.summaryTelegramImage === "string" && content.configurator.summaryTelegramImage.trim()) {
+      count += 1;
+    }
+    if (Array.isArray(content.configurator?.summaryExtraImages)) {
+      count += content.configurator.summaryExtraImages.filter((image) => typeof image === "string" && image.trim()).length;
+    }
     return count;
   };
 
@@ -5279,9 +5388,7 @@ async function hydrateContentFromDiskIfMissing() {
     if (!shouldHydrate && !storedHasMedia && !diskHasMedia) return false;
 
     if (!shouldHydrate && parsedStored) {
-      try {
-        if (JSON.stringify(parsedStored) === JSON.stringify(payload.content)) return false;
-      } catch (error) {}
+      return false;
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.content));
@@ -5303,17 +5410,26 @@ function renderMachines() {
         : index === 1
           ? ["4K Ready", "Création + Gaming", "Puissance max"]
           : ["Full HD+", "Faible latence", "Upgrade facile"];
+      const useCases = index === 0
+        ? ["Ideal pour le 1440p", "Jeux competitifs", "Streaming confortable"]
+        : index === 1
+          ? ["Ideal pour la 4K", "Creation avancee", "Multitache lourd"]
+          : ["Machine vitrine", "Usage intensif", "Profil ultra exigeant"];
       return `
       <article class="card machine-card" data-machine-index="${index}" role="button" tabindex="0" aria-label="Voir le détail du build ${escapeHtml(machine.name)}">
         <div class="machine-card-top">
           <h3>${machine.name}</h3>
           <span class="machine-badge">${badge}</span>
         </div>
-        <p>${machine.description}</p>
+        <p class="machine-description">${machine.description}</p>
+        <div class="machine-user-fit">
+          ${useCases.map((item) => `<span>${item}</span>`).join("")}
+        </div>
         <div class="machine-chips">
           ${chips.map((chip) => `<span>${chip}</span>`).join("")}
         </div>
-        <ul>${machine.specs.map((spec) => `<li>${spec}</li>`).join("")}</ul>
+        <ul class="machine-specs">${machine.specs.map((spec) => `<li>${spec}</li>`).join("")}</ul>
+        <p class="machine-reassurance">Montage atelier, validation premium et accompagnement apres livraison.</p>
         <p class="price">${machine.price}</p>
       </article>
     `;
@@ -5611,9 +5727,12 @@ function setProfileAdminPhotoFeedback(message) {
   profileAdminPhotoFeedbackEl.textContent = String(message || "");
 }
 
-function setSummarySaveFeedback(message) {
+function setSummarySaveFeedback(message, tone = "") {
   if (!summarySaveFeedbackEl) return;
   summarySaveFeedbackEl.textContent = String(message || "");
+  summarySaveFeedbackEl.classList.remove("success", "error", "info");
+  if (!message) return;
+  summarySaveFeedbackEl.classList.add(tone || "info");
 }
 
 function buildCurrentConfigSnapshot() {
@@ -5984,26 +6103,71 @@ function closeUserProfilePanel() {
   userProfilePanel?.classList.add("hidden");
 }
 
-function renderSummaryTelegramImage(image) {
+function getConfiguratorMediaControls(actionPrefix, slot, hasImage) {
+  return `
+    <div class="config-media-admin-controls">
+      <input class="config-fill-input" id="${actionPrefix}-input-${slot}" data-slot="${slot}" data-media-role="${actionPrefix}" type="file" accept="image/*" />
+      <button class="config-media-admin-btn" type="button" data-action="${actionPrefix}-pick" data-slot="${slot}" aria-label="Ajouter ou remplacer le visuel" title="Ajouter ou remplacer le visuel">
+        <span aria-hidden="true">+</span>
+      </button>
+      ${hasImage ? `
+        <button class="config-media-admin-btn config-media-admin-btn-remove" type="button" data-action="${actionPrefix}-remove" data-slot="${slot}" aria-label="Supprimer le visuel" title="Supprimer le visuel">
+          <span aria-hidden="true">×</span>
+        </button>
+      ` : ""}
+    </div>
+  `;
+}
+
+function renderSummaryMediaFrame(src, alt, action, slot = "") {
+  const slotAttr = slot ? ` data-slot="${slot}"` : "";
+  if (!src) {
+    return `<div class="summary-telegram-placeholder">Ajoutez une image HD 6 x 6 cm</div>`;
+  }
+
+  return `
+    <div class="summary-media-stage">
+      <img class="summary-media-backdrop" src="${src}" alt="" aria-hidden="true" />
+      <img src="${src}" alt="${escapeHtml(alt)}" data-action="${action}"${slotAttr} />
+    </div>
+  `;
+}
+
+function renderSummaryTelegramImage(image, title = "") {
   if (!summaryTelegramImageEl) return;
   const src = typeof image === "string" ? image : "";
+  const safeTitle = String(title || "").trim();
   summaryTelegramImageEl.innerHTML = src
     ? `
-      <img src="${src}" alt="Visuel Telegram VortexBox" data-action="open-summary-telegram-image" />
-      <p class="config-category-fill-slogan">VortexBox – La puissance RTX au service de votre expérience gaming.</p>
-      <div class="summary-telegram-controls">
-        <input class="summary-telegram-input" id="summary-telegram-input" type="file" accept="image/*" />
-        <button class="showcase-admin-btn" type="button" data-action="summary-telegram-pick">Image</button>
-        <button class="showcase-admin-btn" type="button" data-action="summary-telegram-remove">X</button>
-      </div>
+      ${renderSummaryMediaFrame(src, "Visuel Telegram VortexBox", "open-summary-telegram-image")}
+      ${getConfiguratorMediaControls("summary-telegram", "main", true)}
+      ${safeTitle ? `<p class="summary-media-caption">${escapeHtml(safeTitle)}</p>` : ""}
     `
     : `
-      <div class="summary-telegram-placeholder">Ajoutez une image HD 6 x 6 cm</div>
-      <div class="summary-telegram-controls">
-        <input class="summary-telegram-input" id="summary-telegram-input" type="file" accept="image/*" />
-        <button class="showcase-admin-btn" type="button" data-action="summary-telegram-pick">Image</button>
-      </div>
+      ${renderSummaryMediaFrame("", "Visuel Telegram VortexBox", "open-summary-telegram-image")}
+      ${getConfiguratorMediaControls("summary-telegram", "main", false)}
     `;
+}
+
+function renderSummaryExtraImages(images) {
+  if (!summaryExtraImagesEl) return;
+  const safeImages = Array.isArray(images) ? [0, 1].map((i) => String(images[i] || "")) : ["", ""];
+  summaryExtraImagesEl.innerHTML = safeImages
+    .map((image, index) => {
+      const slot = String(index + 1);
+      const hasImage = Boolean(image.trim());
+      return `
+        <article class="summary-extra-image-card">
+          ${
+            hasImage
+              ? renderSummaryMediaFrame(image, `Visuel configurateur supplementaire ${slot}`, "open-summary-extra-image", slot)
+              : '<div class="summary-telegram-placeholder">Ajoutez une image HD 6 x 6 cm</div>'
+          }
+          ${getConfiguratorMediaControls("summary-extra", slot, hasImage)}
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function renderConfigurator() {
@@ -6023,6 +6187,11 @@ function renderConfigurator() {
     typeof config.categoryFillImageSecondary === "string" ? config.categoryFillImageSecondary : "";
   const summaryTelegramImage =
     typeof config.summaryTelegramImage === "string" ? config.summaryTelegramImage : "";
+  const summaryTelegramTitle =
+    typeof config.summaryTelegramTitle === "string" ? config.summaryTelegramTitle : "";
+  const summaryExtraImages = Array.isArray(config.summaryExtraImages)
+    ? [0, 1].map((i) => (typeof config.summaryExtraImages[i] === "string" ? config.summaryExtraImages[i] : ""))
+    : ["", ""];
   configuratorVisualEl.innerHTML = configImages.length
     ? `
       <div class="configurator-visual-gallery">
@@ -6053,13 +6222,19 @@ function renderConfigurator() {
 
   const componentsHtml = config.components
     .map((component, componentIndex) => {
+      const panelLead = getConfiguratorPanelLead(component.label);
       const optionsHtml = component.options
         .map((option, optionIndex) => {
           const optionId = `config-${componentIndex}-${optionIndex}`;
           const image = option.image || PREMIUM_GALLERY_IMAGES[optionIndex % PREMIUM_GALLERY_IMAGES.length];
           const descriptionHtml = formatInfoParagraphs(option.description);
+          const optionTag = getConfiguratorOptionTag(optionIndex, component.options.length);
           return `
-            <label class="config-option-card" for="${optionId}">
+            <label
+              class="config-option-card"
+              for="${optionId}"
+              title="${escapeHtml(option.name)} - ${escapeHtml(component.label)}"
+            >
               <button
                 class="config-option-info-btn"
                 type="button"
@@ -6100,8 +6275,10 @@ function renderConfigurator() {
               </button>
               <img src="${image}" alt="${escapeHtml(option.name)}" loading="lazy" decoding="async" />
               <div class="config-option-meta">
-                <strong>${escapeHtml(option.name)}</strong>
-                <small>${escapeHtml(component.label)}</small>
+                <span class="config-option-tag config-option-tag-${optionTag.tone}">${optionTag.label}</span>
+                <strong title="${escapeHtml(option.name)}">${escapeHtml(option.name)}</strong>
+                <small title="${escapeHtml(component.label)}">${escapeHtml(component.label)}</small>
+                <span class="config-option-guidance">${optionTag.note}</span>
               </div>
               <span class="config-option-price">+${Number(option.price)} € <span class="price-ttc">TTC</span></span>
             </label>
@@ -6115,6 +6292,7 @@ function renderConfigurator() {
             ${escapeHtml(component.label)}
             <span class="config-faq-hint" role="note">${escapeHtml(getConfiguratorFaqByLabel(component.label))}</span>
           </h4>
+          <p class="config-panel-lead">${panelLead}</p>
           <div class="config-option-grid">${optionsHtml}</div>
         </section>
       `;
@@ -6146,6 +6324,7 @@ function renderConfigurator() {
   const servicesHtml = servicesForRender
     .map(
       (service, serviceIndex) => {
+      const serviceTag = getConfiguratorServiceTag(service, serviceIndex);
       const serviceId = `config-service-${serviceIndex}`;
       const descriptionHtml = formatInfoParagraphs(service.description);
       return `
@@ -6190,7 +6369,10 @@ function renderConfigurator() {
           }
           ${service.isPromo ? "disabled" : ""}
         />
-        <span class="config-service-label">${escapeHtml(service.label)}</span>
+        <div class="config-service-copy">
+          <span class="config-service-tag config-service-tag-${serviceTag.tone}">${serviceTag.label}</span>
+          <span class="config-service-label">${escapeHtml(service.label)}</span>
+        </div>
         <span class="config-service-price">+${Number(service.price)} € <span class="price-ttc">TTC</span></span>
       </label>
     `
@@ -6218,6 +6400,11 @@ function renderConfigurator() {
       <div class="config-progress" aria-hidden="true">
         <span style="width: ${progressPercent}%"></span>
       </div>
+      <div class="config-guidance-strip" aria-label="Repères de guidage">
+        <span>Lecture simple par univers</span>
+        <span>Labels de recommandation visibles</span>
+        <span>Validation atelier en fin de parcours</span>
+      </div>
       <details class="config-faq-inline">
         <summary>FAQ rapide: bien choisir vos composants</summary>
         <p>Commencez par la puissance graphique et le processeur, puis ajustez RAM et stockage selon votre niveau d’exigence et vos usages.</p>
@@ -6240,11 +6427,7 @@ function renderConfigurator() {
                   `
                   : '<div class="config-category-fill-placeholder">Ajoutez un visuel complémentaire</div>'
               }
-              <div class="config-category-fill-controls">
-                <input class="config-fill-input" id="config-fill-input-1" data-slot="1" type="file" accept="image/*" />
-                <button class="showcase-admin-btn" type="button" data-action="config-fill-pick" data-slot="1">Image</button>
-                ${categoryFillImage ? '<button class="showcase-admin-btn" type="button" data-action="config-fill-remove" data-slot="1">X</button>' : ""}
-              </div>
+              ${getConfiguratorMediaControls("config-fill", "1", Boolean(categoryFillImage))}
             </div>
             <div class="config-category-fill">
               ${
@@ -6255,11 +6438,7 @@ function renderConfigurator() {
                   `
                   : '<div class="config-category-fill-placeholder">Ajoutez un second visuel</div>'
               }
-              <div class="config-category-fill-controls">
-                <input class="config-fill-input" id="config-fill-input-2" data-slot="2" type="file" accept="image/*" />
-                <button class="showcase-admin-btn" type="button" data-action="config-fill-pick" data-slot="2">Image</button>
-                ${categoryFillImageSecondary ? '<button class="showcase-admin-btn" type="button" data-action="config-fill-remove" data-slot="2">X</button>' : ""}
-              </div>
+              ${getConfiguratorMediaControls("config-fill", "2", Boolean(categoryFillImageSecondary))}
             </div>
           </div>
         </aside>
@@ -6283,11 +6462,12 @@ function renderConfigurator() {
   }
   setPromoFeedback(
     promoUnlocked
-      ? "Code promo valide: option DLC activée gratuitement."
-      : "Entrez votre code promo DLC pour activer l'option gratuite.",
+      ? "Code privilege valide. L option DLC offerte est ajoutee a votre configuration."
+      : "Saisissez votre code privilege pour activer l option DLC offerte.",
     promoUnlocked ? "success" : "info"
   );
-  renderSummaryTelegramImage(summaryTelegramImage);
+  renderSummaryTelegramImage(summaryTelegramImage, summaryTelegramTitle);
+  renderSummaryExtraImages(summaryExtraImages);
 }
 
 function applyContent() {
@@ -8442,6 +8622,9 @@ function fillAdminFields() {
   adminConfiguratorImagesDraft = Array.isArray(siteContent.configurator.visualImages)
     ? [0, 1, 2].map((i) => siteContent.configurator.visualImages[i] || "")
     : ["", "", ""];
+  if (adminConfigSummaryTitleInput) {
+    adminConfigSummaryTitleInput.value = String(siteContent.configurator.summaryTelegramTitle || "");
+  }
 
   renderAdminMachinesEditor();
   renderAdminTechnicalSheetsEditor();
@@ -8702,6 +8885,12 @@ function setAdminState(isLoggedIn) {
     if (adminLogin) adminLogin.classList.remove("hidden");
     if (adminKpiGateEl) adminKpiGateEl.classList.add("hidden");
     if (adminEditor) adminEditor.classList.add("hidden");
+    if (adminPasswordInput) {
+      requestAnimationFrame(() => {
+        adminPasswordInput.focus();
+        adminPasswordInput.select?.();
+      });
+    }
     return;
   }
   showAdminKpiGate();
@@ -8719,6 +8908,11 @@ function setFeedback(message, tone = "") {
   if (adminEditor && !adminEditor.classList.contains("hidden")) {
     showAdminToast(text, variant);
   }
+}
+
+function getActiveAdminTabName() {
+  const activeTab = document.querySelector(".admin-tabs .admin-tab.active[data-tab]");
+  return String(activeTab?.dataset.tab || "").trim();
 }
 
 function setAdminUploadProgress(percent, label = "Upload média") {
@@ -9033,9 +9227,13 @@ async function checkDiskApiAvailable() {
 async function uploadDataUrlToDisk(kind, fileName, dataUrl) {
   const response = await fetch("/api/upload", {
     method: "POST",
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ kind, fileName, dataUrl }),
   });
+  if (response.status === 401) {
+    throw new Error(handleExpiredAdminSession());
+  }
   if (!response.ok) {
     throw new Error("Upload disque impossible");
   }
@@ -9051,6 +9249,7 @@ async function deleteUploadedFileFromDisk(filePath) {
   if (!safePath) return { ok: true, deleted: false };
   const response = await fetch("/api/delete-upload", {
     method: "POST",
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path: safePath }),
   });
@@ -9183,9 +9382,14 @@ async function saveContentSnapshotToDisk(content) {
   if (!(await checkDiskApiAvailable())) return false;
   const response = await fetch("/api/save-content", {
     method: "POST",
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ content }),
   });
+  if (response.status === 401) {
+    handleExpiredAdminSession();
+    return false;
+  }
   return response.ok;
 }
 
@@ -9249,7 +9453,7 @@ function updateSummary() {
 
   summaryList.innerHTML = entries.length
     ? entries.map((item) => `<li>${item}</li>`).join("")
-    : '<li class="summary-empty">Aucune sélection pour le moment.</li>';
+    : '<li class="summary-empty">Commencez par choisir vos composants pour voir votre configuration s afficher ici.</li>';
   totalPrice.innerHTML = `${formatEuro(total)} <span class="price-ttc">TTC</span>`;
   setSummarySaveFeedback("");
   updateFpsEstimator();
@@ -9777,9 +9981,13 @@ if (adminRailwayUpdateRunTerminalBtn) {
     try {
       const response = await fetch("/api/run-railway-update-terminal", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ launch: true }),
       });
+      if (response.status === 401) {
+        throw new Error(handleExpiredAdminSession());
+      }
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error || "Impossible de lancer Terminal.");
@@ -11324,7 +11532,7 @@ if (summaryTelegramImageEl) {
     if (!button || !isAdminLiveMode()) return;
 
     if (button.dataset.action === "summary-telegram-pick") {
-      const input = summaryTelegramImageEl.querySelector("#summary-telegram-input");
+      const input = summaryTelegramImageEl.querySelector('#summary-telegram-input-main');
       triggerFileInput(input);
       return;
     }
@@ -11336,7 +11544,7 @@ if (summaryTelegramImageEl) {
   });
 
   summaryTelegramImageEl.addEventListener("change", (event) => {
-    const input = event.target.closest(".summary-telegram-input");
+    const input = event.target.closest('.config-fill-input[data-media-role="summary-telegram"]');
     if (!input || !isAdminLiveMode()) return;
     const file = input.files && input.files[0];
     if (!file) return;
@@ -11345,6 +11553,67 @@ if (summaryTelegramImageEl) {
         siteContent.configurator.summaryTelegramImage = data;
         if (!persistSiteContentAuto()) return;
         renderSummaryTelegramImage(data);
+      })
+      .catch(() => {});
+  });
+}
+
+if (adminConfigSummaryTitleInput) {
+  adminConfigSummaryTitleInput.addEventListener("input", () => {
+    siteContent.configurator.summaryTelegramTitle = String(adminConfigSummaryTitleInput.value || "").trim();
+    persistSiteContentAuto();
+    renderSummaryTelegramImage(
+      String(siteContent.configurator.summaryTelegramImage || ""),
+      String(siteContent.configurator.summaryTelegramTitle || "")
+    );
+  });
+}
+
+if (summaryExtraImagesEl) {
+  summaryExtraImagesEl.addEventListener("click", (event) => {
+    const image = event.target.closest('img[data-action="open-summary-extra-image"]');
+    if (image) {
+      const slot = String(image.dataset.slot || "1");
+      openImageModal(image.src, `Visuel configurateur supplementaire ${slot}`);
+      return;
+    }
+
+    const button = event.target.closest("button[data-action]");
+    if (!button || !isAdminLiveMode()) return;
+    const slotIndex = Math.max(0, Number(button.dataset.slot || "1") - 1);
+    const extraImages = Array.isArray(siteContent.configurator.summaryExtraImages)
+      ? [...siteContent.configurator.summaryExtraImages]
+      : ["", ""];
+
+    if (button.dataset.action === "summary-extra-pick") {
+      const input = summaryExtraImagesEl.querySelector(`#summary-extra-input-${slotIndex + 1}`);
+      triggerFileInput(input);
+      return;
+    }
+
+    if (button.dataset.action === "summary-extra-remove") {
+      extraImages[slotIndex] = "";
+      siteContent.configurator.summaryExtraImages = extraImages;
+      if (!persistSiteContentAuto()) return;
+      renderSummaryExtraImages(extraImages);
+    }
+  });
+
+  summaryExtraImagesEl.addEventListener("change", (event) => {
+    const input = event.target.closest('.config-fill-input[data-media-role="summary-extra"]');
+    if (!input || !isAdminLiveMode()) return;
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const slotIndex = Math.max(0, Number(input.dataset.slot || "1") - 1);
+    resizeImage(file)
+      .then((data) => {
+        const extraImages = Array.isArray(siteContent.configurator.summaryExtraImages)
+          ? [...siteContent.configurator.summaryExtraImages]
+          : ["", ""];
+        extraImages[slotIndex] = data;
+        siteContent.configurator.summaryExtraImages = extraImages;
+        if (!persistSiteContentAuto()) return;
+        renderSummaryExtraImages(extraImages);
       })
       .catch(() => {});
   });
@@ -11790,13 +12059,13 @@ if (summarySaveConfigBtn) {
   summarySaveConfigBtn.addEventListener("click", () => {
     const email = getCurrentSessionEmail();
     if (!email) {
-      setSummarySaveFeedback("Connectez-vous pour sauvegarder votre configuration.");
+      setSummarySaveFeedback("Connectez-vous a votre espace pour sauvegarder cette configuration.", "error");
       return;
     }
 
     const snapshot = buildCurrentConfigSnapshot();
     if (!snapshot) {
-      setSummarySaveFeedback("Aucune sélection à sauvegarder.");
+      setSummarySaveFeedback("Commencez votre selection avant de sauvegarder.", "info");
       return;
     }
 
@@ -11804,7 +12073,7 @@ if (summarySaveConfigBtn) {
     current.unshift(snapshot);
     setUserConfigs(email, current);
     recordUserActivity(email, "Config sauvegardée", snapshot.title || "");
-    setSummarySaveFeedback("Configuration sauvegardée dans votre profil.");
+    setSummarySaveFeedback("Configuration sauvegardee dans votre espace. Vous pouvez la reprendre a tout moment.", "success");
     if (userProfilePanel && !userProfilePanel.classList.contains("hidden")) {
       renderUserProfileConfigs(email);
       renderUserProfileFavorites(email);
@@ -11817,32 +12086,32 @@ if (promoApplyBtnEl) {
   promoApplyBtnEl.addEventListener("click", () => {
     const email = getCurrentSessionEmail();
     if (!email) {
-      setPromoFeedback("Connectez-vous pour activer votre code promo.", "error");
+      setPromoFeedback("Connectez-vous a votre espace pour activer votre code privilege.", "error");
       return;
     }
     const code = normalizePromoCode(promoCodeInputEl?.value || "");
     if (!code) {
-      setPromoFeedback("Entrez votre code promo.", "error");
+      setPromoFeedback("Saisissez votre code privilege personnel.", "error");
       return;
     }
 
     const codes = loadPromoCodes();
     const index = codes.findIndex((item) => item.code === code);
     if (index < 0) {
-      setPromoFeedback("Code promo invalide.", "error");
+      setPromoFeedback("Code privilege non reconnu.", "error");
       return;
     }
     const promo = codes[index];
     if (!promo.active) {
-      setPromoFeedback("Ce code promo est désactivé.", "error");
+      setPromoFeedback("Ce code privilege est actuellement inactif.", "error");
       return;
     }
     if (promo.email !== email) {
-      setPromoFeedback("Ce code promo n'est pas lié à votre adresse email.", "error");
+      setPromoFeedback("Ce code privilege est rattache a une autre adresse email.", "error");
       return;
     }
     if (promo.redeemedBy) {
-      setPromoFeedback("Ce code promo a déjà été utilisé.", "error");
+      setPromoFeedback("Ce code privilege a deja ete utilise.", "error");
       return;
     }
 
@@ -11858,7 +12127,7 @@ if (promoApplyBtnEl) {
     if (promoCodeInputEl) promoCodeInputEl.value = code;
     renderConfigurator();
     updateSummary();
-    setPromoFeedback("Code validé: option DLC activée gratuitement.", "success");
+    setPromoFeedback("Code privilege valide. L option DLC offerte est ajoutee a votre configuration.", "success");
     if (userProfilePanel && !userProfilePanel.classList.contains("hidden")) {
       renderUserProfileActivity(email);
     }
@@ -12458,6 +12727,10 @@ adminEditor.addEventListener("submit", async (event) => {
   const currentCategoryFillImage = siteContent.configurator?.categoryFillImage || "";
   const currentCategoryFillImageSecondary = siteContent.configurator?.categoryFillImageSecondary || "";
   const currentSummaryTelegramImage = siteContent.configurator?.summaryTelegramImage || "";
+  const currentSummaryTelegramTitle = String(siteContent.configurator?.summaryTelegramTitle || "").trim();
+  const currentSummaryExtraImages = Array.isArray(siteContent.configurator?.summaryExtraImages)
+    ? [0, 1].map((i) => siteContent.configurator.summaryExtraImages[i] || "")
+    : ["", ""];
   const persistedCategoryFillImage = await persistDataUrlAsset(
     currentCategoryFillImage,
     "configurator",
@@ -12472,6 +12745,11 @@ adminEditor.addEventListener("submit", async (event) => {
     currentSummaryTelegramImage,
     "configurator",
     "summary-telegram.webp"
+  );
+  const persistedSummaryExtraImages = await Promise.all(
+    currentSummaryExtraImages.map((image, index) =>
+      persistDataUrlAsset(image, "configurator", `summary-extra-${index + 1}.webp`)
+    )
   );
 
   // Anti-perte global: si un bloc média/fichier revient vide par erreur,
@@ -12765,6 +13043,8 @@ adminEditor.addEventListener("submit", async (event) => {
       categoryFillImage: persistedCategoryFillImage,
       categoryFillImageSecondary: persistedCategoryFillImageSecondary,
       summaryTelegramImage: persistedSummaryTelegramImage,
+      summaryTelegramTitle: currentSummaryTelegramTitle,
+      summaryExtraImages: persistedSummaryExtraImages,
       components: adminComponentsDraft.map((component, index) => ({
         id: sanitizeId(component.id || component.label, `categorie-${index + 1}`),
         label: component.label.trim(),
@@ -12791,7 +13071,15 @@ adminEditor.addEventListener("submit", async (event) => {
 
   applyContent();
   renderAdminOverviewKpis();
-  if (strippedLegacyInlineMedia) {
+  const activeAdminTab = getActiveAdminTabName();
+  if (activeAdminTab === "faq") {
+    setFeedback(
+      diskSaved
+        ? "FAQ sauvegardee avec succes. Modifications enregistrees dans le navigateur et sur disque."
+        : "FAQ sauvegardee avec succes dans le navigateur.",
+      "success"
+    );
+  } else if (strippedLegacyInlineMedia) {
     setFeedback("✅ Modifications enregistrées. Certains anciens médias trop lourds ont été optimisés.", "success");
   } else if (diskSaved) {
     setFeedback("✅ Sauvegarde réussie: modifications enregistrées dans le navigateur ET sur disque.", "success");

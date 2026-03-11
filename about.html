@@ -37,19 +37,160 @@
       }
 
       .about-hero {
+        position: relative;
+        overflow: hidden;
         margin-top: 1rem;
         border: 1px solid rgba(127, 231, 255, 0.35);
-        border-radius: 1.1rem;
-        padding: 1.2rem;
+        border-radius: 1.35rem;
+        padding: 1.35rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+        gap: 1.2rem;
+        align-items: center;
         background:
-          radial-gradient(circle at 90% 0%, rgba(127, 231, 255, 0.22), transparent 38%),
-          linear-gradient(155deg, rgba(20, 53, 90, 0.92), rgba(8, 25, 46, 0.92));
+          radial-gradient(circle at 100% 0%, rgba(127, 231, 255, 0.24), transparent 34%),
+          radial-gradient(circle at 0% 100%, rgba(58, 136, 255, 0.16), transparent 34%),
+          linear-gradient(155deg, rgba(20, 53, 90, 0.94), rgba(8, 25, 46, 0.96));
+        box-shadow:
+          0 28px 50px rgba(1, 8, 20, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .about-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 20%),
+          radial-gradient(circle at 70% 50%, rgba(109, 220, 255, 0.08), transparent 28%);
+      }
+
+      .about-hero-copy {
+        position: relative;
+        z-index: 1;
+      }
+
+      .about-hero-copy .badge {
+        margin-bottom: 0.78rem;
+      }
+
+      .about-hero-kicker {
+        margin: 0 0 0.85rem;
+        color: rgba(183, 238, 255, 0.88);
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
       }
 
       .about-hero h1 {
-        margin: 0.65rem 0 0;
+        margin: 0;
         white-space: normal;
-        max-width: 22ch;
+        max-width: 14ch;
+        line-height: 0.95;
+        letter-spacing: -0.05em;
+        text-shadow:
+          0 18px 30px rgba(1, 8, 20, 0.34),
+          0 0 24px rgba(108, 221, 255, 0.08);
+      }
+
+      .about-hero .lead {
+        max-width: 31ch;
+        margin-top: 1.1rem;
+        color: #d8ebfb;
+        font-size: 1rem;
+        line-height: 1.72;
+      }
+
+      .about-hero-visual {
+        position: relative;
+        min-height: 100%;
+        align-self: stretch;
+        display: grid;
+        align-items: end;
+        justify-items: end;
+      }
+
+      .about-hero-orb {
+        position: absolute;
+        right: 0;
+        bottom: 2%;
+        width: min(430px, 100%);
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle, rgba(118, 227, 255, 0.24) 0%, rgba(118, 227, 255, 0.08) 34%, transparent 68%);
+        filter: blur(8px);
+        pointer-events: none;
+      }
+
+      .about-hero-machine {
+        position: relative;
+        width: min(430px, 100%);
+        min-height: 332px;
+        border: 1px solid rgba(127, 231, 255, 0.18);
+        border-radius: 1.2rem;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 18%),
+          radial-gradient(circle at 100% 0%, rgba(171, 242, 255, 0.14), transparent 28%),
+          linear-gradient(160deg, rgba(10, 34, 58, 0.72), rgba(5, 18, 34, 0.82));
+        box-shadow:
+          0 28px 44px rgba(1, 8, 20, 0.34),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+      }
+
+      .about-hero-machine::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(125deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 24%),
+          repeating-linear-gradient(
+            90deg,
+            rgba(147, 236, 255, 0.06) 0,
+            rgba(147, 236, 255, 0.06) 1px,
+            transparent 1px,
+            transparent 82px
+          );
+      }
+
+      .about-hero-machine img {
+        position: absolute;
+        right: -2%;
+        bottom: -2%;
+        width: 118%;
+        max-width: none;
+        object-fit: contain;
+        filter: drop-shadow(0 24px 32px rgba(1, 8, 20, 0.52));
+        opacity: 0.96;
+      }
+
+      .about-hero-specs {
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+        display: grid;
+        gap: 0.46rem;
+        z-index: 1;
+      }
+
+      .about-hero-specs span {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        min-height: 30px;
+        padding: 0 0.68rem;
+        border-radius: 999px;
+        border: 1px solid rgba(175, 240, 255, 0.2);
+        background: rgba(5, 19, 34, 0.62);
+        color: #dff4ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
 
       .about-grid {
@@ -396,6 +537,23 @@
       }
 
       @media (max-width: 900px) {
+        .about-hero {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        .about-hero h1 {
+          max-width: 11ch;
+        }
+
+        .about-hero .lead {
+          max-width: none;
+        }
+
+        .about-hero-machine {
+          min-height: 260px;
+        }
+
         .about-grid {
           grid-template-columns: 1fr;
         }
@@ -517,12 +675,26 @@
 
     <main class="about-page">
       <section class="about-hero">
-        <p class="badge">Notre ADN</p>
-        <h1>VortexBox conçoit des build gaming premium pensés pour durer.</h1>
-        <p class="lead">
-          Notre mission est simple: proposer des configurations puissantes, esthétiques et évolutives,
-          avec un niveau de finition professionnel pour chaque client.
-        </p>
+        <div class="about-hero-copy">
+          <p class="badge">Notre ADN</p>
+          <p class="about-hero-kicker">Puissance  Finition  Durabilite</p>
+          <h1>VortexBox conçoit des build gaming premium pensés pour durer.</h1>
+          <p class="lead">
+            Notre mission est simple: proposer des configurations puissantes, esthétiques et évolutives,
+            avec un niveau de finition professionnel pour chaque client.
+          </p>
+        </div>
+        <div class="about-hero-visual" aria-hidden="true">
+          <div class="about-hero-orb"></div>
+          <div class="about-hero-machine">
+            <div class="about-hero-specs">
+              <span>Montage premium</span>
+              <span>Validation atelier</span>
+              <span>Performance durable</span>
+            </div>
+            <img src="uploads/machine-images/1772891397549-daedz1-image_2026-03-07_144957527.png" alt="" />
+          </div>
+        </div>
       </section>
 
       <section class="about-grid">
