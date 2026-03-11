@@ -10456,3 +10456,700 @@ body.page-enter-active::after {
     min-height: 48px;
   }
 }
+
+/* Premium Expansion Pack */
+:root {
+  --vb-ultra-panel:
+    radial-gradient(circle at 100% 0%, rgba(181, 244, 255, 0.13), transparent 28%),
+    radial-gradient(circle at 0% 100%, rgba(76, 154, 255, 0.12), transparent 30%),
+    linear-gradient(165deg, rgba(9, 33, 58, 0.94), rgba(5, 18, 34, 0.96));
+  --vb-ultra-line: rgba(176, 241, 255, 0.28);
+  --vb-ultra-shadow: 0 24px 48px rgba(2, 10, 24, 0.42);
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(145, 232, 255, 0.07), transparent 28%),
+    radial-gradient(circle at 100% 18%, rgba(89, 178, 255, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(3, 17, 33, 0.98), rgba(2, 10, 22, 1));
+}
+
+main > .section,
+.about-page > section,
+.faq-page > section,
+.jeux-page > section,
+.support-page > section {
+  position: relative;
+}
+
+main > .section::before,
+.about-page > section::before,
+.faq-page > section::before,
+.jeux-page > section::before,
+.support-page > section::before {
+  content: "";
+  position: absolute;
+  inset: -0.45rem -0.4rem;
+  z-index: -1;
+  border-radius: 1.3rem;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(182, 244, 255, 0.08), transparent 26%),
+    radial-gradient(circle at 100% 100%, rgba(76, 154, 255, 0.06), transparent 24%);
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+.section-head {
+  position: relative;
+  gap: 0.3rem;
+  margin-bottom: 1.1rem;
+}
+
+.section-head::after {
+  content: "";
+  display: block;
+  width: min(140px, 28vw);
+  height: 1px;
+  margin-top: 0.32rem;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(165, 239, 255, 0.74), rgba(255, 255, 255, 0));
+  box-shadow: 0 0 18px rgba(104, 219, 255, 0.14);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  width: fit-content;
+  padding: 0.28rem 0.74rem;
+  border-radius: 999px;
+  border: 1px solid rgba(176, 241, 255, 0.34);
+  background:
+    radial-gradient(circle at 30% 0%, rgba(212, 249, 255, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(12, 41, 69, 0.76), rgba(7, 23, 42, 0.8));
+  box-shadow:
+    0 14px 24px rgba(2, 10, 24, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.section-head h2,
+.about-hero h1,
+.faq-hero h1,
+.jeux-hero h1,
+#support-sav-title {
+  text-shadow:
+    0 16px 34px rgba(2, 10, 24, 0.4),
+    0 0 22px rgba(104, 219, 255, 0.08);
+}
+
+.hero-showcase {
+  gap: 0.9rem;
+}
+
+.showcase-card,
+.machine-card,
+.review-card,
+.technical-card,
+.why-card,
+.timeline-step,
+.proof-kpi,
+.verified-premium-item,
+.config-group-card,
+.summary,
+.admin-content-panel,
+.about-card,
+.game-cover-card,
+.faq-item {
+  border-color: var(--vb-ultra-line);
+  background: var(--vb-ultra-panel);
+  box-shadow: var(--vb-ultra-shadow), inset 0 1px 0 rgba(245, 252, 255, 0.06);
+}
+
+.showcase-card:hover,
+.machine-card:hover,
+.review-card:hover,
+.technical-card:hover,
+.why-card:hover,
+.timeline-step:hover,
+.proof-kpi:hover,
+.verified-premium-item:hover,
+.about-card:hover,
+.game-cover-card:hover,
+.faq-item:hover {
+  box-shadow:
+    0 32px 58px rgba(2, 10, 24, 0.5),
+    0 0 26px rgba(103, 218, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.showcase-card::after,
+.machine-card::after,
+.review-card::after,
+.technical-card::after,
+.about-card::after,
+.game-cover-card::after {
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0) 38%, rgba(178, 242, 255, 0.14) 50%, rgba(255, 255, 255, 0) 62%);
+  background-size: 240% 100%;
+  animation: vb-sheen-pass 7.8s linear infinite;
+}
+
+.machine-card-top,
+.showcase-overlay,
+.game-cover-topbar,
+.faq-question {
+  backdrop-filter: blur(10px);
+}
+
+.price,
+.summary .total strong,
+.proof-value {
+  text-shadow: 0 0 14px rgba(104, 219, 255, 0.08);
+}
+
+.configurator {
+  gap: 1.35rem;
+}
+
+.configurator::before {
+  border-radius: 1.35rem;
+  border-color: rgba(173, 240, 255, 0.42);
+  box-shadow:
+    0 26px 52px rgba(2, 10, 24, 0.42),
+    inset 0 1px 0 rgba(249, 254, 255, 0.08);
+}
+
+.configurator-visual,
+.configurator-visual-fallback,
+.config-reference-content,
+.config-reference-list,
+.promo-code-box,
+.promo-offer-banner,
+.pitch-item {
+  border-color: rgba(173, 240, 255, 0.3);
+  box-shadow:
+    0 20px 36px rgba(2, 10, 24, 0.34),
+    inset 0 1px 0 rgba(250, 254, 255, 0.06);
+}
+
+.config-option-card,
+.config-service-item {
+  border-color: rgba(171, 241, 255, 0.26);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(169, 242, 255, 0.12), transparent 28%),
+    linear-gradient(165deg, rgba(10, 34, 58, 0.94), rgba(6, 20, 37, 0.96));
+  box-shadow:
+    0 16px 28px rgba(2, 10, 24, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.config-option-card:hover,
+.config-service-item:hover,
+.config-option-card:focus-within,
+.config-service-item:focus-within {
+  transform: translateY(-3px);
+  box-shadow:
+    0 24px 40px rgba(2, 10, 24, 0.42),
+    0 0 22px rgba(103, 218, 255, 0.07);
+}
+
+.summary {
+  position: sticky;
+  top: 5.8rem;
+  border-radius: 1.2rem;
+  overflow: hidden;
+}
+
+.summary h3 {
+  font-size: 1.34rem;
+  letter-spacing: -0.03em;
+}
+
+.summary .total {
+  padding: 0.84rem 0.92rem;
+  border: 1px solid rgba(175, 240, 255, 0.26);
+  border-radius: 0.96rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(166, 241, 255, 0.12), transparent 26%),
+    linear-gradient(165deg, rgba(11, 39, 68, 0.9), rgba(6, 22, 41, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.summary-save-btn,
+.summary .cta {
+  min-height: 52px;
+}
+
+.faq-answer {
+  line-height: 1.78;
+}
+
+.games-page .games-catalog-grid {
+  gap: 1rem;
+}
+
+.game-cover-card {
+  border-radius: 1rem;
+}
+
+.game-cover-media-wrap {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(170, 240, 255, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(6, 24, 42, 0.78), rgba(4, 15, 28, 0.84));
+}
+
+.game-cover-title {
+  background:
+    linear-gradient(180deg, rgba(8, 28, 49, 0.9), rgba(5, 18, 34, 0.95));
+  border-top: 1px solid rgba(171, 241, 255, 0.18);
+}
+
+.admin-panel {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(159, 236, 255, 0.18), transparent 24%),
+    radial-gradient(circle at 100% 100%, rgba(70, 160, 255, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(2, 10, 24, 0.92), rgba(1, 8, 18, 0.97));
+}
+
+.admin-shell-head {
+  box-shadow:
+    0 18px 36px rgba(2, 10, 24, 0.26),
+    inset 0 1px 0 rgba(245, 252, 255, 0.08);
+}
+
+.admin-tabs {
+  padding: 0.52rem;
+  border: 1px solid rgba(171, 241, 255, 0.16);
+  box-shadow:
+    0 16px 28px rgba(2, 10, 24, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.admin-tabs .admin-tab,
+.admin-secondary,
+.admin-actions button {
+  min-height: 42px;
+  border-radius: 0.9rem;
+}
+
+.admin-content-panel {
+  border-radius: 1.18rem;
+  overflow: hidden;
+}
+
+.admin-feedback.success:not(:empty),
+.admin-feedback.error:not(:empty),
+.admin-feedback.info:not(:empty) {
+  box-shadow:
+    0 16px 26px rgba(2, 10, 24, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.site-footer {
+  position: relative;
+  overflow: hidden;
+  margin-top: 3rem;
+  padding: 1.6rem 1.25rem 1.4rem;
+  border-top: 1px solid rgba(173, 240, 255, 0.22);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(170, 240, 255, 0.08), transparent 24%),
+    radial-gradient(circle at 100% 100%, rgba(82, 164, 255, 0.08), transparent 22%);
+}
+
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 16%);
+}
+
+.site-footer p {
+  font-size: 0.92rem;
+  color: #deefff;
+}
+
+.footer-legal-links {
+  gap: 0.7rem;
+}
+
+.footer-legal-btn {
+  border-radius: 0.8rem;
+  min-height: 42px;
+  padding-inline: 0.95rem;
+}
+
+.vortexbot-toggle {
+  min-height: 70px;
+}
+
+.vortexbot-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 18%),
+    radial-gradient(circle at 100% 0%, rgba(170, 240, 255, 0.08), transparent 28%);
+}
+
+.nav-smart-results,
+.nav-smart-keywords {
+  max-height: min(420px, 62vh);
+  overflow-y: auto;
+}
+
+img,
+video {
+  backface-visibility: hidden;
+}
+
+@keyframes vb-sheen-pass {
+  0% {
+    background-position: 220% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcase-card::after,
+  .machine-card::after,
+  .review-card::after,
+  .technical-card::after,
+  .about-card::after,
+  .game-cover-card::after {
+    animation: none;
+  }
+}
+
+/* Final Premium Pass: Top Build / Configurateur / Admin */
+.machine-card {
+  border-radius: 1.16rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(177, 242, 255, 0.14), transparent 28%),
+    linear-gradient(165deg, rgba(11, 39, 69, 0.96), rgba(6, 20, 38, 0.98));
+}
+
+.machine-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 18%),
+    radial-gradient(circle at 18% 0%, rgba(194, 247, 255, 0.08), transparent 22%);
+}
+
+.machine-card::after {
+  opacity: 0.9;
+}
+
+.machine-card-top {
+  position: relative;
+  margin: -1rem -1rem 0.9rem;
+  padding: 0.92rem 1rem 0.86rem;
+  border-bottom: 1px solid rgba(173, 240, 255, 0.18);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(185, 244, 255, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(12, 45, 77, 0.84), rgba(8, 29, 52, 0.72));
+}
+
+.machine-card-top::after {
+  content: "";
+  position: absolute;
+  inset: auto 1rem 0 1rem;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(175, 240, 255, 0.5), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.machine-card-top h3 {
+  font-size: 1.18rem;
+  letter-spacing: -0.03em;
+  text-shadow:
+    0 14px 28px rgba(2, 10, 24, 0.42),
+    0 0 18px rgba(103, 218, 255, 0.08);
+}
+
+.machine-card .price {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.34rem;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 211, 139, 0.28);
+  background:
+    linear-gradient(180deg, rgba(52, 39, 16, 0.72), rgba(31, 22, 9, 0.72));
+  box-shadow:
+    0 12px 22px rgba(2, 10, 24, 0.22),
+    inset 0 1px 0 rgba(255, 244, 212, 0.08);
+}
+
+.machine-card ul {
+  display: grid;
+  gap: 0.34rem;
+}
+
+.machine-card li::marker {
+  color: #80deff;
+}
+
+.configurator {
+  grid-template-columns: minmax(0, 1.78fr) minmax(340px, 0.92fr);
+}
+
+.configurator-visual {
+  min-height: 240px;
+  border-radius: 1.22rem;
+  margin-bottom: 0.34rem;
+}
+
+.configurator-visual-gallery,
+.fallback-gallery {
+  gap: 0.84rem;
+  padding: 0.84rem;
+}
+
+.configurator-visual-gallery img,
+.fallback-gallery img {
+  border-radius: 0.9rem;
+  box-shadow:
+    0 18px 30px rgba(2, 10, 24, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.configurator-pitch {
+  gap: 0.92rem;
+}
+
+.pitch-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 0.95rem 1rem;
+}
+
+.pitch-item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 22%);
+}
+
+.configurator-helper {
+  padding: 0.78rem 0.92rem;
+  border: 1px solid rgba(171, 241, 255, 0.16);
+  border-radius: 0.86rem;
+  background: rgba(8, 28, 49, 0.42);
+}
+
+.promo-offer-banner {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  padding-inline: 0.92rem;
+}
+
+.promo-code-box {
+  border-radius: 0.96rem;
+  padding: 0.84rem;
+}
+
+.config-group-card {
+  border-radius: 1.02rem;
+}
+
+.config-group-card h3 {
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+}
+
+.config-category-select {
+  min-height: 46px;
+  border-radius: 0.8rem;
+}
+
+.config-reference-list,
+.config-reference-content {
+  border-radius: 1rem;
+}
+
+.config-option-card {
+  gap: 0.72rem;
+  grid-template-columns: 72px 1fr auto;
+  min-height: 86px;
+  border-radius: 0.96rem;
+  padding: 0.62rem;
+}
+
+.config-option-card img {
+  width: 72px;
+  height: 72px;
+  border-radius: 0.76rem;
+}
+
+.config-option-meta strong {
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.config-option-meta small {
+  font-size: 0.75rem;
+}
+
+.config-option-price {
+  font-size: 0.84rem;
+}
+
+.config-service-item {
+  min-height: 54px;
+  border-radius: 0.88rem;
+}
+
+.summary {
+  top: 6rem;
+  padding: 1.14rem;
+  border-radius: 1.28rem;
+}
+
+.summary h3 {
+  margin-bottom: 0.9rem;
+}
+
+.summary ul {
+  display: grid;
+  gap: 0.44rem;
+}
+
+.summary li {
+  padding: 0.5rem 0.62rem;
+  border: 1px solid rgba(171, 241, 255, 0.14);
+  border-radius: 0.78rem;
+  background: rgba(7, 24, 43, 0.46);
+}
+
+.summary .total {
+  margin-top: 0.95rem;
+}
+
+.summary-save-btn {
+  width: 100%;
+  margin-top: 0.72rem;
+}
+
+.summary-telegram-image {
+  border-radius: 1rem;
+  box-shadow:
+    0 16px 28px rgba(2, 10, 24, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.admin-box {
+  border-radius: 1.42rem;
+}
+
+.admin-shell-head {
+  margin-bottom: 1rem;
+  border-radius: 1.26rem 1.26rem 0 0;
+}
+
+.admin-shell-head .admin-shell-head-copy h3 {
+  font-size: 1.72rem;
+}
+
+.admin-shell-pill {
+  min-height: 34px;
+  padding-inline: 0.82rem;
+}
+
+.admin-control-center {
+  gap: 0.8rem;
+}
+
+.admin-control-card,
+.admin-overview-card,
+.admin-kpi-gate-card,
+.admin-machine-card,
+.admin-tech-card,
+.admin-review-card,
+.admin-showcase-item,
+.admin-stock-kpi,
+.admin-crm-card,
+.admin-crm-column,
+.admin-kpi-chart-card,
+.admin-kpi-reco-card {
+  border-radius: 0.98rem;
+  box-shadow:
+    0 18px 32px rgba(2, 10, 24, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.admin-control-card strong,
+.admin-overview-card strong,
+.admin-kpi-gate-card strong {
+  text-shadow: 0 0 16px rgba(103, 218, 255, 0.08);
+}
+
+.admin-tabs {
+  top: 0.28rem;
+  border-radius: 1.12rem;
+}
+
+.admin-tabs .admin-tab {
+  min-height: 50px;
+  padding: 0.72rem 1rem;
+  font-size: 0.9rem;
+}
+
+.admin-content-panel {
+  padding: 1rem;
+}
+
+.admin-content-panel h4 {
+  margin-bottom: 0.9rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.admin-box label {
+  border-radius: 0.92rem;
+}
+
+.admin-box input,
+.admin-box select,
+.admin-box textarea {
+  border-radius: 0.78rem;
+}
+
+.admin-actions {
+  gap: 0.72rem;
+  padding-top: 0.82rem;
+  padding-bottom: 0.56rem;
+  border-radius: 0 0 1rem 1rem;
+}
+
+.admin-actions button {
+  min-height: 48px;
+}
+
+.admin-secondary,
+.admin-danger,
+.admin-file-button {
+  min-height: 42px;
+}
+
+@media (max-width: 1080px) {
+  .configurator {
+    grid-template-columns: 1fr;
+  }
+
+  .summary {
+    position: relative;
+    top: 0;
+  }
+}

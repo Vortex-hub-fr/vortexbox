@@ -47,7 +47,7 @@
         "RAM: 64 Go DDR5",
         "SSD: 1 To NVMe"
       ],
-      "price": "2 780 €",
+      "price": "2 680 €",
       "badge": "Best-seller",
       "backName": "VortexBox Elite",
       "backDescription": "Ultra fluide en 1440p, idéale streaming + e-sport & 4K avec pré-réglage des jeux.",
@@ -76,7 +76,7 @@
         "RAM: 64 Go DDR5",
         "SSD: 4 To NVMe"
       ],
-      "price": "3 150 €",
+      "price": "3 050 €",
       "badge": "Ultra premium",
       "backName": "VortexBox Pro",
       "backDescription": "Puissance maximale pour 4K, IA locale et création vidéo.",
@@ -105,7 +105,7 @@
         "RAM: 16 Go DDR5",
         "SSD: 1 To NVMe"
       ],
-      "price": "3 298 €",
+      "price": "3 198 €",
       "badge": "Le PC préféré des joueurs",
       "backName": "VortexBox Expert",
       "backDescription": "VortexBox Expert – L’excellence du gaming.",
@@ -432,7 +432,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-07T16:20:15.183Z",
-        "updatedAt": "2026-03-11T09:17:45.989Z"
+        "updatedAt": "2026-03-10T21:05:13.651Z"
       },
       {
         "id": "crm-1772995291080-2",
@@ -466,7 +466,7 @@
         "orderNumber": "",
         "orderCreatedAt": "",
         "createdAt": "2026-03-08T18:41:31.080Z",
-        "updatedAt": "2026-03-11T09:17:45.989Z"
+        "updatedAt": "2026-03-10T21:05:13.651Z"
       }
     ],
     "gamesFiles": [
