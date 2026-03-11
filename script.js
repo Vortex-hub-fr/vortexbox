@@ -339,7 +339,6 @@ const PENDING_ACTIVATION_KEY = "vortexbox-pending-activation";
 const AUTH_REMEMBER_KEY = "vortexbox-auth-remember";
 const AUTH_RESET_CODES_KEY = "vortexbox-reset-codes";
 const ADMIN_EMAIL = "vortexcore@outlook.fr";
-const ADMIN_PASSWORD = "Eolia460&Qp46uqv";
 const STORAGE_KEY = "vortexbox-content";
 const SESSION_KEY = "vortexbox-admin";
 const BG_MUSIC_KEY = "vortexbox-bg-music-enabled";
@@ -385,8 +384,8 @@ const PREMIUM_GALLERY_IMAGES = [
 
 const DEFAULT_CONTENT = {
   adminProfileReviewPhoto: "",
-  heroTitle: "VortexBox – La puissance au cœur du jeu.",
-  machinesTitle: "Nos meilleurs build vendus",
+  heroTitle: "L'exigence premium du gaming sur mesure",
+  machinesTitle: "Nos builds premium les plus convoités",
   navTheme: "aurora",
   menuBadges: {
     machines: "",
@@ -722,6 +721,7 @@ const DEFAULT_CONTENT = {
 const LEGACY_HERO_TITLES = [
   "Les meilleures machines prêtes à dominer vos jeux.",
   "VortexBox - La puissance au coeur du jeu.",
+  "VortexBox – La puissance au cœur du jeu.",
 ];
 
 let adminShowcaseImages = ["", "", ""];
@@ -2378,8 +2378,33 @@ function normalizeCredentialValue(value) {
 
 function isAdminCredential(email, password) {
   const normalizedEmail = normalizeCredentialValue(email).toLowerCase();
-  const normalizedPassword = normalizeCredentialValue(password);
-  return (normalizedEmail === ADMIN_EMAIL || normalizedEmail === "votexcore.fr") && normalizedPassword === ADMIN_PASSWORD;
+  return normalizedEmail === ADMIN_EMAIL;
+}
+
+async function requestAdminSessionLogin(email, password) {
+  const response = await fetch("/api/admin/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Accès admin refusé.");
+  }
+  return payload;
+}
+
+async function requestAdminSessionLogout() {
+  try {
+    await fetch("/api/admin/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+  } catch (error) {}
 }
 
 function isAdminSessionAuthorized() {
@@ -6179,15 +6204,15 @@ function renderConfigurator() {
       <div class="config-steps" aria-label="Étapes configurateur">
         <article class="config-step ${step1Active ? "is-active" : ""}">
           <span>1</span>
-          <strong>Sélectionner mes composants</strong>
+          <strong>Choisir mes composants premium</strong>
         </article>
         <article class="config-step ${step2Active ? "is-active" : ""}">
           <span>2</span>
-          <strong>Ajouter mes options</strong>
+          <strong>Ajouter mes services premium</strong>
         </article>
         <article class="config-step ${step3Active ? "is-active" : ""}">
           <span>3</span>
-          <strong>Valider mon panier</strong>
+          <strong>Valider ma configuration</strong>
         </article>
       </div>
       <div class="config-progress" aria-hidden="true">
@@ -6195,12 +6220,12 @@ function renderConfigurator() {
       </div>
       <details class="config-faq-inline">
         <summary>FAQ rapide: bien choisir vos composants</summary>
-        <p>Commencez par la carte graphique et le processeur, puis ajustez RAM et stockage selon vos usages.</p>
+        <p>Commencez par la puissance graphique et le processeur, puis ajustez RAM et stockage selon votre niveau d’exigence et vos usages.</p>
       </details>
       <div class="config-master-detail">
         <aside class="config-reference-list">
           <div class="config-category-select-wrap">
-            <label for="config-category-select">Nom de la catégorie</label>
+            <label for="config-category-select">Univers de configuration</label>
             <select id="config-category-select" class="config-category-select">
               ${componentOptions}
             </select>
@@ -6211,7 +6236,7 @@ function renderConfigurator() {
                 categoryFillImage
                   ? `
                     <img src="${categoryFillImage}" alt="Visuel complémentaire configurateur 1" data-action="open-config-fill-image" data-slot="1" loading="lazy" decoding="async" />
-                    <p class="config-category-fill-slogan">VortexBox – Votre machine gaming, prête à dominer.</p>
+                    <p class="config-category-fill-slogan">VortexBox - Une machine premium, pensée pour performer sans compromis.</p>
                   `
                   : '<div class="config-category-fill-placeholder">Ajoutez un visuel complémentaire</div>'
               }
@@ -6226,7 +6251,7 @@ function renderConfigurator() {
                 categoryFillImageSecondary
                   ? `
                     <img src="${categoryFillImageSecondary}" alt="Visuel complémentaire configurateur 2" data-action="open-config-fill-image" data-slot="2" loading="lazy" decoding="async" />
-                    <p class="config-category-fill-slogan">VortexBox – Gaming extrême avec la technologie Intel.</p>
+                    <p class="config-category-fill-slogan">VortexBox - L’alliance de la puissance, de la maîtrise thermique et de la finition premium.</p>
                   `
                   : '<div class="config-category-fill-placeholder">Ajoutez un second visuel</div>'
               }
@@ -6617,8 +6642,8 @@ function openMachineModal(machine) {
   machineModalContentEl.innerHTML = `
     <article class="card machine-modal-card">
       <div class="machine-modal-main">
-        <h3>${backName}</h3>
-        <p>${backDescription}</p>
+        <h3>${escapeHtml(backName)}</h3>
+        <p>${escapeHtml(backDescription)}</p>
         <ul>${backComments.filter(Boolean).map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
       </div>
       <aside class="machine-modal-side">
@@ -11411,7 +11436,6 @@ if (siteLoginFormEl) {
     event.preventDefault();
     const email = String(siteLoginEmailEl.value || "").trim().toLowerCase();
     const password = String(siteLoginPasswordEl.value || "");
-    const adminPasswordCandidate = normalizeCredentialValue(password);
 
     if (!isAllowedOutlookEmail(email)) {
       setAuthFeedback("Adresse non autorisée. Utilisez une adresse Outlook.", "error");
@@ -11423,12 +11447,13 @@ if (siteLoginFormEl) {
       return;
     }
 
-    if (isAdminEmail(email) && !isAdminCredential(email, adminPasswordCandidate)) {
-      setAuthFeedback("Cet email est réservé à l'administrateur.", "error");
-      return;
-    }
-
-    if (isAdminCredential(email, adminPasswordCandidate)) {
+    if (isAdminEmail(email)) {
+      try {
+        await requestAdminSessionLogin(email, password);
+      } catch (error) {
+        setAuthFeedback(String(error.message || "Cet email est réservé à l'administrateur."), "error");
+        return;
+      }
       setPendingActivation("");
       showActivationStep(false);
       sessionStorage.setItem(AUTH_SESSION_KEY, email);
@@ -12025,7 +12050,10 @@ if (siteActivateBtnEl) {
 }
 
 if (userLogoutBtn) {
-  userLogoutBtn.addEventListener("click", () => {
+  userLogoutBtn.addEventListener("click", async () => {
+    if (sessionStorage.getItem(SESSION_KEY) === "1") {
+      await requestAdminSessionLogout();
+    }
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(PENDING_ACTIVATION_KEY);
@@ -12043,21 +12071,21 @@ if (userLogoutBtn) {
   });
 }
 
-adminLoginBtn.addEventListener("click", () => {
+adminLoginBtn.addEventListener("click", async () => {
   const email = String(adminEmailInput.value || "").trim().toLowerCase();
   const password = adminPasswordInput.value || "";
-  const adminPasswordCandidate = normalizeCredentialValue(password);
-
-  if (!isAdminCredential(email, adminPasswordCandidate)) {
-    setFeedback("Accès admin refusé.");
+  try {
+    await requestAdminSessionLogin(email, password);
+    sessionStorage.setItem(SESSION_KEY, "1");
+    setAdminState(true);
+    refreshAdminLiveMode();
+    setFeedback("Connexion administrateur réussie.");
+    adminEmailInput.value = "";
+    adminPasswordInput.value = "";
+  } catch (error) {
+    setFeedback(String(error.message || "Accès admin refusé."));
     return;
   }
-  sessionStorage.setItem(SESSION_KEY, "1");
-  setAdminState(true);
-  refreshAdminLiveMode();
-  setFeedback("Connexion administrateur réussie.");
-  adminEmailInput.value = "";
-  adminPasswordInput.value = "";
 
   // Si l'accès vient d'un lien profond (openAdmin + onglet), on ouvre directement
   // la zone demandée sans bloquer sur l'écran KPI.
@@ -12798,10 +12826,12 @@ adminReset.addEventListener("click", () => {
 });
 
 adminLogout.addEventListener("click", () => {
-  sessionStorage.removeItem(SESSION_KEY);
-  refreshAdminLiveMode();
-  setAdminState(false);
-  setFeedback("Déconnecté du mode administrateur.");
+  requestAdminSessionLogout().finally(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    refreshAdminLiveMode();
+    setAdminState(false);
+    setFeedback("Déconnecté du mode administrateur.");
+  });
 });
 
 if (adminRestoreHistoryBtn) {

@@ -76,6 +76,10 @@
         border-radius: 0.9rem;
         padding: 0.9rem;
         background: linear-gradient(170deg, rgba(19, 50, 84, 0.88), rgba(9, 27, 49, 0.9));
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        height: 100%;
       }
       .about-card h3 {
         margin: 0;
@@ -83,11 +87,128 @@
       .about-card p {
         margin: 0.45rem 0 0.7rem;
         color: #cfe3f7;
+        flex: 1 1 auto;
+      }
+      .about-card .cta {
+        margin-top: auto;
       }
       .faq-grid {
         margin-top: 1rem;
         display: grid;
         gap: 0.75rem;
+      }
+      .support-form-section {
+        margin-top: 1rem;
+        border: 1px solid rgba(127, 231, 255, 0.3);
+        border-radius: 1.15rem;
+        padding: 1.1rem;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(127, 231, 255, 0.18), transparent 34%),
+          linear-gradient(160deg, rgba(17, 49, 82, 0.92), rgba(8, 25, 46, 0.94));
+        box-shadow: 0 20px 38px rgba(2, 10, 24, 0.28);
+      }
+      .support-form-head {
+        display: grid;
+        gap: 0.35rem;
+        margin-bottom: 0.95rem;
+      }
+      .support-form-kicker {
+        margin: 0;
+        color: #9fe4ff;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .support-form-head h2 {
+        margin: 0;
+        color: #eef8ff;
+      }
+      .support-form-head p {
+        margin: 0;
+        color: #cfe3f7;
+        max-width: 70ch;
+      }
+      .support-form {
+        display: grid;
+        gap: 0.9rem;
+      }
+      .support-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.85rem;
+      }
+      .support-form-field {
+        display: grid;
+        gap: 0.32rem;
+      }
+      .support-form-field.is-full {
+        grid-column: 1 / -1;
+      }
+      .support-form-field label {
+        color: #e4f4ff;
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+      .support-form-field input,
+      .support-form-field select,
+      .support-form-field textarea {
+        width: 100%;
+        border: 1px solid rgba(127, 231, 255, 0.28);
+        border-radius: 0.78rem;
+        background: linear-gradient(180deg, rgba(12, 38, 66, 0.92), rgba(7, 24, 45, 0.96));
+        color: #eef8ff;
+        padding: 0.82rem 0.9rem;
+        font: inherit;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+      .support-form-field textarea {
+        min-height: 170px;
+        resize: vertical;
+      }
+      .support-form-field input::placeholder,
+      .support-form-field textarea::placeholder {
+        color: rgba(205, 229, 248, 0.68);
+      }
+      .support-form-benefits {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+      .support-form-benefit {
+        border: 1px solid rgba(127, 231, 255, 0.2);
+        border-radius: 0.9rem;
+        padding: 0.82rem 0.88rem;
+        background: rgba(7, 28, 50, 0.42);
+      }
+      .support-form-benefit strong {
+        display: block;
+        color: #eef8ff;
+        font-size: 0.9rem;
+      }
+      .support-form-benefit span {
+        display: block;
+        margin-top: 0.2rem;
+        color: #c9e0f4;
+        font-size: 0.8rem;
+        line-height: 1.4;
+      }
+      .support-form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        align-items: center;
+      }
+      .support-form-note {
+        margin: 0;
+        color: #bcd7ef;
+        font-size: 0.8rem;
+      }
+      .support-form-feedback {
+        min-height: 1.25rem;
+        margin: 0;
+        color: #bfe9ff;
+        font-size: 0.82rem;
       }
       .faq-item {
         border: 1px solid rgba(127, 231, 255, 0.28);
@@ -135,6 +256,10 @@
       }
       @media (max-width: 900px) {
         .about-grid {
+          grid-template-columns: 1fr;
+        }
+        .support-form-grid,
+        .support-form-benefits {
           grid-template-columns: 1fr;
         }
       }
@@ -238,6 +363,81 @@
 
       <section class="about-grid" id="support-sav-cards"></section>
       <section class="about-grid" id="support-sav-steps"></section>
+      <section class="support-form-section" aria-labelledby="support-form-title">
+        <div class="support-form-head">
+          <p class="support-form-kicker">Demande premium</p>
+          <h2 id="support-form-title">Ouvrir une demande Support & SAV premium</h2>
+          <p>
+            Décrivez votre besoin avec précision et préparez une demande claire, structurée et professionnelle.
+            Votre message sera prérempli automatiquement pour un envoi rapide sur Telegram.
+          </p>
+        </div>
+        <div class="support-form-benefits" aria-label="Avantages du formulaire premium">
+          <article class="support-form-benefit">
+            <strong>Prise en charge plus claire</strong>
+            <span>Les bonnes informations dès le premier message pour accélérer le diagnostic.</span>
+          </article>
+          <article class="support-form-benefit">
+            <strong>Image premium</strong>
+            <span>Une demande structurée, plus sérieuse et plus rassurante pour l’utilisateur.</span>
+          </article>
+          <article class="support-form-benefit">
+            <strong>Contact instantané</strong>
+            <span>Le formulaire prépare le message puis ouvre directement Telegram.</span>
+          </article>
+        </div>
+        <form class="support-form" id="support-form">
+          <div class="support-form-grid">
+            <div class="support-form-field">
+              <label for="support-form-name">Nom / pseudo</label>
+              <input id="support-form-name" name="name" type="text" placeholder="Ex: Bruno / VortexPlayer" />
+            </div>
+            <div class="support-form-field">
+              <label for="support-form-email">Email Outlook</label>
+              <input id="support-form-email" name="email" type="email" placeholder="exemple@outlook.com" />
+            </div>
+            <div class="support-form-field">
+              <label for="support-form-order">Référence commande / build</label>
+              <input id="support-form-order" name="order_ref" type="text" placeholder="Ex: VB-2026-0148 / VortexBox Pro" />
+            </div>
+            <div class="support-form-field">
+              <label for="support-form-type">Type de demande</label>
+              <select id="support-form-type" name="request_type">
+                <option value="Diagnostic">Diagnostic</option>
+                <option value="Garantie">Garantie</option>
+                <option value="SAV">SAV</option>
+                <option value="Conseil technique">Conseil technique</option>
+                <option value="Commande / livraison">Commande / livraison</option>
+              </select>
+            </div>
+            <div class="support-form-field">
+              <label for="support-form-priority">Niveau d'urgence</label>
+              <select id="support-form-priority" name="priority">
+                <option value="Normale">Normale</option>
+                <option value="Haute">Haute</option>
+                <option value="Critique">Critique</option>
+              </select>
+            </div>
+            <div class="support-form-field">
+              <label for="support-form-contact">Canal souhaité</label>
+              <select id="support-form-contact" name="contact_method">
+                <option value="Telegram">Telegram</option>
+                <option value="Email">Email</option>
+                <option value="Telegram puis email">Telegram puis email</option>
+              </select>
+            </div>
+            <div class="support-form-field is-full">
+              <label for="support-form-message">Décrivez votre demande</label>
+              <textarea id="support-form-message" name="message" placeholder="Expliquez le contexte, le comportement observé, les vérifications déjà effectuées et le résultat attendu."></textarea>
+            </div>
+          </div>
+          <div class="support-form-actions">
+            <button class="cta" id="support-form-submit" type="submit">Préparer ma demande premium</button>
+            <p class="support-form-note">Telegram s’ouvrira avec votre demande préremplie pour un envoi immédiat.</p>
+          </div>
+          <p class="support-form-feedback" id="support-form-feedback"></p>
+        </form>
+      </section>
       <section class="faq-grid" id="faq-list"></section>
     </main>
 
@@ -322,6 +522,50 @@
       </div>
     </section>
 
+    <script>
+      (function () {
+        var form = document.getElementById("support-form");
+        var feedback = document.getElementById("support-form-feedback");
+        if (!form || !feedback) return;
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          var name = String(document.getElementById("support-form-name")?.value || "").trim();
+          var email = String(document.getElementById("support-form-email")?.value || "").trim();
+          var orderRef = String(document.getElementById("support-form-order")?.value || "").trim();
+          var requestType = String(document.getElementById("support-form-type")?.value || "Diagnostic").trim();
+          var priority = String(document.getElementById("support-form-priority")?.value || "Normale").trim();
+          var contactMethod = String(document.getElementById("support-form-contact")?.value || "Telegram").trim();
+          var message = String(document.getElementById("support-form-message")?.value || "").trim();
+
+          if (!name || !email || !message) {
+            feedback.textContent = "Complétez au minimum le nom, l'email et la description de votre demande.";
+            return;
+          }
+
+          var lines = [
+            "Bonjour VortexBox,",
+            "",
+            "Je souhaite ouvrir une demande Support & SAV premium.",
+            "",
+            "Nom / pseudo: " + name,
+            "Email: " + email,
+            "Reference commande / build: " + (orderRef || "Non renseignee"),
+            "Type de demande: " + requestType,
+            "Urgence: " + priority,
+            "Canal souhaite: " + contactMethod,
+            "",
+            "Description:",
+            message
+          ];
+
+          var telegramUrl = "https://t.me/VortexCore460?text=" + encodeURIComponent(lines.join("\n"));
+          feedback.textContent = "Demande preparee. Ouverture de Telegram...";
+          window.open(telegramUrl, "_blank", "noopener");
+        });
+      })();
+    </script>
     <script src="faq.js?v=20260310faq2"></script>
   </body>
 </html>

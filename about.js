@@ -9,7 +9,6 @@ const USER_CONFIGS_KEY = "vortexbox-user-configs";
 const PROMO_CODES_KEY = "vortexbox-promo-codes";
 const ADMIN_PROFILE_PHOTO_KEY = "vortexbox-admin-profile-photo";
 const ADMIN_EMAIL = "vortexcore@outlook.fr";
-const ADMIN_PASSWORD = "Eolia460&Qp46uqv";
 const SESSION_KEY = "vortexbox-admin";
 const authGateEl = document.getElementById("auth-gate");
 const siteLoginFormEl = document.getElementById("site-login-form");
@@ -1290,6 +1289,32 @@ function isAdminEmail(email) {
   return normalized === ADMIN_EMAIL || normalized === "votexcore.fr";
 }
 
+async function requestAdminSessionLogin(email, password) {
+  const response = await fetch("/api/admin/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Accès admin refusé.");
+  }
+  return payload;
+}
+
+async function requestAdminSessionLogout() {
+  try {
+    await fetch("/api/admin/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+  } catch (error) {}
+}
+
 function isAdminSessionAuthorized() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   return isAdminEmail(sessionEmail) && sessionStorage.getItem(SESSION_KEY) === "1";
@@ -2128,8 +2153,6 @@ if (siteLoginFormEl) {
     event.preventDefault();
     const email = String(siteLoginEmailEl.value || "").trim().toLowerCase();
     const password = String(siteLoginPasswordEl.value || "");
-    const adminPasswordCandidate = String(password || "").trim();
-    const adminPasswordExpected = String(ADMIN_PASSWORD || "").trim();
 
     if (!isAllowedOutlookEmail(email)) {
       setAuthFeedback("Adresse non autorisée. Utilisez une adresse Outlook.", "error");
@@ -2141,12 +2164,13 @@ if (siteLoginFormEl) {
       return;
     }
 
-    if (isAdminEmail(email) && adminPasswordCandidate !== adminPasswordExpected) {
-      setAuthFeedback("Cet email est réservé à l'administrateur.", "error");
-      return;
-    }
-
-    if (isAdminEmail(email) && adminPasswordCandidate === adminPasswordExpected) {
+    if (isAdminEmail(email)) {
+      try {
+        await requestAdminSessionLogin(email, password);
+      } catch (error) {
+        setAuthFeedback(String(error.message || "Cet email est réservé à l'administrateur."), "error");
+        return;
+      }
       setPendingActivation("");
       showActivationStep(false);
       sessionStorage.setItem(AUTH_SESSION_KEY, email);
@@ -2300,7 +2324,10 @@ if (siteActivateBtnEl) {
 }
 
 if (userLogoutBtn) {
-  userLogoutBtn.addEventListener("click", () => {
+  userLogoutBtn.addEventListener("click", async () => {
+    if (sessionStorage.getItem(SESSION_KEY) === "1") {
+      await requestAdminSessionLogout();
+    }
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(PENDING_ACTIVATION_KEY);

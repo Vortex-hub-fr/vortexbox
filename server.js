@@ -3,6 +3,7 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const os = require("os");
 const path = require("path");
+const crypto = require("crypto");
 const { spawn } = require("child_process");
 const { URL } = require("url");
 
@@ -89,6 +90,10 @@ const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "vortexcore@outlook.fr").trim().toLowerCase();
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "Eolia460&Qp46uqv");
+const ADMIN_SESSION_COOKIE = "vb_admin_session";
+const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -120,6 +125,12 @@ const MIME_TYPES = {
 
 const RATE_LIMIT_STORE = new Map();
 const UPLOAD_STATUS_STORE = new Map();
+const ADMIN_SESSION_STORE = new Map();
+
+function isAdminEmailCandidate(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  return normalized === ADMIN_EMAIL || normalized === "votexcore.fr";
+}
 
 function getClientIp(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "")
@@ -155,9 +166,79 @@ function buildSecurityHeaders() {
   };
 }
 
+function parseCookies(req) {
+  const raw = String(req.headers.cookie || "");
+  if (!raw) return {};
+  return raw.split(/;\s*/).reduce((acc, part) => {
+    const eq = part.indexOf("=");
+    if (eq <= 0) return acc;
+    const key = part.slice(0, eq).trim();
+    const value = part.slice(eq + 1).trim();
+    if (!key) return acc;
+    acc[key] = decodeURIComponent(value || "");
+    return acc;
+  }, {});
+}
+
+function buildCookieHeader(name, value, options = {}) {
+  const parts = [`${name}=${encodeURIComponent(value)}`];
+  parts.push(`Path=${options.path || "/"}`);
+  if (options.maxAge !== undefined) parts.push(`Max-Age=${Math.max(0, Math.floor(Number(options.maxAge) || 0))}`);
+  if (options.httpOnly !== false) parts.push("HttpOnly");
+  parts.push(`SameSite=${options.sameSite || "Strict"}`);
+  if (options.secure) parts.push("Secure");
+  return parts.join("; ");
+}
+
+function shouldUseSecureCookies(req) {
+  if (req.socket?.encrypted) return true;
+  return String(req.headers["x-forwarded-proto"] || "").toLowerCase() === "https";
+}
+
+function createAdminSession(email) {
+  const token = crypto.randomBytes(24).toString("hex");
+  ADMIN_SESSION_STORE.set(token, {
+    email,
+    expiresAt: Date.now() + ADMIN_SESSION_TTL_MS,
+  });
+  return token;
+}
+
+function getAdminSession(req) {
+  const cookies = parseCookies(req);
+  const token = String(cookies[ADMIN_SESSION_COOKIE] || "");
+  if (!token) return null;
+  const session = ADMIN_SESSION_STORE.get(token);
+  if (!session) return null;
+  if (Number(session.expiresAt || 0) <= Date.now()) {
+    ADMIN_SESSION_STORE.delete(token);
+    return null;
+  }
+  return { token, email: String(session.email || "").toLowerCase() };
+}
+
+function clearAdminSession(token) {
+  if (!token) return;
+  ADMIN_SESSION_STORE.delete(token);
+}
+
+function buildAdminSessionCookie(req, token) {
+  return buildCookieHeader(ADMIN_SESSION_COOKIE, token, {
+    maxAge: Math.floor(ADMIN_SESSION_TTL_MS / 1000),
+    secure: shouldUseSecureCookies(req),
+  });
+}
+
+function buildAdminSessionClearCookie(req) {
+  return buildCookieHeader(ADMIN_SESSION_COOKIE, "", {
+    maxAge: 0,
+    secure: shouldUseSecureCookies(req),
+  });
+}
+
 function isTrustedOrigin(req) {
   const originRaw = String(req.headers.origin || "").trim();
-  if (!originRaw) return true;
+  if (!originRaw) return false;
   let originUrl;
   let hostUrl;
   try {
@@ -175,12 +256,30 @@ function isTrustedOrigin(req) {
   return false;
 }
 
+function requireAdminSession(req, res) {
+  const session = getAdminSession(req);
+  if (!session || !isAdminEmailCandidate(session.email)) {
+    sendJson(res, 401, { ok: false, error: "Session administrateur requise." });
+    return null;
+  }
+  return session;
+}
+
 function cleanupUploadStatusStore() {
   const now = Date.now();
   for (const [id, status] of UPLOAD_STATUS_STORE.entries()) {
     const updatedAt = Number(status?.updatedAt || 0);
     if (!updatedAt || now - updatedAt > 30 * 60 * 1000) {
       UPLOAD_STATUS_STORE.delete(id);
+    }
+  }
+}
+
+function cleanupAdminSessionStore() {
+  const now = Date.now();
+  for (const [token, session] of ADMIN_SESSION_STORE.entries()) {
+    if (Number(session?.expiresAt || 0) <= now) {
+      ADMIN_SESSION_STORE.delete(token);
     }
   }
 }
@@ -204,13 +303,14 @@ function setUploadStatus(uploadId, patch) {
   UPLOAD_STATUS_STORE.set(uploadId, next);
 }
 
-function sendJson(res, status, payload) {
+function sendJson(res, status, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload);
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(body),
     "Cache-Control": "no-store",
     ...buildSecurityHeaders(),
+    ...extraHeaders,
   });
   res.end(body);
 }
@@ -1158,6 +1258,42 @@ async function handleGetGamesCatalog(res) {
   }
 }
 
+async function handleAdminSessionLogin(req, res) {
+  const body = await readJsonBody(req);
+  const email = String(body?.email || "").trim().toLowerCase();
+  const password = String(body?.password || "");
+  if (!email || !password) {
+    sendJson(res, 400, { ok: false, error: "Email et mot de passe requis." });
+    return;
+  }
+  if (!isAdminEmailCandidate(email) || password !== ADMIN_PASSWORD) {
+    sendJson(res, 401, { ok: false, error: "Identifiants administrateur invalides." });
+    return;
+  }
+  const token = createAdminSession(ADMIN_EMAIL);
+  sendJson(
+    res,
+    200,
+    { ok: true, email },
+    {
+      "Set-Cookie": buildAdminSessionCookie(req, token),
+    }
+  );
+}
+
+function handleAdminSessionLogout(req, res) {
+  const session = getAdminSession(req);
+  if (session?.token) clearAdminSession(session.token);
+  sendJson(
+    res,
+    200,
+    { ok: true },
+    {
+      "Set-Cookie": buildAdminSessionClearCookie(req),
+    }
+  );
+}
+
 async function handleSaveUserState(req, res) {
   const body = await readJsonBody(req);
   const state = body && typeof body.state === "object" ? body.state : null;
@@ -1832,6 +1968,10 @@ function ensureMaintenanceTimers() {
   setInterval(() => {
     cleanupUploadStatusStore();
   }, 10 * 60 * 1000).unref();
+
+  setInterval(() => {
+    cleanupAdminSessionStore();
+  }, 10 * 60 * 1000).unref();
 }
 
 async function requestListener(req, res) {
@@ -1844,6 +1984,26 @@ async function requestListener(req, res) {
     }
     if (req.method === "GET" && url.pathname === "/api/ping") {
       sendJson(res, 200, { ok: true });
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/admin/session") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "admin-session", 12, 10 * 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de tentatives. Réessayez dans quelques minutes." });
+        return;
+      }
+      await handleAdminSessionLogin(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/admin/logout") {
+      handleAdminSessionLogout(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/upload") {
@@ -1859,6 +2019,7 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop d'uploads. Réessayez dans 1 minute." });
         return;
       }
+      if (!requireAdminSession(req, res)) return;
       await handleUpload(req, res);
       return;
     }
@@ -1871,6 +2032,7 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop d'uploads. Réessayez dans 1 minute." });
         return;
       }
+      if (!requireAdminSession(req, res)) return;
       await handleBinaryUpload(req, res);
       return;
     }
@@ -1891,6 +2053,7 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
         return;
       }
+      if (!requireAdminSession(req, res)) return;
       await handleSaveContent(req, res);
       return;
     }
@@ -1907,6 +2070,7 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop de suppressions. Réessayez dans 1 minute." });
         return;
       }
+      if (!requireAdminSession(req, res)) return;
       await handleDeleteUpload(req, res);
       return;
     }
@@ -1923,6 +2087,7 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop d'imports. Réessayez dans 1 minute." });
         return;
       }
+      if (!requireAdminSession(req, res)) return;
       await handleImportGamesCoversZip(req, res);
       return;
     }
@@ -1947,10 +2112,12 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop d'écritures. Réessayez dans 1 minute." });
         return;
       }
+      if (!requireAdminSession(req, res)) return;
       await handleSaveUserState(req, res);
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/user-state") {
+      if (!requireAdminSession(req, res)) return;
       await handleGetUserState(res);
       return;
     }
@@ -1959,6 +2126,7 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop de demandes de sauvegarde. Réessayez plus tard." });
         return;
       }
+      if (!requireAdminSession(req, res)) return;
       await handleBackupSiteZip(res);
       return;
     }
@@ -1967,6 +2135,7 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop de tentatives. Réessayez dans 1 minute." });
         return;
       }
+      if (!requireAdminSession(req, res)) return;
       await handleRunRailwayUpdateTerminal(req, res);
       return;
     }
@@ -2006,6 +2175,9 @@ if (require.main === module) {
     console.log(`VortexBox server running: http://${HOST}:${PORT}`);
     if (!RESEND_API_KEY && (!MAIL_FROM || !SMTP_USER || !SMTP_PASS)) {
       console.log("Email auth non configure. Ajoutez RESEND_API_KEY ou MAIL_FROM+SMTP_USER+SMTP_PASS dans .env");
+    }
+    if (!process.env.ADMIN_PASSWORD) {
+      console.log("Admin password fallback actif. Definissez ADMIN_EMAIL et ADMIN_PASSWORD dans .env");
     }
   });
 }
