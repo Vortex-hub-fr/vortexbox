@@ -1182,6 +1182,10 @@ h1 {
   font-weight: 600;
 }
 
+.image-modal p[hidden] {
+  display: none;
+}
+
 .admin-video-modal {
   position: fixed;
   inset: 0;
@@ -1443,10 +1447,13 @@ h1 {
 }
 
 .machine-modal-thumb {
+  display: grid;
+  place-items: center;
   border: 1px solid rgba(127, 231, 255, 0.32);
   background: rgba(8, 25, 44, 0.75);
   border-radius: 0.52rem;
   padding: 0.16rem;
+  min-height: 58px;
   cursor: pointer;
   transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
@@ -1464,9 +1471,11 @@ h1 {
 .machine-modal-thumb img {
   width: 100%;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center center;
   border-radius: 0.4rem;
   display: block;
+  background: linear-gradient(180deg, rgba(10, 35, 60, 0.92), rgba(6, 20, 38, 0.96));
   cursor: var(--zoom-cursor);
 }
 
@@ -1768,6 +1777,16 @@ h1 {
 .about-video-card,
 .about-photo-item img {
   cursor: var(--zoom-cursor) !important;
+}
+
+.showcase-card img,
+.machine-modal-media,
+.machine-modal-thumb img,
+.technical-jacket-image,
+.about-photo-item img,
+.admin-preview {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
 }
 
 .machine-card:hover {
@@ -2601,6 +2620,8 @@ body.config-only .configurator {
   min-height: 180px;
   object-fit: cover;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
 }
 
 .configurator-visual-gallery {
@@ -2621,6 +2642,8 @@ body.config-only .configurator {
   border: 1px solid rgba(127, 231, 255, 0.38);
   background: #0b233f;
   box-shadow: 0 14px 24px rgba(2, 10, 24, 0.35);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
 }
 
 .config-visual-card {
@@ -2662,6 +2685,8 @@ body.config-only .configurator {
   object-position: center;
   border-radius: 0.75rem;
   border: 1px solid rgba(127, 231, 255, 0.38);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
   background: #0b233f;
   box-shadow: 0 14px 24px rgba(2, 10, 24, 0.35);
 }
@@ -2959,21 +2984,23 @@ body.config-only .configurator {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .config-category-fill img {
   width: 100%;
-  height: auto;
-  min-height: 0;
-  max-height: 138px;
-  object-fit: contain;
+  height: 132px;
+  min-height: 132px;
+  max-height: none;
+  object-fit: cover;
   object-position: center;
   display: block;
   background: transparent;
   cursor: zoom-in;
   transition: transform 180ms ease, filter 180ms ease;
-  margin: 0 auto;
+  margin: 0;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
 }
 
 .config-category-fill img:hover {
@@ -2995,6 +3022,43 @@ body.config-only .configurator {
   background: linear-gradient(180deg, rgba(10, 33, 58, 0.18), rgba(6, 20, 37, 0.42));
   border-top: 1px solid rgba(127, 231, 255, 0.18);
   letter-spacing: 0.01em;
+}
+
+.config-category-fill-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  align-self: center;
+  margin: 0.28rem auto 0.38rem;
+  padding: 0.28rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(142, 239, 255, 0.42);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(127, 231, 255, 0.22), transparent 40%),
+    linear-gradient(180deg, rgba(18, 77, 120, 0.92), rgba(8, 40, 69, 0.96));
+  color: #eafaff;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow:
+    0 10px 18px rgba(2, 10, 24, 0.26),
+    0 0 0 1px rgba(127, 231, 255, 0.12) inset;
+}
+
+.config-category-fill-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(127, 231, 255, 0.34), rgba(60, 158, 234, 0.2));
+  color: #ffffff;
+  font-size: 0.68rem;
+  line-height: 1;
+  box-shadow: 0 0 12px rgba(127, 231, 255, 0.24);
 }
 
 .config-category-fill-placeholder {
@@ -3309,11 +3373,17 @@ body.config-only .configurator {
 .config-option-card img {
   width: 64px;
   height: 64px;
-  object-fit: cover;
-  object-position: center;
+  object-fit: contain;
+  object-position: center center;
   border-radius: 0.6rem;
   border: 1px solid rgba(127, 231, 255, 0.32);
-  background: #0b233f;
+  background: linear-gradient(180deg, rgba(10, 35, 60, 0.92), rgba(6, 20, 38, 0.96));
+  cursor: zoom-in;
+}
+
+:root[data-config-image-fit="cover"] .config-option-card img,
+:root[data-config-image-fit="cover"] .machine-modal-thumb img {
+  object-fit: cover;
 }
 
 .config-option-meta {
@@ -3573,6 +3643,63 @@ textarea {
 .total {
   font-size: 1.2rem;
   color: #e9f7ff;
+}
+
+.config-trust-meter {
+  margin: 0.78rem 0 0.7rem;
+  padding: 0.72rem 0.78rem;
+  border: 1px solid rgba(102, 213, 255, 0.3);
+  border-radius: 0.82rem;
+  background:
+    linear-gradient(145deg, rgba(8, 35, 60, 0.92), rgba(3, 21, 39, 0.9));
+  box-shadow: inset 0 1px 0 rgba(156, 231, 255, 0.14);
+}
+
+.config-trust-meter h4 {
+  margin: 0 0 0.55rem;
+  font-size: 0.93rem;
+  letter-spacing: 0.04em;
+  color: rgba(197, 243, 255, 0.96);
+  text-transform: uppercase;
+}
+
+.config-trust-item + .config-trust-item {
+  margin-top: 0.48rem;
+}
+
+.config-trust-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.83rem;
+  color: rgba(195, 232, 250, 0.95);
+}
+
+.config-trust-head strong {
+  color: rgba(166, 242, 255, 0.98);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.config-trust-track {
+  position: relative;
+  width: 100%;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: rgba(21, 68, 104, 0.82);
+  overflow: hidden;
+}
+
+.config-trust-track > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #27d8ff 0%, #6df0ff 46%, #a6feff 100%);
+  box-shadow: 0 0 14px rgba(86, 226, 255, 0.45);
+  transition: width 0.32s ease;
 }
 
 .price-ttc {
@@ -5408,6 +5535,304 @@ textarea {
   gap: 0.25rem;
 }
 
+.admin-process-invoice-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.admin-process-invoice-card,
+.admin-process-invoice-archive-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-process-invoice-archive-card {
+  display: grid;
+  align-content: start;
+}
+
+.admin-process-invoice-card::before,
+.admin-process-invoice-archive-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(127, 231, 255, 0.11), transparent 38%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent 55%);
+  pointer-events: none;
+}
+
+.admin-process-invoice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.admin-process-invoice-address-field {
+  grid-column: 1 / -1;
+}
+
+.admin-process-invoice-postal-field {
+  grid-column: span 1;
+}
+
+.admin-process-invoice-city-field {
+  grid-column: span 2;
+}
+
+.admin-process-invoice-grid label,
+.admin-process-invoice-line-grid label {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.admin-process-invoice-lines {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.55rem 0 0.8rem;
+}
+
+.admin-process-invoice-line {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(127, 231, 255, 0.12), transparent 40%),
+    linear-gradient(175deg, rgba(12, 38, 66, 0.94), rgba(8, 25, 47, 0.94));
+  border-radius: 1.35rem;
+  padding: 1rem 1rem 0.9rem;
+}
+
+.admin-process-invoice-line-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(120px, 0.55fr) minmax(160px, 0.72fr);
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.admin-process-invoice-line-grid select,
+.admin-process-invoice-line-grid input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-process-invoice-summary {
+  margin-top: 0.7rem;
+}
+
+#admin-process-invoices-list {
+  max-height: 720px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(127, 231, 255, 0.55) rgba(8, 27, 49, 0.55);
+}
+
+#admin-process-list,
+#admin-process-links-list,
+#admin-process-crm-list,
+#admin-process-stock-list,
+#admin-process-supplier-orders-list,
+#admin-process-sav-list,
+#admin-process-delivery-list,
+#admin-process-games-list,
+#admin-process-games-assignments-list,
+#admin-faq-list,
+#admin-reviews-list,
+#admin-support-cards-list,
+#admin-support-steps-list,
+#admin-support-faq-list {
+  max-height: 720px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(127, 231, 255, 0.55) rgba(8, 27, 49, 0.55);
+}
+
+#admin-process-invoices-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#admin-process-list::-webkit-scrollbar,
+#admin-process-links-list::-webkit-scrollbar,
+#admin-process-crm-list::-webkit-scrollbar,
+#admin-process-stock-list::-webkit-scrollbar,
+#admin-process-supplier-orders-list::-webkit-scrollbar,
+#admin-process-sav-list::-webkit-scrollbar,
+#admin-process-delivery-list::-webkit-scrollbar,
+#admin-process-games-list::-webkit-scrollbar,
+#admin-process-games-assignments-list::-webkit-scrollbar,
+#admin-faq-list::-webkit-scrollbar,
+#admin-reviews-list::-webkit-scrollbar,
+#admin-support-cards-list::-webkit-scrollbar,
+#admin-support-steps-list::-webkit-scrollbar,
+#admin-support-faq-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#admin-process-invoices-list::-webkit-scrollbar-track {
+  background: rgba(8, 27, 49, 0.55);
+  border-radius: 999px;
+}
+
+#admin-process-list::-webkit-scrollbar-track,
+#admin-process-links-list::-webkit-scrollbar-track,
+#admin-process-crm-list::-webkit-scrollbar-track,
+#admin-process-stock-list::-webkit-scrollbar-track,
+#admin-process-supplier-orders-list::-webkit-scrollbar-track,
+#admin-process-sav-list::-webkit-scrollbar-track,
+#admin-process-delivery-list::-webkit-scrollbar-track,
+#admin-process-games-list::-webkit-scrollbar-track,
+#admin-process-games-assignments-list::-webkit-scrollbar-track,
+#admin-faq-list::-webkit-scrollbar-track,
+#admin-reviews-list::-webkit-scrollbar-track,
+#admin-support-cards-list::-webkit-scrollbar-track,
+#admin-support-steps-list::-webkit-scrollbar-track,
+#admin-support-faq-list::-webkit-scrollbar-track {
+  background: rgba(8, 27, 49, 0.55);
+  border-radius: 999px;
+}
+
+#admin-process-invoices-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(100, 213, 255, 0.92), rgba(63, 172, 227, 0.9));
+  border-radius: 999px;
+  border: 1px solid rgba(127, 231, 255, 0.28);
+}
+
+#admin-process-list::-webkit-scrollbar-thumb,
+#admin-process-links-list::-webkit-scrollbar-thumb,
+#admin-process-crm-list::-webkit-scrollbar-thumb,
+#admin-process-stock-list::-webkit-scrollbar-thumb,
+#admin-process-supplier-orders-list::-webkit-scrollbar-thumb,
+#admin-process-sav-list::-webkit-scrollbar-thumb,
+#admin-process-delivery-list::-webkit-scrollbar-thumb,
+#admin-process-games-list::-webkit-scrollbar-thumb,
+#admin-process-games-assignments-list::-webkit-scrollbar-thumb,
+#admin-faq-list::-webkit-scrollbar-thumb,
+#admin-reviews-list::-webkit-scrollbar-thumb,
+#admin-support-cards-list::-webkit-scrollbar-thumb,
+#admin-support-steps-list::-webkit-scrollbar-thumb,
+#admin-support-faq-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(100, 213, 255, 0.92), rgba(63, 172, 227, 0.9));
+  border-radius: 999px;
+  border: 1px solid rgba(127, 231, 255, 0.28);
+}
+
+#admin-process-invoices-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(131, 225, 255, 0.98), rgba(79, 192, 245, 0.95));
+}
+
+#admin-process-list::-webkit-scrollbar-thumb:hover,
+#admin-process-links-list::-webkit-scrollbar-thumb:hover,
+#admin-process-crm-list::-webkit-scrollbar-thumb:hover,
+#admin-process-stock-list::-webkit-scrollbar-thumb:hover,
+#admin-process-supplier-orders-list::-webkit-scrollbar-thumb:hover,
+#admin-process-sav-list::-webkit-scrollbar-thumb:hover,
+#admin-process-delivery-list::-webkit-scrollbar-thumb:hover,
+#admin-process-games-list::-webkit-scrollbar-thumb:hover,
+#admin-process-games-assignments-list::-webkit-scrollbar-thumb:hover,
+#admin-faq-list::-webkit-scrollbar-thumb:hover,
+#admin-reviews-list::-webkit-scrollbar-thumb:hover,
+#admin-support-cards-list::-webkit-scrollbar-thumb:hover,
+#admin-support-steps-list::-webkit-scrollbar-thumb:hover,
+#admin-support-faq-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(131, 225, 255, 0.98), rgba(79, 192, 245, 0.95));
+}
+
+.admin-process-invoice-toolbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.admin-process-invoice-toolbar > * {
+  min-width: 0;
+  white-space: normal;
+  flex: initial;
+}
+
+.admin-process-invoice-toolbar .admin-secondary,
+.admin-process-invoice-toolbar .cta {
+  width: 100%;
+  min-height: 60px;
+  height: 60px;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.1;
+  padding: 0 1.1rem;
+  margin: 0;
+  align-self: start;
+  transform: none;
+  position: relative;
+  inset: auto;
+  box-sizing: border-box;
+}
+
+.admin-process-invoice-toolbar .cta::after,
+.admin-process-invoice-toolbar .cta::before {
+  inset-block: auto;
+}
+
+#admin-process-invoice-export {
+  top: 0 !important;
+  translate: none !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.admin-process-invoice-line .admin-machine-header {
+  align-items: flex-start;
+  margin-bottom: 0.8rem;
+}
+
+.admin-process-invoice-line .admin-machine-header h5 {
+  font-size: 1.1rem;
+  line-height: 1.1;
+}
+
+.admin-process-invoice-line-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.admin-process-invoice-line-actions .admin-danger {
+  min-height: 44px;
+  padding-inline: 1rem;
+  border-radius: 1rem;
+  white-space: nowrap;
+}
+
+.admin-process-invoice-line .admin-file-name {
+  margin: 0.75rem 0 0;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(127, 231, 255, 0.22);
+  color: rgba(230, 247, 255, 0.82);
+  font-size: 0.96rem;
+}
+
+.admin-process-invoice-line .admin-stock-line {
+  margin-top: 0.75rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(127, 231, 255, 0.18);
+}
+
+.admin-process-invoice-line-total {
+  color: #8ff7d3;
+  font-size: 1.1rem;
+}
+
+.admin-process-invoice-archive-card .download-btn {
+  min-height: 38px;
+  padding-inline: 0.9rem;
+}
+
 .admin-delivery-actions {
   border-top: 1px solid rgba(127, 231, 255, 0.2);
   padding-top: 0.45rem;
@@ -5478,6 +5903,12 @@ textarea {
   .admin-supplier-order-grid {
     grid-template-columns: 1fr;
   }
+  .admin-process-invoice-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .admin-process-invoice-layout,
+  .admin-process-invoice-grid,
+  .admin-process-invoice-line-grid,
   .admin-delivery-grid {
     grid-template-columns: 1fr;
   }
@@ -5511,7 +5942,11 @@ textarea {
 }
 
 .admin-option-row.admin-option-product {
-  grid-template-columns: 1fr 112px;
+  grid-template-columns: 1fr 154px;
+  grid-template-areas:
+    "main preview"
+    "info info"
+    "actions actions";
   gap: 0.55rem;
   align-items: start;
   border: 1px solid rgba(127, 231, 255, 0.18);
@@ -5520,19 +5955,28 @@ textarea {
   background: rgba(7, 25, 43, 0.62);
 }
 
-.admin-option-row.admin-option-product .admin-file-field {
-  grid-column: 1;
+.admin-option-row.admin-option-product .admin-product-main-fields {
+  grid-area: main;
+  display: grid;
+  gap: 0.5rem;
 }
 
 .admin-option-row.admin-option-product .admin-preview {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  height: 84px;
+  grid-area: preview;
+  width: 100%;
+  height: 128px;
   margin-top: 0;
 }
 
+.admin-option-row.admin-option-product .admin-product-info-field {
+  grid-area: info;
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+}
+
 .admin-option-row.admin-option-product .admin-option-actions {
-  grid-column: 1 / -1;
+  grid-area: actions;
 }
 
 .admin-option-actions {
@@ -6510,6 +6954,33 @@ video.admin-preview {
   gap: 0.65rem;
 }
 
+#profile-activity-list {
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(127, 231, 255, 0.55) rgba(8, 27, 49, 0.55);
+}
+
+#profile-activity-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#profile-activity-list::-webkit-scrollbar-track {
+  background: rgba(8, 27, 49, 0.55);
+  border-radius: 999px;
+}
+
+#profile-activity-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(100, 213, 255, 0.92), rgba(63, 172, 227, 0.9));
+  border-radius: 999px;
+  border: 1px solid rgba(127, 231, 255, 0.28);
+}
+
+#profile-activity-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(131, 225, 255, 0.98), rgba(79, 192, 245, 0.95));
+}
+
 #profile-admin-photo-tools {
   margin-top: 0.55rem;
 }
@@ -6873,6 +7344,11 @@ video.admin-preview {
 
   .admin-option-row.admin-option-product {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "main"
+      "preview"
+      "info"
+      "actions";
   }
 
   .admin-tabs {
@@ -10939,6 +11415,60 @@ main > .section::before,
   line-height: 1.78;
 }
 
+.faq-answer p {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
+/* Justification premium: textes longs uniquement (passe fine) */
+main .section-intro,
+main .after-order-note,
+main .configurator-helper,
+main .config-panel-lead,
+main .about-hero-copy .lead,
+main .about-block p,
+main .support-form-note,
+main .faq-answer p,
+.legal-modal-content p,
+.legal-modal-content li {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
+/* Cartes courtes: garder un rythme visuel plus premium en alignement naturel */
+main .about-card p,
+main .why-card p,
+main .support-form-benefit p,
+main .config-option-guidance,
+main .fps-note {
+  text-align: left;
+  text-justify: auto;
+  hyphens: none;
+}
+
+/* Performance rendering: defer offscreen heavy blocks */
+.cards,
+.about-grid,
+.faq-grid,
+.technical-grid,
+.games-catalog-grid,
+.about-videos-grid,
+.reviews-track {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 900px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .games-page .games-catalog-grid {
   gap: 1rem;
 }
@@ -11023,6 +11553,37 @@ main > .section::before,
 .site-footer p {
   font-size: 0.92rem;
   color: #deefff;
+}
+
+.footer-contact-line {
+  margin: 0 auto 0.5rem;
+  width: fit-content;
+  padding: 0.38rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(172, 241, 255, 0.28);
+  background:
+    linear-gradient(120deg, rgba(120, 216, 255, 0.16), rgba(122, 169, 255, 0.08));
+  box-shadow:
+    0 8px 20px rgba(2, 12, 28, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f1fbff;
+}
+
+.footer-contact-line #footer-contact-email {
+  color: #9feaff;
+  text-shadow: 0 0 12px rgba(110, 223, 255, 0.34);
+}
+
+.footer-copyright {
+  margin: 0.08rem 0 0.8rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: rgba(205, 238, 255, 0.8);
 }
 
 .footer-legal-links {
@@ -12593,4 +13154,88 @@ video {
 
 #promo-dlc-offer {
   margin-bottom: 1rem;
+}
+
+/* Admin premium lot: unify cards, secondary buttons, section headings */
+.admin-panel .admin-content-panel {
+  border: 1px solid rgba(120, 226, 255, 0.2);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(127, 231, 255, 0.12), transparent 38%),
+    linear-gradient(176deg, rgba(10, 34, 60, 0.92), rgba(6, 20, 38, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 14px 28px rgba(2, 10, 24, 0.34);
+  padding: 0.9rem;
+}
+
+.admin-panel .admin-content-panel h4 {
+  margin: 0 0 0.8rem;
+  padding: 0.62rem 0.84rem;
+  border: 1px solid rgba(122, 231, 255, 0.28);
+  border-radius: 0.86rem;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(127, 231, 255, 0.12), transparent 40%),
+    linear-gradient(170deg, rgba(10, 39, 67, 0.92), rgba(7, 23, 41, 0.94));
+  color: #e9f8ff;
+  font-size: clamp(1rem, 1.7vw, 1.16rem);
+  letter-spacing: 0.015em;
+  text-shadow: 0 0 12px rgba(121, 225, 255, 0.18);
+}
+
+.admin-panel .admin-subtitle {
+  margin: 0 0 0.5rem;
+  color: #dff4ff;
+  font-size: 1rem;
+  letter-spacing: 0.012em;
+}
+
+.admin-panel .admin-tech-card,
+.admin-panel .admin-machine-card,
+.admin-panel .admin-review-card,
+.admin-panel .admin-showcase-item,
+.admin-panel .admin-option-row.admin-option-product {
+  border: 1px solid rgba(125, 228, 255, 0.24);
+  border-radius: 0.9rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(127, 231, 255, 0.11), transparent 42%),
+    linear-gradient(176deg, rgba(10, 35, 61, 0.9), rgba(6, 20, 38, 0.93));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 12px 24px rgba(2, 10, 24, 0.32);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.admin-panel .admin-tech-card:hover,
+.admin-panel .admin-machine-card:hover,
+.admin-panel .admin-review-card:hover,
+.admin-panel .admin-showcase-item:hover {
+  border-color: rgba(134, 234, 255, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 16px 30px rgba(2, 10, 24, 0.36);
+  transform: translateY(-1px);
+}
+
+.admin-panel .admin-secondary {
+  border: 1px solid rgba(125, 226, 255, 0.42);
+  border-radius: 0.78rem;
+  background:
+    linear-gradient(180deg, rgba(17, 49, 83, 0.94), rgba(9, 29, 52, 0.95));
+  color: #e9f8ff;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 10px 18px rgba(3, 12, 24, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.admin-panel .admin-secondary:hover {
+  border-color: rgba(149, 236, 255, 0.68);
+  box-shadow:
+    0 14px 24px rgba(3, 12, 24, 0.3),
+    0 0 0 1px rgba(127, 231, 255, 0.14);
 }

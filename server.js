@@ -346,6 +346,170 @@ function extFromMime(mime) {
   return ".bin";
 }
 
+function normalizePdfText(value) {
+  return String(value || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[’]/g, "'")
+    .replace(/[–—]/g, "-")
+    .replace(/[•]/g, "-")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\x20-\x7E\xA0-\xFF\n]/g, "");
+}
+
+function escapePdfString(value) {
+  return normalizePdfText(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)");
+}
+
+function wrapPdfLine(text, maxLength = 82) {
+  const source = normalizePdfText(text).trim();
+  if (!source) return [""];
+  const words = source.split(/\s+/);
+  const lines = [];
+  let current = "";
+  words.forEach((word) => {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxLength) {
+      current = candidate;
+      return;
+    }
+    if (current) lines.push(current);
+    current = word;
+  });
+  if (current) lines.push(current);
+  return lines.length ? lines : [source];
+}
+
+function buildProcessInvoicePdfBuffer(invoice) {
+  const safeInvoice = invoice && typeof invoice === "object" ? invoice : {};
+  const lines = Array.isArray(safeInvoice.lines) ? safeInvoice.lines : [];
+  const normalizedLines = lines.map((line, index) => {
+    const quantity = Math.max(1, Number(line?.quantity) || 1);
+    const unitPrice = Math.max(0, Number(line?.unitPrice) || 0);
+    return {
+      label: normalizePdfText(line?.label || `Ligne ${index + 1}`) || `Ligne ${index + 1}`,
+      quantity,
+      unitPrice,
+      total: quantity * unitPrice,
+    };
+  });
+  const totalTtc = normalizedLines.reduce((sum, line) => sum + line.total, 0);
+  const euro = (value) =>
+    new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(
+      Math.max(0, Number(value) || 0)
+    );
+  const issueDate = safeInvoice.issueDate
+    ? new Date(`${safeInvoice.issueDate}T12:00:00`).toLocaleDateString("fr-FR")
+    : new Date().toLocaleDateString("fr-FR");
+  const dueDate = safeInvoice.dueDate
+    ? new Date(`${safeInvoice.dueDate}T12:00:00`).toLocaleDateString("fr-FR")
+    : "";
+  const stream = [];
+  const addText = (text, x, y, options = {}) => {
+    const font = options.bold ? "F2" : "F1";
+    const size = options.size || 11;
+    const color = options.color || "1 1 1";
+    stream.push(`BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${escapePdfString(text)}) Tj ET\n`);
+  };
+
+  stream.push("0.02 0.08 0.18 rg 0 0 595 842 re f\n");
+  stream.push("0.06 0.23 0.39 rg 32 760 531 58 re f\n");
+  stream.push("0.38 0.87 0.98 RG 32 760 531 58 re S\n");
+  addText("VORTEXBOX", 48, 792, { bold: true, size: 28, color: "0.82 0.97 1" });
+  addText("FACTURE CLIENT PREMIUM", 250, 792, { bold: true, size: 15, color: "0.82 0.97 1" });
+  addText("VortexBox - Paris - VortexCore@outlook.Fr", 48, 772, {
+    size: 11,
+    color: "0.74 0.92 1",
+  });
+  addText(`Facture: ${safeInvoice.number || "VB-FACTURE"}`, 48, 738, { bold: true, size: 14, color: "0.70 0.92 1" });
+  addText(`Date: ${issueDate}`, 385, 738, { size: 11, color: "0.88 0.96 1" });
+  if (dueDate) addText(`Echeance: ${dueDate}`, 385, 720, { size: 11, color: "0.88 0.96 1" });
+
+  stream.push("0.18 0.52 0.76 RG 32 640 531 82 re S\n");
+  addText("CLIENT", 48, 705, { bold: true, size: 12, color: "0.60 0.93 1" });
+  addText(`${safeInvoice.clientName || "Client non renseigne"}`, 48, 684, { bold: true, size: 18 });
+  addText(`${safeInvoice.clientEmail || "Email non renseigne"}`, 48, 664, { size: 11, color: "0.86 0.95 1" });
+  addText(`${safeInvoice.clientPhone || "Telephone non renseigne"}`, 260, 664, { size: 11, color: "0.86 0.95 1" });
+  addText(
+    `${safeInvoice.clientAddress || "Adresse non renseignee"} ${safeInvoice.clientPostalCode || ""} ${safeInvoice.clientCity || ""}`.trim(),
+    48,
+    644,
+    { size: 11, color: "0.86 0.95 1" }
+  );
+
+  let y = 610;
+  addText("DETAIL DE LA FACTURE", 48, y, { bold: true, size: 13, color: "0.60 0.93 1" });
+  y -= 24;
+  normalizedLines.forEach((line, index) => {
+    const labelLines = wrapPdfLine(line.label, 48);
+    addText(`${index + 1}.`, 48, y, { bold: true });
+    addText(`${labelLines[0]}`, 68, y, { bold: true });
+    addText(`${line.quantity} x ${euro(line.unitPrice)} EUR TTC`, 390, y, { size: 10, color: "0.82 0.97 1" });
+    y -= 18;
+    labelLines.slice(1).forEach((wrapped) => {
+      addText(wrapped, 68, y, { size: 10, color: "0.84 0.95 1" });
+      y -= 16;
+    });
+    addText(`Total ligne: ${euro(line.total)} EUR TTC`, 390, y + 16, { bold: true, size: 10, color: "0.60 0.93 1" });
+    y -= 6;
+    stream.push(`0.16 0.34 0.52 RG 48 ${y} 499 0.6 re S\n`);
+    y -= 18;
+  });
+
+  const noteLines = wrapPdfLine(
+    safeInvoice.notes || "Reglement comptant a reception. Garantie materielle 2 ans incluse.",
+    90
+  );
+  addText("NOTES", 48, Math.max(180, y), { bold: true, size: 12, color: "0.60 0.93 1" });
+  let noteY = Math.max(160, y - 20);
+  noteLines.slice(0, 5).forEach((line) => {
+    addText(line, 48, noteY, { size: 10, color: "0.88 0.96 1" });
+    noteY -= 15;
+  });
+
+  stream.push("0.08 0.30 0.48 rg 320 92 243 68 re f\n");
+  stream.push("0.45 0.93 0.99 RG 320 92 243 68 re S\n");
+  addText("TOTAL TTC", 340, 134, { bold: true, size: 14, color: "0.70 0.95 1" });
+  addText(`${euro(totalTtc)} EUR TTC`, 340, 108, { bold: true, size: 22, color: "1 1 1" });
+  addText("Garantie 2 ans incluse - Support premium VortexBox", 48, 58, { size: 10, color: "0.74 0.92 1" });
+
+  const contentBuffer = Buffer.from(stream.join(""), "latin1");
+  const objects = [];
+  objects.push("1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n");
+  objects.push("2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n");
+  objects.push(
+    "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >> endobj\n"
+  );
+  objects.push(`4 0 obj << /Length ${contentBuffer.length} >> stream\n`);
+  objects.push(contentBuffer);
+  objects.push("\nendstream endobj\n");
+  objects.push("5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n");
+  objects.push("6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> endobj\n");
+
+  const header = Buffer.from("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n", "binary");
+  let offset = header.length;
+  const offsets = [0];
+  const buffers = [header];
+  objects.forEach((object) => {
+    const buffer = Buffer.isBuffer(object) ? object : Buffer.from(object, "latin1");
+    offsets.push(offset);
+    buffers.push(buffer);
+    offset += buffer.length;
+  });
+
+  const xrefStart = offset;
+  let xref = `xref\n0 ${offsets.length}\n0000000000 65535 f \n`;
+  for (let index = 1; index < offsets.length; index += 1) {
+    xref += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
+  }
+  const trailer = `trailer << /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+  buffers.push(Buffer.from(xref + trailer, "latin1"));
+  return { buffer: Buffer.concat(buffers), totalTtc };
+}
+
 function isAllowedUploadExtension(ext) {
   return ALLOWED_UPLOAD_EXTENSIONS.has(String(ext || "").toLowerCase());
 }
@@ -1499,6 +1663,53 @@ async function handleRunRailwayUpdateTerminal(req, res) {
   }
 }
 
+async function handleProcessInvoicePdf(req, res) {
+  const body = await readJsonBody(req);
+  const invoice = body?.invoice && typeof body.invoice === "object" ? body.invoice : null;
+  const persistRecord = Boolean(body?.persistRecord);
+  if (!invoice) {
+    sendJson(res, 400, { ok: false, error: "Facture invalide." });
+    return;
+  }
+
+  const clientName = String(invoice.clientName || "").trim();
+  const number = String(invoice.number || "").trim();
+  const lines = Array.isArray(invoice.lines) ? invoice.lines : [];
+  const validLines = lines.filter((line) => String(line?.label || "").trim() || Number(line?.unitPrice) > 0);
+  if (persistRecord && !clientName) {
+    sendJson(res, 400, { ok: false, error: "Nom client requis." });
+    return;
+  }
+  if (!number) {
+    sendJson(res, 400, { ok: false, error: "Numero de facture requis." });
+    return;
+  }
+  if (!validLines.length) {
+    sendJson(res, 400, { ok: false, error: "Ajoutez au moins une ligne valide a la facture." });
+    return;
+  }
+
+  const finalInvoice = {
+    ...invoice,
+    clientName: clientName || "Client VortexBox",
+    lines: validLines,
+  };
+  const { buffer, totalTtc } = buildProcessInvoicePdfBuffer(finalInvoice);
+  const safeBase = sanitizeName(`${number}-${finalInvoice.clientName}`, `facture-${Date.now()}`);
+  const finalName = `${Date.now()}-${safeBase}.pdf`;
+  const folder = path.join(UPLOADS_DIR, "processus");
+  await fsp.mkdir(folder, { recursive: true });
+  const absolute = path.join(folder, finalName);
+  await fsp.writeFile(absolute, buffer);
+  const relative = path.relative(ROOT_DIR, absolute).replace(/\\/g, "/");
+  sendJson(res, 200, {
+    ok: true,
+    path: relative,
+    fileName: finalName,
+    totalTtc,
+  });
+}
+
 function serveStatic(req, res) {
   const safePath = resolveSafePath(new URL(req.url, `http://${req.headers.host}`).pathname);
   if (!safePath) {
@@ -2055,6 +2266,23 @@ async function requestListener(req, res) {
       }
       if (!requireAdminSession(req, res)) return;
       await handleSaveContent(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/process-invoice-pdf") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "process-invoice-pdf", 30, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop d'exports PDF. Réessayez dans 1 minute." });
+        return;
+      }
+      if (!requireAdminSession(req, res)) return;
+      await handleProcessInvoicePdf(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/delete-upload") {

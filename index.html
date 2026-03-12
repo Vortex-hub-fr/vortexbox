@@ -445,6 +445,44 @@
           <h3>Votre configuration signature</h3>
           <ul id="summary-list" aria-label="Éléments sélectionnés"></ul>
           <p class="total">Total estimé: <strong id="total-price">0 € <span class="price-ttc">TTC</span></strong></p>
+          <section class="config-trust-meter" id="config-trust-meter" aria-label="Barometre de confiance premium">
+            <h4>Barometre de confiance premium</h4>
+            <div class="config-trust-item">
+              <div class="config-trust-head">
+                <span>Performance & FPS</span>
+                <strong id="trust-performance-value">0%</strong>
+              </div>
+              <div class="config-trust-track"><span id="trust-performance-bar"></span></div>
+            </div>
+            <div class="config-trust-item">
+              <div class="config-trust-head">
+                <span>Garantie materiel 2 ans</span>
+                <strong id="trust-warranty-value">100%</strong>
+              </div>
+              <div class="config-trust-track"><span id="trust-warranty-bar"></span></div>
+            </div>
+            <div class="config-trust-item">
+              <div class="config-trust-head">
+                <span>Montage & tests premium</span>
+                <strong id="trust-assembly-value">0%</strong>
+              </div>
+              <div class="config-trust-track"><span id="trust-assembly-bar"></span></div>
+            </div>
+            <div class="config-trust-item">
+              <div class="config-trust-head">
+                <span>Support prioritaire</span>
+                <strong id="trust-support-value">0%</strong>
+              </div>
+              <div class="config-trust-track"><span id="trust-support-bar"></span></div>
+            </div>
+            <div class="config-trust-item">
+              <div class="config-trust-head">
+                <span>Livraison estimee</span>
+                <strong id="trust-delivery-value">0%</strong>
+              </div>
+              <div class="config-trust-track"><span id="trust-delivery-bar"></span></div>
+            </div>
+          </section>
           <button class="summary-save-btn" id="summary-save-config" type="button">Sauvegarder dans mon espace</button>
           <p class="summary-save-feedback" id="summary-save-feedback"></p>
           <div class="fps-estimator" id="fps-estimator">
@@ -1001,6 +1039,13 @@
                 Titre sous la première image de droite
                 <input id="admin-config-summary-title" type="text" placeholder="Ex: La puissance RTX au service de votre experience" />
               </label>
+              <label>
+                Ajustement image dans les cadres
+                <select id="admin-config-image-fit-mode">
+                  <option value="contain">Contain (image entiere)</option>
+                  <option value="cover">Cover (cadre rempli)</option>
+                </select>
+              </label>
             </div>
 
             <h5 class="admin-subtitle">Configurer les références, produits et prix (menus déroulants)</h5>
@@ -1328,10 +1373,11 @@
                 <button class="admin-tab" id="admin-process-subtab-docs" type="button" data-process-subtab="docs" draggable="true">Installation VB</button>
                 <button class="admin-tab" id="admin-process-subtab-achats" type="button" data-process-subtab="achats" draggable="true">Fournisseurs</button>
                 <button class="admin-tab active" id="admin-process-subtab-crm" type="button" data-process-subtab="crm" draggable="true">CRM</button>
+                <button class="admin-tab" id="admin-process-subtab-facturation" type="button" data-process-subtab="facturation" draggable="true">Facturation</button>
                 <button class="admin-tab" id="admin-process-subtab-games" type="button" data-process-subtab="games" draggable="true">Games</button>
               </div>
               <div id="admin-process-docs-panel" class="hidden" data-process-section-panel="docs">
-                <div class="admin-machine-toolbar">
+                <div class="admin-machine-toolbar admin-process-invoice-toolbar">
                   <button class="admin-secondary" id="admin-open-process-install-modal" type="button">Nouveau PDF Installation VB</button>
                   <button class="cta admin-railway-update-btn" id="admin-open-railway-update-modal" type="button">MAJ Railway</button>
                 </div>
@@ -1359,6 +1405,74 @@
                 </div>
                 <div id="admin-process-crm-summary" class="admin-stock-summary"></div>
                 <div id="admin-process-crm-list" class="admin-machines-list"></div>
+              </div>
+              <div id="admin-process-facturation-panel" class="hidden" data-process-section-panel="facturation">
+                <div class="admin-machine-toolbar">
+                  <button class="admin-secondary" id="admin-process-invoice-add-line" type="button">+ Ligne facture</button>
+                  <button class="admin-secondary" id="admin-process-invoice-reset" type="button">Nouvelle facture</button>
+                  <button class="admin-secondary" id="admin-process-invoice-save" type="button">Sauvegarder client en PDF</button>
+                  <button class="cta" id="admin-process-invoice-export" type="button">Exporter le PDF</button>
+                </div>
+                <div class="admin-process-invoice-layout">
+                  <article class="admin-tech-card admin-process-invoice-card">
+                    <div class="admin-machine-header">
+                      <h5>Logiciel de facturation VortexBox</h5>
+                      <p class="admin-file-name">Sauvegarde client + archivage PDF premium</p>
+                    </div>
+                    <div class="admin-process-invoice-grid">
+                      <label>
+                        Numero de facture
+                        <input id="admin-process-invoice-number" type="text" placeholder="Ex: VB-2026-001" />
+                      </label>
+                      <label>
+                        Date de facture
+                        <input id="admin-process-invoice-date" type="date" />
+                      </label>
+                      <label>
+                        Echeance
+                        <input id="admin-process-invoice-due-date" type="date" />
+                      </label>
+                      <label>
+                        Client
+                        <input id="admin-process-invoice-client-name" type="text" placeholder="Nom du client" />
+                      </label>
+                      <label>
+                        Email client
+                        <input id="admin-process-invoice-client-email" type="email" placeholder="client@outlook.fr" />
+                      </label>
+                      <label>
+                        Telephone
+                        <input id="admin-process-invoice-client-phone" type="text" placeholder="06..." />
+                      </label>
+                      <label class="admin-process-invoice-address-field">
+                        Adresse
+                        <input id="admin-process-invoice-client-address" type="text" placeholder="Adresse complete" />
+                      </label>
+                      <label class="admin-process-invoice-postal-field">
+                        Code postal
+                        <input id="admin-process-invoice-client-postal" type="text" placeholder="75000" />
+                      </label>
+                      <label class="admin-process-invoice-city-field">
+                        Ville
+                        <input id="admin-process-invoice-client-city" type="text" placeholder="Paris" />
+                      </label>
+                    </div>
+                    <div id="admin-process-invoice-lines" class="admin-process-invoice-lines"></div>
+                    <label>
+                      Notes facture
+                      <textarea id="admin-process-invoice-notes" rows="4" placeholder="Conditions, precision client, modalites de reglement..."></textarea>
+                    </label>
+                    <div id="admin-process-invoice-summary" class="admin-stock-summary admin-process-invoice-summary"></div>
+                    <p id="admin-process-invoice-feedback" class="admin-feedback"></p>
+                  </article>
+                  <article class="admin-tech-card admin-process-invoice-archive-card">
+                    <div class="admin-machine-header">
+                      <h5>Archives clients</h5>
+                      <p class="admin-file-name">Factures sauvegardees en PDF par client</p>
+                    </div>
+                    <div id="admin-process-invoices-list" class="admin-machines-list"></div>
+                  </article>
+                </div>
               </div>
               <div id="admin-process-games-panel" class="hidden" data-process-section-panel="games">
                 <div class="admin-machine-toolbar">
@@ -1652,7 +1766,8 @@
     </div>
 
     <footer id="contact" class="site-footer">
-      <p>VortexBox - Paris - <span id="footer-contact-email">VortexCore@outlook.Fr</span></p>
+      <p class="footer-contact-line">VortexBox - Paris - <span id="footer-contact-email">VortexCore@outlook.Fr</span></p>
+      <p class="footer-copyright">Copyright © 2026 VortexBox. Tous droits reserves.</p>
       <div class="footer-legal-links">
         <button class="footer-legal-btn" id="footer-legal-mentions-btn" type="button">Mentions légales</button>
         <button class="footer-legal-btn" id="footer-legal-cgv-btn" type="button">Conditions générales de vente</button>

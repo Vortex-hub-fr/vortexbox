@@ -1,0 +1,504 @@
+{
+  "adminProfileReviewPhoto": "",
+  "faqSeedVersion": 2,
+  "heroTitle": "L'exigence premium du gaming sur mesure",
+  "machinesTitle": "Nos builds premium les plus convoités",
+  "navTheme": "aurora",
+  "menuBadges": {
+    "machines": "",
+    "configurateur": "",
+    "support": "promo",
+    "fiches": "",
+    "guides": "nouveau",
+    "jeux": "",
+    "about": "",
+    "faq": ""
+  },
+  "footerContactEmail": "VortexCore@outlook.Fr",
+  "legal": {
+    "mentions": {
+      "label": "Mentions légales",
+      "title": "Mentions légales",
+      "content": "Éditeur: VortexBox, Paris. Contact: VortexCore@outlook.Fr.\nHébergement: Serveur local/client.\nTous droits réservés."
+    },
+    "cgv": {
+      "label": "Conditions générales de vente",
+      "title": "Conditions générales de vente",
+      "content": "Les prix sont indiqués en euros TTC. Toute commande validée implique l'acceptation des conditions de vente. Garantie matérielle de 2 ans sur les VortexBox."
+    },
+    "rgpd": {
+      "label": "Politique de confidentialité RGPD",
+      "title": "Politique de confidentialité RGPD",
+      "content": "Vos données (email, profil, avis) sont utilisées uniquement pour le fonctionnement de votre compte VortexBox. Vous pouvez demander la modification ou suppression de vos données via VortexCore@outlook.Fr."
+    },
+    "cookies": {
+      "label": "Gestion des cookies",
+      "title": "Gestion des cookies",
+      "content": "Vous pouvez accepter, refuser ou personnaliser les cookies depuis le bandeau cookies du site. Vos préférences sont enregistrées localement."
+    }
+  },
+  "machines": [
+    {
+      "name": "VortexBox Nova RTX",
+      "description": "Ultra fluide en 1440p, idéale streaming + e-sport.",
+      "specs": [
+        "CPU: AMD Ryzen 7 7800X3D",
+        "GPU: NVIDIA RTX 5070 Ti",
+        "RAM: 32 Go DDR5",
+        "SSD: 1 To NVMe"
+      ],
+      "price": "2 199 €",
+      "badge": "Best-seller",
+      "backName": "VortexBox Nova RTX",
+      "backDescription": "Ultra fluide en 1440p, idéale streaming + e-sport.",
+      "backComments": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "image": "",
+      "images": [],
+      "imageSlogan": ""
+    },
+    {
+      "name": "VortexBox Titan Pro",
+      "description": "Puissance maximale pour 4K, IA locale et création vidéo.",
+      "specs": [
+        "CPU: Intel Core Ultra 9",
+        "GPU: NVIDIA RTX 5090",
+        "RAM: 64 Go DDR5",
+        "SSD: 2 To NVMe"
+      ],
+      "price": "3 799 €",
+      "badge": "Ultra premium",
+      "backName": "VortexBox Titan Pro",
+      "backDescription": "Puissance maximale pour 4K, IA locale et création vidéo.",
+      "backComments": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "image": "",
+      "images": [],
+      "imageSlogan": ""
+    },
+    {
+      "name": "VortexBox Pulse",
+      "description": "Le meilleur rapport qualité/prix pour jouer en Full HD.",
+      "specs": [
+        "CPU: AMD Ryzen 5 7600",
+        "GPU: AMD Radeon RX 7700 XT",
+        "RAM: 16 Go DDR5",
+        "SSD: 1 To NVMe"
+      ],
+      "price": "1 499 €",
+      "badge": "Meilleur rapport perf/prix",
+      "backName": "VortexBox Pulse",
+      "backDescription": "Le meilleur rapport qualité/prix pour jouer en Full HD.",
+      "backComments": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "image": "",
+      "images": [],
+      "imageSlogan": ""
+    }
+  ],
+  "showcase": [
+    {
+      "title": "Frame Rate Max",
+      "slogan": "Chaque FPS compte.",
+      "image": "vortex-premium-photo-1.svg"
+    },
+    {
+      "title": "Design Premium",
+      "slogan": "Sobriété, airflow, précision.",
+      "image": "vortex-premium-photo-2.svg"
+    },
+    {
+      "title": "Upgrade Ready",
+      "slogan": "Pensé pour durer.",
+      "image": "vortex-premium-photo-3.svg"
+    }
+  ],
+  "technicalSheets": [
+    {
+      "title": "Fiche Technique Nova RTX",
+      "image": "vortex-premium-photo-1.svg",
+      "fileName": "",
+      "fileData": "",
+      "fileMime": "application/pdf",
+      "fileKey": ""
+    },
+    {
+      "title": "Fiche Technique Titan Pro",
+      "image": "vortex-premium-photo-2.svg",
+      "fileName": "",
+      "fileData": "",
+      "fileMime": "application/pdf",
+      "fileKey": ""
+    }
+  ],
+  "aboutVideos": [
+    {
+      "title": "La performance ultime, prête à jouer",
+      "fileName": "",
+      "videoData": "",
+      "videoWebm": "",
+      "videoMime": "video/mp4",
+      "videoKey": ""
+    },
+    {
+      "title": "Présentation Pack Jeux",
+      "fileName": "",
+      "videoData": "",
+      "videoWebm": "",
+      "videoMime": "video/mp4",
+      "videoKey": ""
+    },
+    {
+      "title": "Intel i9 : la performance ultime.",
+      "fileName": "",
+      "videoData": "",
+      "videoWebm": "",
+      "videoMime": "video/mp4",
+      "videoKey": ""
+    },
+    {
+      "title": "4070 vs 4070 Ti : le duel du ray tracing.",
+      "fileName": "",
+      "videoData": "",
+      "videoWebm": "",
+      "videoMime": "video/mp4",
+      "videoKey": ""
+    },
+    {
+      "title": "Immersion VortexBox Full HD",
+      "fileName": "03061-opt.webm",
+      "videoData": "",
+      "videoWebm": "uploads/about-videos/1772808569776-2epalf-03061-opt.webm",
+      "videoMime": "video/mp4",
+      "videoKey": ""
+    },
+    {
+      "title": "RTX : la puissance du vrai gaming",
+      "fileName": "rtx-5060-ti-vs-rtx-5070-vs-rtx-5070-ti-vs-rtx-5080.webm",
+      "videoData": "",
+      "videoWebm": "uploads/about-videos/1773165893093-f4b757-rtx-5060-ti-vs-rtx-5070-vs-rtx-5070-ti-vs-rtx-5080-test-in-11-games-1-opt.webm",
+      "videoMime": "video/mp4",
+      "videoKey": ""
+    }
+  ],
+  "aboutGallery": {
+    "speed": 28,
+    "direction": "left",
+    "watermarkEnabled": true,
+    "photos": [
+      {
+        "title": "Gaming Setup Premium",
+        "image": "vortex-premium-photo-1.svg"
+      },
+      {
+        "title": "Performance Ready",
+        "image": "vortex-premium-photo-2.svg"
+      },
+      {
+        "title": "Expérience Immersive",
+        "image": "vortex-premium-photo-3.svg"
+      }
+    ]
+  },
+  "reviews": [
+    {
+      "author": "Lucas M.",
+      "rating": 5,
+      "text": "Build ultra performant, livraison rapide et finitions impeccables.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    },
+    {
+      "author": "Sarah K.",
+      "rating": 5,
+      "text": "Service pro, excellent conseil avant achat. Je recommande VortexBox.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    },
+    {
+      "author": "Nicolas R.",
+      "rating": 4,
+      "text": "Très bonne expérience, machine silencieuse et stable en jeu.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    },
+    {
+      "author": "Amine B.",
+      "rating": 5,
+      "text": "FPS excellents sur tous mes jeux, montage propre et cable management parfait.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    },
+    {
+      "author": "Julie T.",
+      "rating": 5,
+      "text": "Support client réactif, configuration claire, exactement ce que je voulais.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    },
+    {
+      "author": "Mehdi L.",
+      "rating": 4,
+      "text": "Très bonne qualité globale, machine fluide même en streaming + gaming.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    },
+    {
+      "author": "Camille P.",
+      "rating": 5,
+      "text": "Design sobre et premium, températures très bien maîtrisées en charge.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    },
+    {
+      "author": "Yanis D.",
+      "rating": 5,
+      "text": "Rapport performance/prix excellent, livraison sérieuse et tests pro avant envoi.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    },
+    {
+      "author": "Sophie G.",
+      "rating": 4,
+      "text": "Première commande chez VortexBox et très satisfaite du résultat final.",
+      "approved": true,
+      "userEmail": "",
+      "createdAt": ""
+    }
+  ],
+  "processus": {
+    "files": [],
+    "purchases": [],
+    "crmLeads": [],
+    "invoices": [],
+    "gamesFiles": [],
+    "gamesAssignments": [],
+    "suppliersOrders": [],
+    "stockItems": [],
+    "deliveryItems": [],
+    "savItems": []
+  },
+  "faqItems": [
+    {
+      "question": "VortexBox, c’est quoi exactement ?",
+      "answer": "VortexBox est une expérience gaming premium pensée pour offrir bien plus qu’un simple PC assemblé.\nChaque machine est conçue, optimisée et préparée pour proposer un haut niveau de performance, de stabilité et de confort dès la réception.\nL’objectif est de vous faire gagner du temps, d’éviter les choix techniques hasardeux et de vous livrer une solution prête à jouer dans les meilleures conditions.\nVortexBox, c’est donc un univers complet mêlant puissance, finition, accompagnement et vraie exigence premium."
+    },
+    {
+      "question": "Pourquoi choisir une VortexBox plutôt qu’un PC gaming classique ?",
+      "answer": "Une VortexBox n’est pas pensée comme un simple ordinateur assemblé, mais comme une solution gaming prête à l’emploi, testée et optimisée avant livraison.\nChaque build est sélectionné pour offrir un excellent équilibre entre performances, stabilité, silence et évolutivité.\nVous gagnez du temps, vous évitez les erreurs de compatibilité, et vous profitez d’une machine immédiatement exploitable.\nL’objectif est clair : vous livrer une expérience premium, fluide et rassurante dès le premier démarrage."
+    },
+    {
+      "question": "La VortexBox convient-elle réellement aux jeux récents et exigeants ?",
+      "answer": "Oui, les configurations proposées sont orientées pour répondre aux attentes du gaming moderne, y compris sur des titres récents plus lourds.\nLe but n’est pas seulement d’obtenir des FPS, mais de proposer une machine équilibrée, stable et agréable à utiliser dans la durée.\nLes composants sont choisis pour préserver un bon niveau de fluidité, de confort thermique et de fiabilité générale.\nVous profitez ainsi d’un build crédible pour jouer aujourd’hui, mais aussi pour rester pertinent dans le temps."
+    },
+    {
+      "question": "La VortexBox est-elle prête à jouer dès la réception ?",
+      "answer": "Oui, votre VortexBox arrive configurée pour être utilisée immédiatement dans les meilleures conditions.\nLe système, les pilotes essentiels et l’environnement de jeu sont préparés pour offrir un démarrage simple et rapide.\nVous n’avez pas à passer des heures à installer ou à optimiser la machine avant d’en profiter.\nUne fois connectée, vous pouvez finaliser vos comptes et commencer à jouer sans procédure complexe."
+    },
+    {
+      "question": "Est-ce une machine adaptée à un utilisateur débutant ?",
+      "answer": "Oui, une VortexBox est pensée pour être simple à prendre en main, même si vous n’avez pas l’habitude du matériel informatique.\nLa préparation en amont réduit fortement les manipulations techniques souvent sources d’erreurs ou de stress.\nVous bénéficiez d’un système plus lisible, plus prêt, et d’un accompagnement si vous avez besoin d’être guidé.\nCela permet de profiter d’un vrai PC gaming sans devoir devenir expert dès le premier jour."
+    },
+    {
+      "question": "Puis-je personnaliser ma configuration avant l’achat ?",
+      "answer": "Oui, le configurateur VortexBox est justement conçu pour vous permettre de sélectionner les composants et options qui correspondent à votre usage.\nVous pouvez choisir votre base matérielle, vos références, vos services complémentaires et ajuster le projet selon votre budget.\nCette approche permet de construire un build plus cohérent avec vos jeux, votre résolution cible et vos attentes en confort.\nSi besoin, nous pouvons aussi vous guider pour éviter un choix trop faible ou au contraire inutilement surdimensionné."
+    },
+    {
+      "question": "Puis-je enregistrer ma configuration ou la reprendre plus tard ?",
+      "answer": "Oui, votre espace utilisateur permet de sauvegarder vos configurations pour les retrouver ultérieurement.\nC’est utile si vous comparez plusieurs versions, si vous hésitez encore, ou si vous souhaitez reprendre votre projet plus tard.\nCette fonction vous aide à construire votre build sans pression et sans perdre vos sélections précédentes.\nVous gardez ainsi une continuité claire entre votre réflexion, vos essais et votre décision finale."
+    },
+    {
+      "question": "Les fiches techniques et informations produit sont-elles consultables avant achat ?",
+      "answer": "Oui, le site met à disposition des fiches techniques, des visuels, des informations détaillées et des éléments de comparaison pour vous aider à choisir.\nCes contenus ont pour but de rendre la décision plus claire, plus transparente et plus professionnelle.\nVous pouvez ainsi mieux comprendre la logique de chaque build avant de passer à l’étape de commande.\nCela participe à une expérience d’achat plus rassurante et plus qualitative."
+    },
+    {
+      "question": "Quels délais faut-il prévoir pour la préparation et l’expédition ?",
+      "answer": "Chaque VortexBox est préparée avec une logique qualité, ce qui implique assemblage, configuration et validation avant départ.\nEn moyenne, il faut compter entre 3 et 7 jours ouvrés selon la complexité de la configuration et les composants retenus.\nCe délai permet d’effectuer les réglages et les tests nécessaires pour éviter les mauvaises surprises à la réception.\nNous privilégions une machine bien préparée plutôt qu’un envoi trop rapide sans contrôle sérieux."
+    },
+    {
+      "question": "Quels contrôles sont réalisés avant l’envoi d’un build ?",
+      "answer": "Avant expédition, chaque build passe par une série de vérifications visant à garantir sa stabilité et sa cohérence globale.\nLes performances, les températures, le comportement en charge et le bon fonctionnement des composants sont contrôlés avec attention.\nCette phase permet de confirmer que la machine est réellement prête à être utilisée dans de bonnes conditions.\nC’est un point essentiel de l’expérience VortexBox : livrer un build validé, pas seulement monté."
+    },
+    {
+      "question": "La garantie VortexBox couvre-t-elle bien le matériel ?",
+      "answer": "Oui, les VortexBox bénéficient d’une garantie matérielle de 2 ans conformément à ce qui est affiché sur le site.\nCette garantie concerne le matériel dans le cadre d’un usage normal et selon les conditions prévues par la boutique.\nEn cas de doute, notre équipe peut vous orienter vers la bonne procédure afin d’ouvrir un dossier proprement.\nL’objectif est d’assurer un suivi sérieux, compréhensible et professionnel après votre achat."
+    },
+    {
+      "question": "Le support technique reste-t-il disponible après la livraison ?",
+      "answer": "Oui, l’accompagnement ne s’arrête pas au moment où la machine est expédiée.\nNous pouvons vous aider pour la prise en main, les questions techniques, les vérifications de base et les conseils d’évolution.\nLe support a été pensé pour rassurer les utilisateurs qui veulent un interlocuteur clair et réactif.\nVous n’êtes donc pas laissé seul après l’achat : le suivi fait partie de l’expérience VortexBox."
+    },
+    {
+      "question": "Le pack jeux me permet-il de télécharger gratuitement les derniers jeux ?",
+      "answer": "Oui, le pack jeux vous donne accès à une solution pensée pour profiter plus librement d’un très large catalogue, y compris des titres récents selon les disponibilités et le suivi proposé.\nL’objectif est de vous offrir une expérience plus riche, plus confortable et plus avantageuse, sans multiplier les achats au fil du temps.\nL’activation reste encadrée afin de garantir un accès clair, propre et cohérent avec votre dossier client.\nVous bénéficiez ainsi d’un accompagnement premium pour profiter de vos jeux dans les meilleures conditions, avec plus de simplicité et de valeur."
+    },
+    {
+      "question": "Comment puis-je obtenir mon patch pour les jeux ?",
+      "answer": "Pour obtenir votre patch jeux, il vous suffit de contacter l’équipe VortexBox via Telegram avec votre référence de commande ou l’email utilisé lors de l’achat.\nNous vérifions ensuite votre dossier pour confirmer l’éligibilité et préparer l’activation dans les bonnes conditions.\nUne fois la demande validée, vous recevez la procédure à suivre ainsi que les indications nécessaires pour appliquer le patch simplement.\nSi vous avez le moindre doute pendant l’installation, le support peut aussi vous accompagner étape par étape pour que tout soit clair et rapide."
+    },
+    {
+      "question": "Comment fonctionne l’offre Option DLC via code promo ?",
+      "answer": "L’Option DLC gratuite fonctionne via un code promo personnel demandé sur Telegram puis saisi dans le configurateur.\nCe code est associé à votre adresse email et son usage est contrôlé afin d’éviter les activations multiples non prévues.\nUne fois le code validé, l’option concernée est automatiquement prise en compte dans votre configuration.\nLe système a été conçu pour rester simple côté utilisateur, tout en gardant une logique propre côté administration."
+    }
+  ],
+  "gamesCatalog": [
+    {
+      "title": "Cyber Assault 2026",
+      "image": "uploads/technical-images/1772676120540-hriwmx-technical-image-1.webp",
+      "info": ""
+    },
+    {
+      "title": "Racing Drift Pro",
+      "image": "uploads/technical-images/1772676640794-irjlxm-technical-image-2.webp",
+      "info": ""
+    },
+    {
+      "title": "Arena Legends",
+      "image": "uploads/technical-images/1772677190425-usy9db-technical-image-3.webp",
+      "info": ""
+    }
+  ],
+  "supportSav": {
+    "badge": "Support & SAV Premium",
+    "title": "Support & SAV VortexBox",
+    "subtitle": "Un accompagnement rapide et professionnel pour vos questions, diagnostics et retours. Notre équipe vous suit de la première prise de contact jusqu'à la résolution.",
+    "telegramUrl": "https://t.me/VortexCore460",
+    "cards": [
+      {
+        "title": "Diagnostic rapide",
+        "text": "Analyse guidée de votre build et vérifications prioritaires en moins de 24h.",
+        "ctaLabel": "Ouvrir un ticket"
+      },
+      {
+        "title": "Garantie matérielle 2 ans",
+        "text": "Prise en charge des pièces éligibles et suivi transparent de votre dossier SAV.",
+        "ctaLabel": "Voir la garantie"
+      },
+      {
+        "title": "Support Telegram",
+        "text": "Échange direct avec l'équipe VortexBox pour accélérer vos demandes.",
+        "ctaLabel": "Contacter sur Telegram"
+      }
+    ],
+    "steps": [
+      {
+        "title": "1. Déclaration",
+        "text": "Vous nous envoyez votre demande avec les détails de votre build."
+      },
+      {
+        "title": "2. Analyse",
+        "text": "Nous validons le diagnostic et proposons la meilleure solution."
+      },
+      {
+        "title": "3. Résolution",
+        "text": "Réparation, échange ou conseil d'optimisation selon votre cas."
+      }
+    ],
+    "faq": [
+      {
+        "question": "Quel est le délai de réponse du support ?",
+        "answer": "En général sous 24h ouvrées."
+      },
+      {
+        "question": "La garantie couvre quoi ?",
+        "answer": "La garantie couvre le matériel selon les conditions affichées sur le site."
+      },
+      {
+        "question": "Comment lancer un SAV ?",
+        "answer": "Contactez-nous via Telegram ou le formulaire de la page Support & SAV."
+      }
+    ]
+  },
+  "configurator": {
+    "visualImages": [
+      "vortex-premium-photo-1.svg",
+      "vortex-premium-photo-2.svg",
+      "vortex-premium-photo-3.svg"
+    ],
+    "imageFitMode": "contain",
+    "categoryFillImage": "",
+    "categoryFillImageSecondary": "",
+    "summaryTelegramImage": "",
+    "summaryTelegramTitle": "",
+    "summaryExtraImages": [
+      "",
+      ""
+    ],
+    "components": [
+      {
+        "id": "categorie-1",
+        "label": "Catégorie 1",
+        "options": [
+          {
+            "name": "Nouveau produit 1",
+            "price": 0,
+            "image": "",
+            "description": "",
+            "badge": "Equilibre conseille"
+          },
+          {
+            "name": "Nouveau produit 2",
+            "price": 0,
+            "image": "",
+            "description": "",
+            "badge": "Signature premium"
+          },
+          {
+            "name": "Nouveau produit 3",
+            "price": 0,
+            "image": "",
+            "description": "",
+            "badge": "Performance max"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "id": "warranty",
+        "label": "Extension garantie 2 ans",
+        "price": 149,
+        "checked": false,
+        "description": "Protection étendue: prise en charge matériel prolongée.\nSupport prioritaire VortexBox."
+      },
+      {
+        "id": "assembly",
+        "label": "Montage pro et tests stabilité",
+        "price": 99,
+        "checked": true,
+        "description": "Montage professionnel en atelier.\nStress tests complets avant livraison."
+      }
+    ]
+  }
+}

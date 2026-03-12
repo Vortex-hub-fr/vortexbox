@@ -1048,8 +1048,13 @@ function initializeResponsiveNav() {
     if (!navEl.contains(event.target)) closeMenu();
   });
 
+  let navResizeRaf = 0;
   window.addEventListener("resize", () => {
-    if (window.innerWidth > 1220) closeMenu();
+    if (navResizeRaf) return;
+    navResizeRaf = window.requestAnimationFrame(() => {
+      navResizeRaf = 0;
+      if (window.innerWidth > 1220) closeMenu();
+    });
   });
 
   document.addEventListener("keydown", (event) => {
@@ -2436,19 +2441,10 @@ function loadSupportSavContent() {
 async function hydrateContentFromDiskIfMissing() {
   const rawStored = localStorage.getItem(STORAGE_KEY);
   let parsedStored = null;
-  let shouldHydrate = !rawStored;
-
-  if (!shouldHydrate) {
-    try {
-      parsedStored = JSON.parse(rawStored);
-      const hasRequiredStructure =
-        parsedStored &&
-        typeof parsedStored === "object" &&
-        (Array.isArray(parsedStored.faqItems) || Array.isArray(parsedStored.gamesCatalog));
-      if (!hasRequiredStructure) shouldHydrate = true;
-    } catch (error) {
-      shouldHydrate = true;
-    }
+  try {
+    parsedStored = rawStored ? JSON.parse(rawStored) : null;
+  } catch (error) {
+    parsedStored = null;
   }
 
   try {
@@ -2456,7 +2452,7 @@ async function hydrateContentFromDiskIfMissing() {
     if (!response.ok) return false;
     const payload = await response.json();
     if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return false;
-    if (!shouldHydrate && parsedStored) {
+    if (parsedStored) {
       try {
         if (JSON.stringify(parsedStored) === JSON.stringify(payload.content)) return false;
       } catch (error) {}
@@ -3055,17 +3051,32 @@ function initializePremiumRevealAndSpotlight() {
   const spotTargets = Array.from(
     document.querySelectorAll(".about-card, .games-empty-state, .game-cover-card, .faq-item, .support-sav-card")
   );
+  const canUsePointerSpotlight = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   spotTargets.forEach((el) => {
     el.classList.add("vb-spotlight-target");
+    if (!canUsePointerSpotlight) return;
+    let rafId = 0;
+    let lastClientX = 0;
+    let lastClientY = 0;
     el.addEventListener("pointermove", (event) => {
-      const rect = el.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 100;
-      const y = ((event.clientY - rect.top) / rect.height) * 100;
-      el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
-      el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
-      el.style.setProperty("--vb-spot-a", "1");
+      lastClientX = event.clientX;
+      lastClientY = event.clientY;
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        const rect = el.getBoundingClientRect();
+        const x = ((lastClientX - rect.left) / rect.width) * 100;
+        const y = ((lastClientY - rect.top) / rect.height) * 100;
+        el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
+        el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
+        el.style.setProperty("--vb-spot-a", "1");
+      });
     });
     el.addEventListener("pointerleave", () => {
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
       el.style.setProperty("--vb-spot-a", "0");
     });
   });
@@ -3074,6 +3085,20 @@ function initializePremiumRevealAndSpotlight() {
 function initializeUltraPremiumVisuals() {
   mountPremiumPreloader();
   initializePremiumRevealAndSpotlight();
+}
+
+function optimizeMediaLoadingHints() {
+  const images = Array.from(document.querySelectorAll("img"));
+  images.forEach((img, index) => {
+    if (!img.hasAttribute("decoding")) img.setAttribute("decoding", "async");
+    if (!img.hasAttribute("loading")) {
+      img.setAttribute("loading", index < 4 ? "eager" : "lazy");
+    }
+  });
+  document.querySelectorAll("video").forEach((video) => {
+    if (!video.hasAttribute("preload")) video.setAttribute("preload", "metadata");
+    if (!video.hasAttribute("playsinline")) video.setAttribute("playsinline", "");
+  });
 }
 
 async function initializeFaqPage() {
@@ -3101,6 +3126,7 @@ async function initializeFaqPage() {
   initializeForgotPasswordFlow();
   initializePageTransitions();
   initializeUltraPremiumVisuals();
+  optimizeMediaLoadingHints();
   initializeSiteAuth();
   renderGamesAdminDebug();
   refreshNavSessionButtons();

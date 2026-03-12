@@ -104,6 +104,7 @@ let pendingActivationEmail = "";
 let aboutVideoObjectUrls = [];
 let aboutVideoIntersectionObserver = null;
 const aboutVideoKeyUrlCache = new Map();
+const aboutVideoUhdUrlCache = new Map();
 let userStatePersistTimer = null;
 const LEGAL_FALLBACK = {
   footerContactEmail: "VortexCore@outlook.Fr",
@@ -198,8 +199,47 @@ function pickPlayableVideoSource(mp4LikeSrc, webmSrc) {
   return mp4Like;
 }
 
+function isLocalRuntime() {
+  const host = String(window.location.hostname || "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
+function buildLocal2kCandidate(src) {
+  const value = String(src || "").trim();
+  if (!value || !/\.mp4$/i.test(value)) return "";
+  return value.replace(/\.mp4$/i, "-2k.mp4");
+}
+
+function buildLocalUhdCandidate(src) {
+  const value = String(src || "").trim();
+  if (!value || !/\.mp4$/i.test(value)) return "";
+  return value.replace(/\.mp4$/i, "-uhd.mp4");
+}
+
+async function preferLocalUhdVideoSource(source) {
+  const direct = String(source || "").trim();
+  if (!isLocalRuntime() || !direct) return direct;
+  const candidates = [buildLocal2kCandidate(direct), buildLocalUhdCandidate(direct)].filter(Boolean);
+  for (const candidate of candidates) {
+    if (aboutVideoUhdUrlCache.has(candidate)) {
+      const cached = aboutVideoUhdUrlCache.get(candidate) || "";
+      if (cached && cached !== direct) return cached;
+      continue;
+    }
+    try {
+      const response = await fetch(candidate, { method: "HEAD", cache: "no-store" });
+      const resolved = response.ok ? candidate : "";
+      aboutVideoUhdUrlCache.set(candidate, resolved);
+      if (resolved) return resolved;
+    } catch (error) {
+      aboutVideoUhdUrlCache.set(candidate, "");
+    }
+  }
+  return direct;
+}
+
 async function resolveAboutVideoSource(videoData, videoKey, videoWebm) {
-  const directSrc = pickPlayableVideoSource(videoData, videoWebm);
+  const directSrc = await preferLocalUhdVideoSource(pickPlayableVideoSource(videoData, videoWebm));
   if (directSrc) return directSrc;
   const key = String(videoKey || "").trim();
   if (!key) return "";
@@ -543,8 +583,13 @@ function initializeResponsiveNav() {
     if (!navEl.contains(event.target)) closeMenu();
   });
 
+  let navResizeRaf = 0;
   window.addEventListener("resize", () => {
-    if (window.innerWidth > 1220) closeMenu();
+    if (navResizeRaf) return;
+    navResizeRaf = window.requestAnimationFrame(() => {
+      navResizeRaf = 0;
+      if (window.innerWidth > 1220) closeMenu();
+    });
   });
 
   document.addEventListener("keydown", (event) => {
@@ -1110,36 +1155,23 @@ function saveAboutVideosOrder(videos) {
 
 async function hydrateContentFromDiskIfMissing() {
   const rawStored = localStorage.getItem(STORAGE_KEY);
-  let localContent = {};
-  if (rawStored) {
-    try {
-      localContent = JSON.parse(rawStored) || {};
-    } catch (error) {
-      localContent = {};
-    }
+  let localContent = null;
+  try {
+    localContent = rawStored ? JSON.parse(rawStored) : null;
+  } catch (error) {
+    localContent = null;
   }
   try {
     const response = await fetch("/api/content", { cache: "no-store" });
     if (!response.ok) return false;
     const payload = await response.json();
     if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return false;
-
-    // About page is always synced from disk to avoid stale local gallery/video artifacts.
-    const nextContent = {
-      ...localContent,
-      aboutVideos: Array.isArray(payload.content.aboutVideos)
-        ? payload.content.aboutVideos
-        : Array.isArray(localContent.aboutVideos)
-          ? localContent.aboutVideos
-          : fallbackVideos,
-      aboutGallery:
-        payload.content.aboutGallery && typeof payload.content.aboutGallery === "object"
-          ? payload.content.aboutGallery
-          : localContent.aboutGallery && typeof localContent.aboutGallery === "object"
-            ? localContent.aboutGallery
-            : fallbackGallery,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextContent));
+    if (localContent) {
+      try {
+        if (JSON.stringify(localContent) === JSON.stringify(payload.content)) return false;
+      } catch (error) {}
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.content));
     return true;
   } catch (error) {
     return false;
@@ -1962,9 +1994,9 @@ async function renderAboutVideos() {
   initializeAboutVideosLazyLoad();
 }
 
-function openVideoModal(src) {
+async function openVideoModal(src) {
   if (!src) return;
-  aboutVideoModalPlayerEl.src = src;
+  aboutVideoModalPlayerEl.src = await preferLocalUhdVideoSource(src);
   aboutVideoModalEl.classList.remove("hidden");
   aboutVideoModalPlayerEl.play().catch(() => {});
 }
@@ -2404,17 +2436,32 @@ function initializePremiumRevealAndSpotlight() {
   }
 
   const spotTargets = Array.from(document.querySelectorAll(".about-card, .about-video-card, .about-gallery-photo-card"));
+  const canUsePointerSpotlight = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   spotTargets.forEach((el) => {
     el.classList.add("vb-spotlight-target");
+    if (!canUsePointerSpotlight) return;
+    let rafId = 0;
+    let lastClientX = 0;
+    let lastClientY = 0;
     el.addEventListener("pointermove", (event) => {
-      const rect = el.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 100;
-      const y = ((event.clientY - rect.top) / rect.height) * 100;
-      el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
-      el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
-      el.style.setProperty("--vb-spot-a", "1");
+      lastClientX = event.clientX;
+      lastClientY = event.clientY;
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        const rect = el.getBoundingClientRect();
+        const x = ((lastClientX - rect.left) / rect.width) * 100;
+        const y = ((lastClientY - rect.top) / rect.height) * 100;
+        el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
+        el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
+        el.style.setProperty("--vb-spot-a", "1");
+      });
     });
     el.addEventListener("pointerleave", () => {
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
       el.style.setProperty("--vb-spot-a", "0");
     });
   });
@@ -2423,6 +2470,20 @@ function initializePremiumRevealAndSpotlight() {
 function initializeUltraPremiumVisuals() {
   mountPremiumPreloader();
   initializePremiumRevealAndSpotlight();
+}
+
+function optimizeMediaLoadingHints() {
+  const images = Array.from(document.querySelectorAll("img"));
+  images.forEach((img, index) => {
+    if (!img.hasAttribute("decoding")) img.setAttribute("decoding", "async");
+    if (!img.hasAttribute("loading")) {
+      img.setAttribute("loading", index < 4 ? "eager" : "lazy");
+    }
+  });
+  document.querySelectorAll("video").forEach((video) => {
+    if (!video.hasAttribute("preload")) video.setAttribute("preload", "metadata");
+    if (!video.hasAttribute("playsinline")) video.setAttribute("playsinline", "");
+  });
 }
 
 async function initializeAboutPage() {
@@ -2444,6 +2505,7 @@ async function initializeAboutPage() {
   initializeForgotPasswordFlow();
   initializePageTransitions();
   initializeUltraPremiumVisuals();
+  optimizeMediaLoadingHints();
   initializeSiteAuth();
   refreshNavSessionButtons();
   window.addEventListener("pageshow", refreshNavSessionButtons);

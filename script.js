@@ -6,6 +6,16 @@ const summarySaveConfigBtn = document.getElementById("summary-save-config");
 const summarySaveFeedbackEl = document.getElementById("summary-save-feedback");
 const summaryTelegramImageEl = document.getElementById("summary-telegram-image");
 const summaryExtraImagesEl = document.getElementById("summary-extra-images");
+const trustPerformanceValueEl = document.getElementById("trust-performance-value");
+const trustPerformanceBarEl = document.getElementById("trust-performance-bar");
+const trustWarrantyValueEl = document.getElementById("trust-warranty-value");
+const trustWarrantyBarEl = document.getElementById("trust-warranty-bar");
+const trustAssemblyValueEl = document.getElementById("trust-assembly-value");
+const trustAssemblyBarEl = document.getElementById("trust-assembly-bar");
+const trustSupportValueEl = document.getElementById("trust-support-value");
+const trustSupportBarEl = document.getElementById("trust-support-bar");
+const trustDeliveryValueEl = document.getElementById("trust-delivery-value");
+const trustDeliveryBarEl = document.getElementById("trust-delivery-bar");
 const fpsFortniteEl = document.getElementById("fps-fortnite");
 const fpsWarzoneEl = document.getElementById("fps-warzone");
 const fpsGtaEl = document.getElementById("fps-gta");
@@ -187,6 +197,24 @@ const adminCrmSearchInput = document.getElementById("admin-crm-search");
 const adminCrmFilterStatusSelect = document.getElementById("admin-crm-filter-status");
 const adminProcessCrmSummaryEl = document.getElementById("admin-process-crm-summary");
 const adminProcessCrmListEl = document.getElementById("admin-process-crm-list");
+const adminProcessInvoiceAddLineBtn = document.getElementById("admin-process-invoice-add-line");
+const adminProcessInvoiceResetBtn = document.getElementById("admin-process-invoice-reset");
+const adminProcessInvoiceSaveBtn = document.getElementById("admin-process-invoice-save");
+const adminProcessInvoiceExportBtn = document.getElementById("admin-process-invoice-export");
+const adminProcessInvoiceNumberInput = document.getElementById("admin-process-invoice-number");
+const adminProcessInvoiceDateInput = document.getElementById("admin-process-invoice-date");
+const adminProcessInvoiceDueDateInput = document.getElementById("admin-process-invoice-due-date");
+const adminProcessInvoiceClientNameInput = document.getElementById("admin-process-invoice-client-name");
+const adminProcessInvoiceClientEmailInput = document.getElementById("admin-process-invoice-client-email");
+const adminProcessInvoiceClientPhoneInput = document.getElementById("admin-process-invoice-client-phone");
+const adminProcessInvoiceClientAddressInput = document.getElementById("admin-process-invoice-client-address");
+const adminProcessInvoiceClientPostalInput = document.getElementById("admin-process-invoice-client-postal");
+const adminProcessInvoiceClientCityInput = document.getElementById("admin-process-invoice-client-city");
+const adminProcessInvoiceNotesInput = document.getElementById("admin-process-invoice-notes");
+const adminProcessInvoiceLinesEl = document.getElementById("admin-process-invoice-lines");
+const adminProcessInvoiceSummaryEl = document.getElementById("admin-process-invoice-summary");
+const adminProcessInvoiceFeedbackEl = document.getElementById("admin-process-invoice-feedback");
+const adminProcessInvoicesListEl = document.getElementById("admin-process-invoices-list");
 const adminAddStockItemBtn = document.getElementById("admin-add-stock-item");
 const adminProcessStockSummaryEl = document.getElementById("admin-process-stock-summary");
 const adminProcessStockListEl = document.getElementById("admin-process-stock-list");
@@ -248,6 +276,7 @@ const adminConfigImageNameEls = [0, 1, 2].map((i) => document.getElementById(`ad
 const adminConfigImagePreviewEls = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-preview-${i}`));
 const adminConfigImageRemoveBtns = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-remove-${i}`));
 const adminConfigSummaryTitleInput = document.getElementById("admin-config-summary-title");
+const adminConfigImageFitModeSelect = document.getElementById("admin-config-image-fit-mode");
 const adminAboutVideoTitleInputs = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById(`admin-about-video-title-${i}`));
 const adminAboutVideoFileInputs = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById(`admin-about-video-file-${i}`));
 const adminAboutVideoNameEls = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById(`admin-about-video-name-${i}`));
@@ -634,6 +663,7 @@ const DEFAULT_CONTENT = {
     files: [],
     purchases: [],
     crmLeads: [],
+    invoices: [],
     gamesFiles: [],
     gamesAssignments: [],
     suppliersOrders: [],
@@ -654,6 +684,7 @@ const DEFAULT_CONTENT = {
   ],
   configurator: {
     visualImages: [...PREMIUM_GALLERY_IMAGES],
+    imageFitMode: "contain",
     categoryFillImage: "",
     categoryFillImageSecondary: "",
     summaryTelegramImage: "",
@@ -755,6 +786,8 @@ let adminProcessSectionDrafts = {
   achats: [],
 };
 let adminCrmLeadsDraft = [];
+let adminProcessInvoicesDraft = [];
+let adminProcessInvoiceDraft = null;
 let adminProcessGamesFilesDraft = [];
 let adminProcessGamesAssignmentsDraft = [];
 let adminStockItemsDraft = [];
@@ -1208,8 +1241,13 @@ function initializeResponsiveNav() {
     if (!navEl.contains(event.target)) closeMenu();
   });
 
+  let navResizeRaf = 0;
   window.addEventListener("resize", () => {
-    if (window.innerWidth > 1220) closeMenu();
+    if (navResizeRaf) return;
+    navResizeRaf = window.requestAnimationFrame(() => {
+      navResizeRaf = 0;
+      if (window.innerWidth > 1220) closeMenu();
+    });
   });
 
   const updateActiveNavLink = () => {
@@ -2440,6 +2478,26 @@ function handleExpiredAdminSession(message = "Session administrateur expiree. Re
   return message;
 }
 
+async function validateAdminSessionWithServer() {
+  if (sessionStorage.getItem(SESSION_KEY) !== "1") return true;
+  try {
+    const response = await fetch("/api/user-state", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    if (response.status === 401) {
+      handleExpiredAdminSession(
+        "Session administrateur expirée (redémarrage serveur). Reconnectez-vous pour sauvegarder sur disque."
+      );
+      return false;
+    }
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
 function isAdminLiveMode() {
   const enabled = sessionStorage.getItem(ADMIN_LIVE_MODE_KEY) !== "0";
   return isAdminSessionAuthorized() && enabled;
@@ -2929,7 +2987,24 @@ function setPromoFeedback(message, tone = "") {
   promoFeedbackEl.classList.add(tone || "info");
 }
 
-function getConfiguratorOptionTag(optionIndex, optionCount) {
+function mapConfiguratorBadgeTone(label) {
+  const text = normalizeSearchText(label);
+  if (!text) return "premium";
+  if (/equilibre|equilibr|recommande|conseille|safe/.test(text)) return "recommended";
+  if (/perf|max|ultra|fps|extreme|boost/.test(text)) return "performance";
+  if (/focus|expert|pro|precision|cible/.test(text)) return "focus";
+  return "premium";
+}
+
+function getConfiguratorOptionTag(optionIndex, optionCount, customBadge = "") {
+  const custom = String(customBadge || "").trim();
+  if (custom) {
+    return {
+      label: custom,
+      tone: mapConfiguratorBadgeTone(custom),
+      note: "Badge personnalise par l administrateur.",
+    };
+  }
   if (optionCount <= 1) return { label: "Choix cible", tone: "focus", note: "Une base claire pour construire votre configuration." };
   if (optionIndex === 0) {
     return {
@@ -2950,6 +3025,24 @@ function getConfiguratorOptionTag(optionIndex, optionCount) {
     tone: "premium",
     note: "Une option haut de gamme pour monter en standing sans desequilibre."
   };
+}
+
+const CONFIG_BADGE_PRESETS = [
+  "Equilibre conseille",
+  "Signature premium",
+  "Performance max",
+  "Ultra FPS",
+  "Silence & efficacite",
+  "Createur & streaming",
+  "Best value",
+  "Edition limitee",
+];
+
+function resolveBadgePresetValue(rawBadge) {
+  const normalized = normalizeSearchText(rawBadge);
+  if (!normalized) return "";
+  const found = CONFIG_BADGE_PRESETS.find((item) => normalizeSearchText(item) === normalized);
+  return found || "custom";
 }
 
 function getConfiguratorServiceTag(service, serviceIndex) {
@@ -4647,6 +4740,49 @@ function normalizeCrmLeads(items) {
     .filter((item) => item.name || item.email || item.phone || item.note);
 }
 
+function normalizeProcessInvoices(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item, index) => {
+      const fallback = createEmptyProcessInvoice(index);
+      const lines = Array.isArray(item?.lines) ? item.lines : [];
+      return {
+        id: typeof item?.id === "string" && item.id.trim() ? item.id.trim() : fallback.id,
+        number: typeof item?.number === "string" && item.number.trim() ? item.number.trim() : fallback.number,
+        issueDate: typeof item?.issueDate === "string" && item.issueDate.trim() ? item.issueDate.trim() : fallback.issueDate,
+        dueDate: typeof item?.dueDate === "string" && item.dueDate.trim() ? item.dueDate.trim() : fallback.dueDate,
+        clientName: typeof item?.clientName === "string" ? item.clientName.trim() : "",
+        clientEmail: typeof item?.clientEmail === "string" ? item.clientEmail.trim().toLowerCase() : "",
+        clientPhone: typeof item?.clientPhone === "string" ? item.clientPhone.trim() : "",
+        clientAddress: typeof item?.clientAddress === "string" ? item.clientAddress.trim() : "",
+        clientPostalCode: typeof item?.clientPostalCode === "string" ? item.clientPostalCode.trim() : "",
+        clientCity: typeof item?.clientCity === "string" ? item.clientCity.trim() : "",
+        notes: typeof item?.notes === "string" ? item.notes.trim() : fallback.notes,
+        lines: (lines.length ? lines : fallback.lines)
+          .map((line, lineIndex) => ({
+            id:
+              typeof line?.id === "string" && line.id.trim()
+                ? line.id.trim()
+                : `invoice-line-${Date.now()}-${index + 1}-${lineIndex + 1}`,
+            label:
+              typeof line?.label === "string" && line.label.trim()
+                ? line.label.trim()
+                : `Ligne ${lineIndex + 1}`,
+            catalogKey: typeof line?.catalogKey === "string" ? line.catalogKey.trim() : "",
+            quantity: Math.max(1, Number(line?.quantity) || 1),
+            unitPrice: Math.max(0, Number(line?.unitPrice) || 0),
+          }))
+          .filter((line) => line.label || line.unitPrice > 0),
+        pdfPath: typeof item?.pdfPath === "string" ? item.pdfPath.replace(/^\/+/, "").trim() : "",
+        pdfFileName: typeof item?.pdfFileName === "string" ? item.pdfFileName.trim() : "",
+        totalTtc: Math.max(0, Number(item?.totalTtc) || 0),
+        createdAt: typeof item?.createdAt === "string" && item.createdAt.trim() ? item.createdAt.trim() : fallback.createdAt,
+        updatedAt: typeof item?.updatedAt === "string" && item.updatedAt.trim() ? item.updatedAt.trim() : fallback.updatedAt,
+      };
+    })
+    .filter((item) => item.clientName || item.clientEmail || item.number || item.pdfPath);
+}
+
 function normalizeStockItems(items) {
   if (!Array.isArray(items)) return [];
   return items
@@ -4799,6 +4935,7 @@ function normalizeConfigurator(configurator) {
               price: Number.isFinite(Number(option?.price)) ? Number(option.price) : 0,
               image: typeof option?.image === "string" && option.image.trim() ? option.image : "",
               description: typeof option?.description === "string" ? option.description.trim() : "",
+              badge: typeof option?.badge === "string" ? option.badge.trim() : "",
             }))
             .filter((option) => option.name)
         : [];
@@ -4806,7 +4943,7 @@ function normalizeConfigurator(configurator) {
       return {
         id,
         label,
-        options: options.length ? options : [{ name: "Produit", price: 0, image: "" }],
+        options: options.length ? options : [{ name: "Produit", price: 0, image: "", description: "", badge: "" }],
       };
     })
     .filter((component) => component.label);
@@ -4862,14 +4999,20 @@ function normalizeConfigurator(configurator) {
 
   return {
     visualImages,
+    imageFitMode,
     categoryFillImage,
     categoryFillImageSecondary,
     summaryTelegramImage,
     summaryTelegramTitle,
     summaryExtraImages,
-    components: components.length ? components : fallback.components,
+    components,
     services,
   };
+}
+
+function applyConfiguratorImageFitMode(mode) {
+  const safeMode = String(mode || "").trim().toLowerCase() === "cover" ? "cover" : "contain";
+  document.documentElement.setAttribute("data-config-image-fit", safeMode);
 }
 
 function createEmptyMachine() {
@@ -4939,9 +5082,9 @@ function createEmptyComponentCategory(index) {
     id: `categorie-${index + 1}`,
     label: `Catégorie ${index + 1}`,
     options: [
-      { name: "Nouveau produit 1", price: 0, image: "", description: "" },
-      { name: "Nouveau produit 2", price: 0, image: "", description: "" },
-      { name: "Nouveau produit 3", price: 0, image: "", description: "" },
+      { name: "Nouveau produit 1", price: 0, image: "", description: "", badge: "Equilibre conseille" },
+      { name: "Nouveau produit 2", price: 0, image: "", description: "", badge: "Signature premium" },
+      { name: "Nouveau produit 3", price: 0, image: "", description: "", badge: "Performance max" },
     ],
   };
 }
@@ -5024,6 +5167,49 @@ function createEmptyCrmLead(index) {
     orderCreatedAt: "",
     createdAt: nowIso,
     updatedAt: nowIso,
+  };
+}
+
+function createEmptyProcessInvoiceLine(index) {
+  return {
+    id: `invoice-line-${Date.now()}-${index + 1}`,
+    label: "",
+    catalogKey: "",
+    quantity: 1,
+    unitPrice: 0,
+  };
+}
+
+function createEmptyProcessInvoice(index = 0) {
+  const now = new Date();
+  const issueDate = now.toISOString().slice(0, 10);
+  const dueDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return {
+    id: `invoice-${Date.now()}-${index + 1}`,
+    number: `VB-${now.getFullYear()}-${String(index + 1).padStart(3, "0")}`,
+    issueDate,
+    dueDate,
+    clientName: "",
+    clientEmail: "",
+    clientPhone: "",
+    clientAddress: "",
+    clientPostalCode: "",
+    clientCity: "",
+    notes: "Reglement comptant a reception. Garantie materielle 2 ans incluse.",
+    lines: [
+      {
+        id: `invoice-line-${Date.now()}-1`,
+        label: "",
+        catalogKey: "",
+        quantity: 1,
+        unitPrice: 0,
+      },
+    ],
+    pdfPath: "",
+    pdfFileName: "",
+    totalTtc: 0,
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
   };
 }
 
@@ -5187,6 +5373,7 @@ function loadContent() {
     const normalizedProcessFiles = normalizeProcessFiles(parsed.processus?.files);
     const normalizedProcessPurchases = normalizeProcessPurchases(parsed.processus?.purchases);
     const normalizedProcessCrmLeads = normalizeCrmLeads(parsed.processus?.crmLeads);
+    const normalizedProcessInvoices = normalizeProcessInvoices(parsed.processus?.invoices);
     const normalizedProcessGamesFiles = normalizeProcessGamesFiles(parsed.processus?.gamesFiles);
     const normalizedProcessGamesAssignments = normalizeProcessGamesAssignments(parsed.processus?.gamesAssignments);
     const suppliersSource =
@@ -5217,6 +5404,7 @@ function loadContent() {
       JSON.stringify(normalizedProcessFiles) !== JSON.stringify(parsed.processus?.files || []) ||
       JSON.stringify(normalizedProcessPurchases) !== JSON.stringify(parsed.processus?.purchases || []) ||
       JSON.stringify(normalizedProcessCrmLeads) !== JSON.stringify(parsed.processus?.crmLeads || []) ||
+      JSON.stringify(normalizedProcessInvoices) !== JSON.stringify(parsed.processus?.invoices || []) ||
       JSON.stringify(normalizedProcessGamesFiles) !== JSON.stringify(parsed.processus?.gamesFiles || []) ||
       JSON.stringify(normalizedProcessGamesAssignments) !== JSON.stringify(parsed.processus?.gamesAssignments || []) ||
       JSON.stringify(normalizedProcessSuppliersOrders) !== JSON.stringify(parsed.processus?.suppliersOrders || []) ||
@@ -5230,6 +5418,7 @@ function loadContent() {
         files: normalizedProcessFiles,
         purchases: normalizedProcessPurchases,
         crmLeads: normalizedProcessCrmLeads,
+        invoices: normalizedProcessInvoices,
         gamesFiles: normalizedProcessGamesFiles,
         gamesAssignments: normalizedProcessGamesAssignments,
         suppliersOrders: normalizedProcessSuppliersOrders,
@@ -5314,83 +5503,21 @@ function loadContent() {
 async function hydrateContentFromDiskIfMissing() {
   const rawStored = localStorage.getItem(STORAGE_KEY);
   let parsedStored = null;
-  let shouldHydrate = !rawStored;
-  let storedHasMedia = false;
-
-  const countMediaEntries = (content) => {
-    if (!content || typeof content !== "object") return 0;
-    let count = 0;
-    if (Array.isArray(content.showcase)) {
-      count += content.showcase.filter((item) => typeof item?.image === "string" && item.image.trim()).length;
-    }
-    if (Array.isArray(content.technicalSheets)) {
-      count += content.technicalSheets.filter((item) => typeof item?.image === "string" && item.image.trim()).length;
-    }
-    if (Array.isArray(content.aboutVideos)) {
-      count += content.aboutVideos.filter((item) => {
-        const data = typeof item?.videoData === "string" ? item.videoData.trim() : "";
-        const key = typeof item?.videoKey === "string" ? item.videoKey.trim() : "";
-        return Boolean(data || key);
-      }).length;
-    }
-    const galleryPhotos = Array.isArray(content.aboutGallery?.photos) ? content.aboutGallery.photos : [];
-    count += galleryPhotos.filter((item) => typeof item?.image === "string" && item.image.trim()).length;
-    if (Array.isArray(content.configurator?.images)) {
-      count += content.configurator.images.filter((image) => typeof image === "string" && image.trim()).length;
-    }
-    if (Array.isArray(content.configurator?.visualImages)) {
-      count += content.configurator.visualImages.filter((image) => typeof image === "string" && image.trim()).length;
-    }
-    if (typeof content.configurator?.categoryFillImage === "string" && content.configurator.categoryFillImage.trim()) {
-      count += 1;
-    }
-    if (
-      typeof content.configurator?.categoryFillImageSecondary === "string" &&
-      content.configurator.categoryFillImageSecondary.trim()
-    ) {
-      count += 1;
-    }
-    if (typeof content.configurator?.summaryTelegramImage === "string" && content.configurator.summaryTelegramImage.trim()) {
-      count += 1;
-    }
-    if (Array.isArray(content.configurator?.summaryExtraImages)) {
-      count += content.configurator.summaryExtraImages.filter((image) => typeof image === "string" && image.trim()).length;
-    }
-    return count;
-  };
-
-  if (!shouldHydrate) {
-    try {
-      parsedStored = JSON.parse(rawStored);
-      const hasRequiredStructure =
-        parsedStored &&
-        typeof parsedStored === "object" &&
-        Array.isArray(parsedStored.machines) &&
-        Array.isArray(parsedStored.showcase) &&
-        Array.isArray(parsedStored.technicalSheets);
-      if (!hasRequiredStructure) {
-        shouldHydrate = true;
-      } else {
-        storedHasMedia = countMediaEntries(parsedStored) > 0;
-      }
-    } catch (error) {
-      shouldHydrate = true;
-    }
+  try {
+    parsedStored = rawStored ? JSON.parse(rawStored) : null;
+  } catch (error) {
+    parsedStored = null;
   }
-
   try {
     const response = await fetch("/api/content", { cache: "no-store" });
     if (!response.ok) return false;
     const payload = await response.json();
     if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return false;
-
-    const diskHasMedia = countMediaEntries(payload.content) > 0;
-    if (!shouldHydrate && !storedHasMedia && !diskHasMedia) return false;
-
-    if (!shouldHydrate && parsedStored) {
-      return false;
+    if (parsedStored) {
+      try {
+        if (JSON.stringify(parsedStored) === JSON.stringify(payload.content)) return false;
+      } catch (error) {}
     }
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.content));
     return true;
   } catch (error) {
@@ -5522,17 +5649,29 @@ function resolveTechnicalSheetHref(sheet, index) {
 function initializeTechnicalPremiumEffects() {
   if (!technicalSheetsGridEl || technicalSheetsGridEl.dataset.premiumFxBound === "1") return;
   technicalSheetsGridEl.dataset.premiumFxBound = "1";
+  let techFxRaf = 0;
+  let techFxCard = null;
+  let techFxX = 0;
+  let techFxY = 0;
 
   technicalSheetsGridEl.addEventListener("pointermove", (event) => {
     const card = event.target.closest(".technical-card");
     if (!card || !technicalSheetsGridEl.contains(card)) return;
-    const rect = card.getBoundingClientRect();
-    const px = rect.width ? (event.clientX - rect.left) / rect.width : 0.5;
-    const py = rect.height ? (event.clientY - rect.top) / rect.height : 0.5;
-    const rotY = (px - 0.5) * 5.5;
-    const rotX = (0.5 - py) * 4.5;
-    card.style.setProperty("--tech-rot-x", `${rotX.toFixed(2)}deg`);
-    card.style.setProperty("--tech-rot-y", `${rotY.toFixed(2)}deg`);
+    techFxCard = card;
+    techFxX = event.clientX;
+    techFxY = event.clientY;
+    if (techFxRaf) return;
+    techFxRaf = window.requestAnimationFrame(() => {
+      techFxRaf = 0;
+      if (!techFxCard) return;
+      const rect = techFxCard.getBoundingClientRect();
+      const px = rect.width ? (techFxX - rect.left) / rect.width : 0.5;
+      const py = rect.height ? (techFxY - rect.top) / rect.height : 0.5;
+      const rotY = (px - 0.5) * 5.5;
+      const rotX = (0.5 - py) * 4.5;
+      techFxCard.style.setProperty("--tech-rot-x", `${rotX.toFixed(2)}deg`);
+      techFxCard.style.setProperty("--tech-rot-y", `${rotY.toFixed(2)}deg`);
+    });
   });
 
   technicalSheetsGridEl.addEventListener(
@@ -6228,7 +6367,7 @@ function renderConfigurator() {
           const optionId = `config-${componentIndex}-${optionIndex}`;
           const image = option.image || PREMIUM_GALLERY_IMAGES[optionIndex % PREMIUM_GALLERY_IMAGES.length];
           const descriptionHtml = formatInfoParagraphs(option.description);
-          const optionTag = getConfiguratorOptionTag(optionIndex, component.options.length);
+          const optionTag = getConfiguratorOptionTag(optionIndex, component.options.length, option.badge || "");
           return `
             <label
               class="config-option-card"
@@ -6273,7 +6412,14 @@ function renderConfigurator() {
               >
                 ×
               </button>
-              <img src="${image}" alt="${escapeHtml(option.name)}" loading="lazy" decoding="async" />
+              <img
+                src="${image}"
+                alt="${escapeHtml(option.name)}"
+                loading="lazy"
+                decoding="async"
+                data-action="open-config-product-image"
+                data-caption="${escapeHtml(option.name)}"
+              />
               <div class="config-option-meta">
                 <span class="config-option-tag config-option-tag-${optionTag.tone}">${optionTag.label}</span>
                 <strong title="${escapeHtml(option.name)}">${escapeHtml(option.name)}</strong>
@@ -6298,6 +6444,7 @@ function renderConfigurator() {
       `;
     })
     .join("");
+  const hasConfiguratorComponents = Array.isArray(config.components) && config.components.length > 0;
 
   const componentOptions = config.components
     .map(
@@ -6413,8 +6560,8 @@ function renderConfigurator() {
         <aside class="config-reference-list">
           <div class="config-category-select-wrap">
             <label for="config-category-select">Univers de configuration</label>
-            <select id="config-category-select" class="config-category-select">
-              ${componentOptions}
+            <select id="config-category-select" class="config-category-select" ${hasConfiguratorComponents ? "" : "disabled"}>
+              ${hasConfiguratorComponents ? componentOptions : '<option value="">Aucune catégorie disponible</option>'}
             </select>
           </div>
           <div class="config-category-fill-stack">
@@ -6424,6 +6571,10 @@ function renderConfigurator() {
                   ? `
                     <img src="${categoryFillImage}" alt="Visuel complémentaire configurateur 1" data-action="open-config-fill-image" data-slot="1" loading="lazy" decoding="async" />
                     <p class="config-category-fill-slogan">VortexBox - Une machine premium, pensée pour performer sans compromis.</p>
+                    <div class="config-category-fill-badge">
+                      <span class="config-category-fill-badge-icon">✦</span>
+                      <span>Garantie 2 ans inclus</span>
+                    </div>
                   `
                   : '<div class="config-category-fill-placeholder">Ajoutez un visuel complémentaire</div>'
               }
@@ -6435,6 +6586,10 @@ function renderConfigurator() {
                   ? `
                     <img src="${categoryFillImageSecondary}" alt="Visuel complémentaire configurateur 2" data-action="open-config-fill-image" data-slot="2" loading="lazy" decoding="async" />
                     <p class="config-category-fill-slogan">VortexBox - L’alliance de la puissance, de la maîtrise thermique et de la finition premium.</p>
+                    <div class="config-category-fill-badge">
+                      <span class="config-category-fill-badge-icon">✦</span>
+                      <span>Garantie 2 ans inclus</span>
+                    </div>
                   `
                   : '<div class="config-category-fill-placeholder">Ajoutez un second visuel</div>'
               }
@@ -6443,7 +6598,11 @@ function renderConfigurator() {
           </div>
         </aside>
         <div class="config-reference-content">
-          <div class="config-panels">${componentsHtml}</div>
+          <div class="config-panels">${
+            hasConfiguratorComponents
+              ? componentsHtml
+              : '<section class="config-panel active"><h4>Configurateur en préparation</h4><p class="config-panel-lead">Aucune catégorie n’est publiée pour le moment.</p></section>'
+          }</div>
         </div>
       </div>
     </section>
@@ -6476,6 +6635,7 @@ function applyContent() {
   heroTitleEl.textContent = siteContent.heroTitle;
   machinesTitleEl.textContent = siteContent.machinesTitle;
   applyNavTheme(siteContent.navTheme);
+  applyConfiguratorImageFitMode(siteContent?.configurator?.imageFitMode || "contain");
   applyMenuBadges(siteContent.menuBadges);
   if (footerContactEmailEl) {
     footerContactEmailEl.textContent = siteContent.footerContactEmail || DEFAULT_CONTENT.footerContactEmail;
@@ -6697,7 +6857,9 @@ function openImageModal(src, caption) {
     machineModalEl.classList.add("hidden");
   }
   imageModalImgEl.src = src;
-  imageModalCaptionEl.textContent = caption || "";
+  const safeCaption = String(caption || "").trim();
+  imageModalCaptionEl.textContent = safeCaption;
+  imageModalCaptionEl.hidden = !safeCaption;
   imageModalEl.classList.remove("hidden");
 }
 
@@ -6705,6 +6867,7 @@ function closeImageModal() {
   imageModalEl.classList.add("hidden");
   imageModalImgEl.removeAttribute("src");
   imageModalCaptionEl.textContent = "";
+  imageModalCaptionEl.hidden = true;
   if (imageModalEl.dataset.restoreMachineModal === "1" && machineModalEl) {
     machineModalEl.classList.remove("hidden");
   }
@@ -6975,15 +7138,16 @@ function renderAdminTechnicalSheetsEditor() {
 }
 
 function renderAdminConfiguratorEditor() {
-  if (!Array.isArray(adminComponentsDraft) || adminComponentsDraft.length === 0) {
-    adminComponentsDraft = [createEmptyComponentCategory(0)];
-    activeAdminComponentIndex = 0;
+  if (!Array.isArray(adminComponentsDraft)) {
+    adminComponentsDraft = [];
   }
 
-  if (activeAdminComponentIndex >= adminComponentsDraft.length) {
+  if (adminComponentsDraft.length === 0) {
+    activeAdminComponentIndex = -1;
+  } else if (activeAdminComponentIndex >= adminComponentsDraft.length) {
     activeAdminComponentIndex = adminComponentsDraft.length - 1;
   }
-  if (activeAdminComponentIndex < 0) activeAdminComponentIndex = 0;
+  if (adminComponentsDraft.length > 0 && activeAdminComponentIndex < 0) activeAdminComponentIndex = 0;
 
   if (adminComponentSelect) {
     adminComponentSelect.innerHTML = adminComponentsDraft
@@ -6992,17 +7156,35 @@ function renderAdminConfiguratorEditor() {
           `<option value="${index}">${escapeHtml(component.label || `Catégorie ${index + 1}`)}</option>`
       )
       .join("");
-    adminComponentSelect.value = String(activeAdminComponentIndex);
+    if (adminComponentsDraft.length > 0) {
+      adminComponentSelect.value = String(activeAdminComponentIndex);
+      adminComponentSelect.disabled = false;
+    } else {
+      adminComponentSelect.disabled = true;
+    }
   }
 
-  if (adminComponentMoveUpBtn) adminComponentMoveUpBtn.disabled = activeAdminComponentIndex <= 0;
-  if (adminComponentMoveDownBtn) adminComponentMoveDownBtn.disabled = activeAdminComponentIndex >= adminComponentsDraft.length - 1;
+  if (adminComponentMoveUpBtn) adminComponentMoveUpBtn.disabled = adminComponentsDraft.length <= 1 || activeAdminComponentIndex <= 0;
+  if (adminComponentMoveDownBtn) {
+    adminComponentMoveDownBtn.disabled =
+      adminComponentsDraft.length <= 1 || activeAdminComponentIndex >= adminComponentsDraft.length - 1;
+  }
 
-  const component = adminComponentsDraft[activeAdminComponentIndex];
-  const canMoveUp = activeAdminComponentIndex > 0;
-  const canMoveDown = activeAdminComponentIndex < adminComponentsDraft.length - 1;
+  if (adminComponentsDraft.length === 0) {
+    adminComponentsList.innerHTML = `
+      <article class="admin-machine-card">
+        <div class="admin-machine-header">
+          <h5>Aucune catégorie</h5>
+        </div>
+        <p>Vous avez supprimé toutes les catégories. Ajoutez-en une nouvelle avec le bouton <strong>+</strong>.</p>
+      </article>
+    `;
+  } else {
+    const component = adminComponentsDraft[activeAdminComponentIndex];
+    const canMoveUp = activeAdminComponentIndex > 0;
+    const canMoveDown = activeAdminComponentIndex < adminComponentsDraft.length - 1;
 
-  adminComponentsList.innerHTML = `
+    adminComponentsList.innerHTML = `
       <article class="admin-machine-card">
         <div class="admin-machine-header">
           <h5>${escapeHtml(component.label || `Catégorie ${activeAdminComponentIndex + 1}`)}</h5>
@@ -7022,15 +7204,23 @@ function renderAdminConfiguratorEditor() {
             .map(
               (option, oIndex) => `
             <div class="admin-option-row admin-option-product">
-              <input type="text" data-action="component-option-name" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" value="${escapeHtml(option.name)}" />
-              <input type="number" min="0" step="1" data-action="component-option-price" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" value="${Number(option.price)}" />
-              <textarea rows="2" data-action="component-option-description" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" placeholder="Description du produit (bouton i)">${escapeHtml(option.description || "")}</textarea>
-              <div class="admin-file-field">
-                <input class="admin-file-input admin-component-image-input" type="file" accept="image/*" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" />
-                <div class="admin-file-picker"><button class="admin-file-button" type="button" data-action="pick-component-image" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}">Image produit</button></div>
-                <span class="admin-file-name">${option.image ? "Image prête" : "Aucune image"}</span>
+              <div class="admin-product-main-fields">
+                <input type="text" data-action="component-option-name" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" value="${escapeHtml(option.name)}" />
+                <input type="number" min="0" step="1" data-action="component-option-price" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" value="${Number(option.price)}" />
+                <select data-action="component-option-badge-preset" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}">
+                  <option value="" ${!String(option.badge || "").trim() ? "selected" : ""}>Badge: aucun</option>
+                  ${CONFIG_BADGE_PRESETS.map((preset) => `<option value="${escapeHtml(preset)}" ${resolveBadgePresetValue(option.badge || "") === preset ? "selected" : ""}>${escapeHtml(preset)}</option>`).join("")}
+                  <option value="custom" ${resolveBadgePresetValue(option.badge || "") === "custom" ? "selected" : ""}>Personnalise</option>
+                </select>
+                <input type="text" data-action="component-option-badge" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" value="${escapeHtml(option.badge || "")}" placeholder="Badge (ex: Equilibre conseille, Signature premium)" />
+                <div class="admin-file-field">
+                  <input class="admin-file-input admin-component-image-input" type="file" accept="image/*" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" />
+                  <div class="admin-file-picker"><button class="admin-file-button" type="button" data-action="pick-component-image" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}">Image produit</button></div>
+                  <span class="admin-file-name">${option.image ? "Image prête" : "Aucune image"}</span>
+                </div>
               </div>
               <img class="admin-preview" alt="Aperçu produit" style="display:${option.image ? "block" : "none"};" src="${option.image || ""}" />
+              <textarea class="admin-product-info-field" rows="3" data-action="component-option-description" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" placeholder="Description du produit (bouton i)">${escapeHtml(option.description || "")}</textarea>
               <div class="admin-option-actions">
                 <button class="admin-secondary" type="button" data-action="remove-component-image" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}">Retirer image</button>
                 <button class="admin-danger" type="button" data-action="remove-component-option" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}">Supprimer produit</button>
@@ -7042,6 +7232,7 @@ function renderAdminConfiguratorEditor() {
         </div>
       </article>
     `;
+  }
 
   adminServicesList.innerHTML = adminServicesDraft
     .map(
@@ -7050,6 +7241,8 @@ function renderAdminConfiguratorEditor() {
         <div class="admin-option-row">
           <input type="text" data-action="service-label" data-service-index="${sIndex}" value="${escapeHtml(service.label)}" />
           <input type="number" min="0" step="1" data-action="service-price" data-service-index="${sIndex}" value="${Number(service.price)}" />
+          <button class="admin-secondary" type="button" data-action="move-service-up" data-service-index="${sIndex}" ${sIndex <= 0 ? "disabled" : ""}>Monter</button>
+          <button class="admin-secondary" type="button" data-action="move-service-down" data-service-index="${sIndex}" ${sIndex >= adminServicesDraft.length - 1 ? "disabled" : ""}>Descendre</button>
           <button class="admin-danger" type="button" data-action="remove-service" data-service-index="${sIndex}">X</button>
         </div>
         <label>
@@ -8379,10 +8572,477 @@ function renderAdminProcessGamesAssignmentsEditor() {
     .join("");
 }
 
+function setAdminProcessInvoiceFeedback(message, tone = "") {
+  if (!adminProcessInvoiceFeedbackEl) return;
+  const text = String(message || "").trim();
+  adminProcessInvoiceFeedbackEl.textContent = text;
+  adminProcessInvoiceFeedbackEl.classList.remove("success", "error", "info");
+  if (!text) return;
+  adminProcessInvoiceFeedbackEl.classList.add(tone || "info");
+}
+
+function calculateProcessInvoiceTotals(invoice) {
+  const lines = Array.isArray(invoice?.lines) ? invoice.lines : [];
+  const lineItems = lines.map((line, index) => {
+    const quantity = Math.max(1, Number(line?.quantity) || 1);
+    const unitPrice = Math.max(0, Number(line?.unitPrice) || 0);
+    return {
+      id: String(line?.id || `invoice-line-${index + 1}`),
+      label: String(line?.label || `Ligne ${index + 1}`).trim(),
+      quantity,
+      unitPrice,
+      total: quantity * unitPrice,
+    };
+  });
+  const totalTtc = lineItems.reduce((sum, line) => sum + line.total, 0);
+  return {
+    lineItems,
+    totalTtc,
+    totalLines: lineItems.length,
+  };
+}
+
+function getAdminProcessInvoiceCatalogOptions() {
+  const options = [];
+  const components = Array.isArray(adminComponentsDraft)
+    ? adminComponentsDraft
+    : Array.isArray(siteContent?.configurator?.components)
+      ? siteContent.configurator.components
+      : [];
+  const services = Array.isArray(adminServicesDraft)
+    ? adminServicesDraft
+    : Array.isArray(siteContent?.configurator?.services)
+      ? siteContent.configurator.services
+      : [];
+  components.forEach((component, componentIndex) => {
+    const componentLabel = String(component?.label || `Categorie ${componentIndex + 1}`).trim();
+    const productOptions = Array.isArray(component?.options) ? component.options : [];
+    productOptions.forEach((option, optionIndex) => {
+      const name = String(option?.name || "").trim();
+      if (!name) return;
+      options.push({
+        key: `component:${componentIndex}:${optionIndex}`,
+        label: `${componentLabel} - ${name}`,
+        shortLabel: name,
+        group: componentLabel,
+        price: Math.max(0, Number(option?.price) || 0),
+      });
+    });
+  });
+  services.forEach((service, serviceIndex) => {
+    const label = String(service?.label || `Service ${serviceIndex + 1}`).trim();
+    if (!label) return;
+    options.push({
+      key: `service:${serviceIndex}`,
+      label: `Service - ${label}`,
+      shortLabel: label,
+      group: "Services optionnels",
+      price: Math.max(0, Number(service?.price) || 0),
+    });
+  });
+  return options;
+}
+
+function getAdminProcessInvoiceCatalogMap() {
+  return new Map(getAdminProcessInvoiceCatalogOptions().map((item) => [item.key, item]));
+}
+
+function renderAdminProcessInvoiceSummary(totals = calculateProcessInvoiceTotals(adminProcessInvoiceDraft)) {
+  if (!adminProcessInvoiceSummaryEl) return;
+  adminProcessInvoiceSummaryEl.innerHTML = `
+    <article class="admin-stock-kpi">
+      <span>Lignes facture</span>
+      <strong>${escapeHtml(String(totals.totalLines))}</strong>
+    </article>
+    <article class="admin-stock-kpi">
+      <span>Total estime</span>
+      <strong>${escapeHtml(formatEuro(totals.totalTtc))} TTC</strong>
+    </article>
+    <article class="admin-stock-kpi">
+      <span>Client</span>
+      <strong>${escapeHtml((adminProcessInvoiceDraft && adminProcessInvoiceDraft.clientName) || "Non renseigne")}</strong>
+    </article>
+  `;
+}
+
+function syncAdminProcessInvoiceForm() {
+  if (!adminProcessInvoiceDraft) {
+    adminProcessInvoiceDraft = createEmptyProcessInvoice(adminProcessInvoicesDraft.length);
+  }
+  const invoice = adminProcessInvoiceDraft;
+  if (adminProcessInvoiceNumberInput) adminProcessInvoiceNumberInput.value = String(invoice.number || "");
+  if (adminProcessInvoiceDateInput) adminProcessInvoiceDateInput.value = String(invoice.issueDate || "");
+  if (adminProcessInvoiceDueDateInput) adminProcessInvoiceDueDateInput.value = String(invoice.dueDate || "");
+  if (adminProcessInvoiceClientNameInput) adminProcessInvoiceClientNameInput.value = String(invoice.clientName || "");
+  if (adminProcessInvoiceClientEmailInput) adminProcessInvoiceClientEmailInput.value = String(invoice.clientEmail || "");
+  if (adminProcessInvoiceClientPhoneInput) adminProcessInvoiceClientPhoneInput.value = String(invoice.clientPhone || "");
+  if (adminProcessInvoiceClientAddressInput) adminProcessInvoiceClientAddressInput.value = String(invoice.clientAddress || "");
+  if (adminProcessInvoiceClientPostalInput) adminProcessInvoiceClientPostalInput.value = String(invoice.clientPostalCode || "");
+  if (adminProcessInvoiceClientCityInput) adminProcessInvoiceClientCityInput.value = String(invoice.clientCity || "");
+  if (adminProcessInvoiceNotesInput) adminProcessInvoiceNotesInput.value = String(invoice.notes || "");
+}
+
+function renderAdminProcessInvoicesEditor() {
+  if (!adminProcessInvoiceLinesEl || !adminProcessInvoicesListEl) return;
+  if (!adminProcessInvoiceDraft) {
+    adminProcessInvoiceDraft = createEmptyProcessInvoice(adminProcessInvoicesDraft.length);
+  }
+  syncAdminProcessInvoiceForm();
+  const totals = calculateProcessInvoiceTotals(adminProcessInvoiceDraft);
+  adminProcessInvoiceDraft.totalTtc = totals.totalTtc;
+  adminProcessInvoiceDraft.updatedAt = new Date().toISOString();
+  const catalogOptions = getAdminProcessInvoiceCatalogOptions();
+  const catalogMap = getAdminProcessInvoiceCatalogMap();
+
+  adminProcessInvoiceLinesEl.innerHTML = totals.lineItems
+    .map(
+      (line, index) => {
+        const currentDraftLine =
+          Array.isArray(adminProcessInvoiceDraft.lines)
+            ? adminProcessInvoiceDraft.lines.find((entry) => String(entry.id || "") === String(line.id || ""))
+            : null;
+        const currentCatalogKey = String(currentDraftLine?.catalogKey || "");
+        const optionsHtml = [
+          '<option value="">Choisir un produit du configurateur</option>',
+          ...catalogOptions.map((option) => {
+            const selected = option.key === currentCatalogKey ? " selected" : "";
+            return `<option value="${escapeHtml(option.key)}"${selected}>${escapeHtml(option.label)} - ${escapeHtml(formatEuro(option.price))} TTC</option>`;
+          }),
+        ].join("");
+        const lockPrice = currentCatalogKey && catalogMap.has(currentCatalogKey);
+        return `
+        <article class="admin-tech-card admin-process-invoice-line">
+          <div class="admin-machine-header">
+            <h5>Ligne ${index + 1}</h5>
+            <div class="admin-option-actions admin-process-invoice-line-actions">
+              <button class="admin-danger" type="button" data-action="remove-process-invoice-line" data-line-id="${escapeHtml(line.id)}">Supprimer</button>
+            </div>
+          </div>
+          <div class="admin-process-invoice-line-grid">
+            <label>
+              Produit du configurateur
+              <select data-action="process-invoice-line-catalog" data-line-id="${escapeHtml(line.id)}">
+                ${optionsHtml}
+              </select>
+            </label>
+            <label>
+              Quantité
+              <input type="number" min="1" step="1" data-action="process-invoice-line-quantity" data-line-id="${escapeHtml(line.id)}" value="${escapeHtml(line.quantity)}" />
+            </label>
+            <label>
+              Prix unitaire TTC
+              <input type="text" value="${escapeHtml(formatEuro(line.unitPrice))} TTC" readonly />
+            </label>
+          </div>
+          <p class="admin-file-name">${escapeHtml(line.label || "Aucun produit sélectionné pour cette ligne.")}</p>
+          <div class="admin-stock-line pos">
+            <span>Total ligne</span>
+            <strong class="admin-process-invoice-line-total" data-line-total-id="${escapeHtml(line.id)}">${escapeHtml(formatEuro(line.total))} TTC</strong>
+          </div>
+        </article>
+      `;
+      }
+    )
+    .join("");
+
+  renderAdminProcessInvoiceSummary(totals);
+
+  const invoices = normalizeProcessInvoices(adminProcessInvoicesDraft)
+    .slice()
+    .sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
+  if (!invoices.length) {
+    adminProcessInvoicesListEl.innerHTML = "<p>Aucune facture client sauvegardee pour le moment.</p>";
+    return;
+  }
+  adminProcessInvoicesListEl.innerHTML = invoices
+    .map((invoice) => {
+      const href = invoice.pdfPath ? `/${String(invoice.pdfPath).replace(/^\/+/, "")}` : "";
+      const dateLabel = invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString("fr-FR") : "Date non renseignee";
+      return `
+        <article class="admin-tech-card">
+          <div class="admin-machine-header">
+            <h5>${escapeHtml(invoice.clientName || invoice.number || "Facture client")}</h5>
+            <div class="admin-option-actions">
+              <button class="admin-secondary" type="button" data-action="load-process-invoice" data-invoice-id="${escapeHtml(invoice.id)}">Charger</button>
+              ${href ? `<a class="download-btn" href="${escapeHtml(href)}" download="${escapeHtml(invoice.pdfFileName || "facture-vortexbox.pdf")}">Telecharger PDF</a>` : ""}
+              <button class="admin-danger" type="button" data-action="remove-process-invoice" data-invoice-id="${escapeHtml(invoice.id)}">Supprimer</button>
+            </div>
+          </div>
+          <p class="admin-file-name">${escapeHtml(invoice.number || "Sans numero")} - ${escapeHtml(dateLabel)}</p>
+          <p class="admin-file-name">${escapeHtml(invoice.clientEmail || "Email non renseigne")} - ${escapeHtml(invoice.clientCity || "Ville non renseignee")}</p>
+          <div class="admin-stock-line pos">
+            <span>Total facture</span>
+            <strong>${escapeHtml(formatEuro(Math.max(0, Number(invoice.totalTtc) || 0)))} TTC</strong>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function updateAdminProcessInvoiceDraft(field, value) {
+  if (!adminProcessInvoiceDraft) {
+    adminProcessInvoiceDraft = createEmptyProcessInvoice(adminProcessInvoicesDraft.length);
+  }
+  adminProcessInvoiceDraft[field] = value;
+  adminProcessInvoiceDraft.updatedAt = new Date().toISOString();
+  renderAdminProcessInvoiceSummary();
+}
+
+function addAdminProcessInvoiceLine() {
+  if (!adminProcessInvoiceDraft) {
+    adminProcessInvoiceDraft = createEmptyProcessInvoice(adminProcessInvoicesDraft.length);
+  }
+  if (!Array.isArray(adminProcessInvoiceDraft.lines)) adminProcessInvoiceDraft.lines = [];
+  adminProcessInvoiceDraft.lines.push(createEmptyProcessInvoiceLine(adminProcessInvoiceDraft.lines.length));
+  renderAdminProcessInvoicesEditor();
+  setAdminProcessInvoiceFeedback("Nouvelle ligne ajoutee.", "success");
+}
+
+function resetAdminProcessInvoiceDraft() {
+  adminProcessInvoiceDraft = createEmptyProcessInvoice(adminProcessInvoicesDraft.length);
+  renderAdminProcessInvoicesEditor();
+  setAdminProcessInvoiceFeedback("Nouvelle facture prete.", "info");
+}
+
+function getAdminProcessInvoicePayload() {
+  const invoice = normalizeProcessInvoices([adminProcessInvoiceDraft || createEmptyProcessInvoice(adminProcessInvoicesDraft.length)])[0];
+  const totals = calculateProcessInvoiceTotals(invoice);
+  return {
+    ...invoice,
+    totalTtc: totals.totalTtc,
+    lines: totals.lineItems.map((line) => ({
+      id: line.id,
+      label: line.label,
+      quantity: line.quantity,
+      unitPrice: line.unitPrice,
+    })),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function normalizeProcessInvoicePdfText(value) {
+  return String(value || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/[^\x20-\x7E\u00A0-\u00FF\n]/g, " ")
+    .trim();
+}
+
+function escapeProcessInvoicePdfString(value) {
+  return normalizeProcessInvoicePdfText(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)");
+}
+
+function wrapProcessInvoicePdfLine(text, maxLength = 82) {
+  const source = normalizeProcessInvoicePdfText(text).trim();
+  if (!source) return [""];
+  const words = source.split(/\s+/);
+  const lines = [];
+  let current = "";
+  words.forEach((word) => {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxLength) {
+      current = candidate;
+      return;
+    }
+    if (current) lines.push(current);
+    current = word;
+  });
+  if (current) lines.push(current);
+  return lines.length ? lines : [source];
+}
+
+function latin1BytesFromString(value) {
+  const source = String(value || "");
+  const bytes = new Uint8Array(source.length);
+  for (let index = 0; index < source.length; index += 1) {
+    bytes[index] = source.charCodeAt(index) & 0xff;
+  }
+  return bytes;
+}
+
+function buildProcessInvoicePdfBlob(invoice) {
+  const safeInvoice = invoice && typeof invoice === "object" ? invoice : {};
+  const lines = Array.isArray(safeInvoice.lines) ? safeInvoice.lines : [];
+  const normalizedLines = lines
+    .map((line, index) => {
+      const quantity = Math.max(1, Number(line?.quantity) || 1);
+      const unitPrice = Math.max(0, Number(line?.unitPrice) || 0);
+      const label = normalizeProcessInvoicePdfText(line?.label || `Ligne ${index + 1}`);
+      return {
+        label: label || `Ligne ${index + 1}`,
+        quantity,
+        unitPrice,
+        total: quantity * unitPrice,
+      };
+    })
+    .filter((line) => line.label || line.total > 0);
+  const totalTtc = normalizedLines.reduce((sum, line) => sum + line.total, 0);
+  const euro = (value) =>
+    new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(
+      Math.max(0, Number(value) || 0)
+    );
+  const issueDate = safeInvoice.issueDate
+    ? new Date(`${safeInvoice.issueDate}T12:00:00`).toLocaleDateString("fr-FR")
+    : new Date().toLocaleDateString("fr-FR");
+  const dueDate = safeInvoice.dueDate
+    ? new Date(`${safeInvoice.dueDate}T12:00:00`).toLocaleDateString("fr-FR")
+    : "";
+  const stream = [];
+  const addText = (text, x, y, options = {}) => {
+    const font = options.bold ? "F2" : "F1";
+    const size = options.size || 11;
+    const color = options.color || "1 1 1";
+    stream.push(`BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${escapeProcessInvoicePdfString(text)}) Tj ET\n`);
+  };
+
+  stream.push("0.02 0.08 0.18 rg 0 0 595 842 re f\n");
+  stream.push("0.06 0.23 0.39 rg 32 760 531 58 re f\n");
+  stream.push("0.38 0.87 0.98 RG 32 760 531 58 re S\n");
+  addText("VORTEXBOX", 48, 792, { bold: true, size: 28, color: "0.82 0.97 1" });
+  addText("FACTURE CLIENT PREMIUM", 250, 792, { bold: true, size: 15, color: "0.82 0.97 1" });
+  addText("VortexBox - Paris - VortexCore@outlook.Fr", 48, 772, { size: 11, color: "0.74 0.92 1" });
+  addText(`Facture: ${safeInvoice.number || "VB-FACTURE"}`, 48, 738, { bold: true, size: 14, color: "0.70 0.92 1" });
+  addText(`Date: ${issueDate}`, 385, 738, { size: 11, color: "0.88 0.96 1" });
+  if (dueDate) addText(`Echeance: ${dueDate}`, 385, 720, { size: 11, color: "0.88 0.96 1" });
+
+  stream.push("0.18 0.52 0.76 RG 32 640 531 82 re S\n");
+  addText("CLIENT", 48, 705, { bold: true, size: 12, color: "0.60 0.93 1" });
+  addText(`${safeInvoice.clientName || "Client VortexBox"}`, 48, 684, { bold: true, size: 18 });
+  addText(`${safeInvoice.clientEmail || "Email non renseigne"}`, 48, 664, { size: 11, color: "0.86 0.95 1" });
+  addText(`${safeInvoice.clientPhone || "Telephone non renseigne"}`, 260, 664, { size: 11, color: "0.86 0.95 1" });
+  addText(
+    `${safeInvoice.clientAddress || "Adresse non renseignee"} ${safeInvoice.clientPostalCode || ""} ${safeInvoice.clientCity || ""}`.trim(),
+    48,
+    644,
+    { size: 11, color: "0.86 0.95 1" }
+  );
+
+  let y = 610;
+  addText("DETAIL DE LA FACTURE", 48, y, { bold: true, size: 13, color: "0.60 0.93 1" });
+  y -= 24;
+  normalizedLines.forEach((line, index) => {
+    const labelLines = wrapProcessInvoicePdfLine(line.label, 48);
+    addText(`${index + 1}.`, 48, y, { bold: true });
+    addText(`${labelLines[0]}`, 68, y, { bold: true });
+    addText(`${line.quantity} x ${euro(line.unitPrice)} EUR TTC`, 390, y, { size: 10, color: "0.82 0.97 1" });
+    y -= 18;
+    labelLines.slice(1).forEach((wrapped) => {
+      addText(wrapped, 68, y, { size: 10, color: "0.84 0.95 1" });
+      y -= 16;
+    });
+    addText(`Total ligne: ${euro(line.total)} EUR TTC`, 390, y + 16, { bold: true, size: 10, color: "0.60 0.93 1" });
+    y -= 6;
+    stream.push(`0.16 0.34 0.52 RG 48 ${y} 499 0.6 re S\n`);
+    y -= 18;
+  });
+
+  const noteLines = wrapProcessInvoicePdfLine(
+    safeInvoice.notes || "Reglement comptant a reception. Garantie materielle 2 ans incluse.",
+    90
+  );
+  addText("NOTES", 48, Math.max(180, y), { bold: true, size: 12, color: "0.60 0.93 1" });
+  let noteY = Math.max(160, y - 20);
+  noteLines.slice(0, 5).forEach((line) => {
+    addText(line, 48, noteY, { size: 10, color: "0.88 0.96 1" });
+    noteY -= 15;
+  });
+
+  stream.push("0.08 0.30 0.48 rg 320 92 243 68 re f\n");
+  stream.push("0.45 0.93 0.99 RG 320 92 243 68 re S\n");
+  addText("TOTAL TTC", 340, 134, { bold: true, size: 14, color: "0.70 0.95 1" });
+  addText(`${euro(totalTtc)} EUR TTC`, 340, 108, { bold: true, size: 22, color: "1 1 1" });
+  addText("Garantie 2 ans incluse - Support premium VortexBox", 48, 58, { size: 10, color: "0.74 0.92 1" });
+
+  const contentBytes = latin1BytesFromString(stream.join(""));
+  const objects = [];
+  objects.push(latin1BytesFromString("1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"));
+  objects.push(latin1BytesFromString("2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"));
+  objects.push(
+    latin1BytesFromString(
+      "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >> endobj\n"
+    )
+  );
+  objects.push(latin1BytesFromString(`4 0 obj << /Length ${contentBytes.length} >> stream\n`));
+  objects.push(contentBytes);
+  objects.push(latin1BytesFromString("\nendstream endobj\n"));
+  objects.push(latin1BytesFromString("5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n"));
+  objects.push(latin1BytesFromString("6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> endobj\n"));
+
+  const header = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe2, 0xe3, 0xcf, 0xd3, 0x0a]);
+  let offset = header.length;
+  const offsets = [0];
+  const buffers = [header];
+  objects.forEach((buffer) => {
+    offsets.push(offset);
+    buffers.push(buffer);
+    offset += buffer.length;
+  });
+  const xrefStart = offset;
+  let xref = `xref\n0 ${offsets.length}\n0000000000 65535 f \n`;
+  for (let index = 1; index < offsets.length; index += 1) {
+    xref += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
+  }
+  const trailer = `trailer << /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+  buffers.push(latin1BytesFromString(xref + trailer));
+  return {
+    blob: new Blob(buffers, { type: "application/pdf" }),
+    totalTtc,
+  };
+}
+
+async function generateProcessInvoicePdf(invoice, persistRecord = false) {
+  const normalizedInvoice = {
+    ...invoice,
+    clientName: String(invoice?.clientName || "").trim() || "Client VortexBox",
+  };
+  const { blob, totalTtc } = buildProcessInvoicePdfBlob(normalizedInvoice);
+  const safeNumber = sanitizeFileName(normalizedInvoice.number || `facture-${Date.now()}`, `facture-${Date.now()}`);
+  const safeClient = sanitizeFileName(normalizedInvoice.clientName || "client-vortexbox", "client-vortexbox");
+  const fileName = `${safeNumber}-${safeClient}.pdf`;
+  if (!persistRecord) {
+    return {
+      ok: true,
+      fileName,
+      totalTtc,
+      blob,
+      objectUrl: URL.createObjectURL(blob),
+      path: "",
+    };
+  }
+  const path = await uploadBlobToDisk("processus", fileName, blob);
+  return {
+    ok: true,
+    fileName,
+    totalTtc,
+    blob,
+    objectUrl: URL.createObjectURL(blob),
+    path,
+  };
+}
+
+function triggerDownloadFromPath(href, fileName = "") {
+  const safeHref = String(href || "").trim();
+  if (!safeHref) return;
+  const link = document.createElement("a");
+  link.href = safeHref;
+  if (fileName) link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  if (safeHref.startsWith("blob:")) {
+    window.setTimeout(() => URL.revokeObjectURL(safeHref), 1500);
+  }
+}
+
 function renderAdminProcessusEditor() {
   if (!adminProcessList) return;
   setAdminProcessSubtab(activeAdminProcessSubtab);
   renderAdminCrmEditor();
+  renderAdminProcessInvoicesEditor();
   renderAdminProcessGamesEditor();
   renderAdminProcessGamesAssignmentForm();
   renderAdminProcessGamesAssignmentsEditor();
@@ -8588,6 +9248,12 @@ function fillAdminFields() {
   adminCrmLeadsDraft = JSON.parse(
     JSON.stringify(siteContent.processus?.crmLeads || cloneDefaultContent().processus.crmLeads)
   );
+  adminProcessInvoicesDraft = JSON.parse(
+    JSON.stringify(siteContent.processus?.invoices || cloneDefaultContent().processus.invoices)
+  );
+  adminProcessInvoiceDraft = normalizeProcessInvoices(adminProcessInvoicesDraft)[0]
+    ? JSON.parse(JSON.stringify(normalizeProcessInvoices(adminProcessInvoicesDraft)[0]))
+    : createEmptyProcessInvoice(adminProcessInvoicesDraft.length);
   adminProcessGamesFilesDraft = JSON.parse(
     JSON.stringify(siteContent.processus?.gamesFiles || cloneDefaultContent().processus.gamesFiles)
   );
@@ -8622,6 +9288,12 @@ function fillAdminFields() {
   adminConfiguratorImagesDraft = Array.isArray(siteContent.configurator.visualImages)
     ? [0, 1, 2].map((i) => siteContent.configurator.visualImages[i] || "")
     : ["", "", ""];
+  if (adminConfigImageFitModeSelect) {
+    adminConfigImageFitModeSelect.value =
+      String(siteContent?.configurator?.imageFitMode || "contain").trim().toLowerCase() === "cover"
+        ? "cover"
+        : "contain";
+  }
   if (adminConfigSummaryTitleInput) {
     adminConfigSummaryTitleInput.value = String(siteContent.configurator.summaryTelegramTitle || "");
   }
@@ -9068,6 +9740,7 @@ function buildProcessusPayloadFromDrafts(baseProcessus = {}) {
       }))
       .filter((item) => item.url),
     crmLeads: normalizeCrmLeads(adminCrmLeadsDraft),
+    invoices: normalizeProcessInvoices(adminProcessInvoicesDraft),
     gamesFiles: normalizeProcessGamesFiles(adminProcessGamesFilesDraft),
     gamesAssignments: normalizeProcessGamesAssignments(adminProcessGamesAssignmentsDraft),
     suppliersOrders: normalizeSupplierOrders(adminSupplierOrdersDraft),
@@ -9137,14 +9810,13 @@ function isSupportedAboutVideoFile(file) {
   return validMime || validExt;
 }
 
-function resizeImage(file) {
+function exportImageDataUrl(file, { maxLongEdge = 6144, quality = 0.992 } = {}) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        // Premium export: keep high definition on all site images.
-        const maxLongEdge = 4320;
+        // Premium export: keep ultra high definition on all site images.
         const sourceLongEdge = Math.max(img.width, img.height);
         const ratio = Math.min(1, maxLongEdge / sourceLongEdge);
         const width = Math.round(img.width * ratio);
@@ -9160,8 +9832,7 @@ function resizeImage(file) {
         context.imageSmoothingEnabled = true;
         context.imageSmoothingQuality = "high";
         context.drawImage(img, 0, 0, width, height);
-        // Very high quality WebP to preserve detail while remaining deployable.
-        resolve(canvas.toDataURL("image/webp", 0.985));
+        resolve(canvas.toDataURL("image/webp", quality));
       };
       img.onerror = () => reject(new Error("Image non valide."));
       img.src = reader.result;
@@ -9171,37 +9842,16 @@ function resizeImage(file) {
   });
 }
 
+function resizeImage(file) {
+  return exportImageDataUrl(file, { maxLongEdge: 6144, quality: 0.992 });
+}
+
 function resizeImageForAboutZoom(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        // Ultra high definition for fullscreen viewing.
-        const maxLongEdge = 6144;
-        const sourceLongEdge = Math.max(img.width, img.height);
-        const ratio = Math.min(1, maxLongEdge / sourceLongEdge);
-        const width = Math.round(img.width * ratio);
-        const height = Math.round(img.height * ratio);
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const context = canvas.getContext("2d");
-        if (!context) {
-          reject(new Error("Canvas indisponible."));
-          return;
-        }
-        context.imageSmoothingEnabled = true;
-        context.imageSmoothingQuality = "high";
-        context.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/webp", 0.992));
-      };
-      img.onerror = () => reject(new Error("Image non valide."));
-      img.src = reader.result;
-    };
-    reader.onerror = () => reject(new Error("Lecture image impossible."));
-    reader.readAsDataURL(file);
-  });
+  return exportImageDataUrl(file, { maxLongEdge: 6144, quality: 0.992 });
+}
+
+function resizeImageForConfigurator(file) {
+  return exportImageDataUrl(file, { maxLongEdge: 6144, quality: 0.992 });
 }
 
 function readFileAsDataURL(file) {
@@ -9428,25 +10078,138 @@ function persistSiteContent() {
 
 function persistSiteContentAuto() {
   if (!persistSiteContent()) return false;
-  saveContentSnapshotToDisk(siteContent).catch(() => {});
+  saveContentSnapshotToDisk(siteContent)
+    .then((ok) => {
+      if (!ok && isAdminSessionAuthorized()) {
+        setFeedback("⚠️ Sauvegarde disque impossible. Reconnectez-vous en mode admin puis cliquez sur Enregistrer.", "error");
+      }
+    })
+    .catch(() => {
+      if (isAdminSessionAuthorized()) {
+        setFeedback("⚠️ Sauvegarde disque impossible. Vérifiez le serveur puis enregistrez à nouveau.", "error");
+      }
+    });
   return true;
+}
+
+function normalizeSearchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function scoreGpuFromText(value) {
+  const text = normalizeSearchText(value).toUpperCase();
+  const nvidiaMatch = text.match(/(?:RTX|GTX)\s*([0-9]{3,4})/);
+  if (nvidiaMatch) {
+    const code = Number(nvidiaMatch[1]);
+    let base = 52;
+    if (code >= 5000) base = 90 + Math.min(7, (code - 5000) / 100);
+    else if (code >= 4000) base = 74 + Math.min(13, (code - 4000) / 100);
+    else if (code >= 3000) base = 60 + Math.min(12, (code - 3000) / 100);
+    if (text.includes("TI")) base += 3;
+    if (text.includes("SUPER")) base += 2;
+    return clampPercent(base);
+  }
+  const amdMatch = text.match(/RX\s*([0-9]{3,4})/);
+  if (amdMatch) {
+    const code = Number(amdMatch[1]);
+    let base = 56;
+    if (code >= 9000) base = 88 + Math.min(8, (code - 9000) / 100);
+    else if (code >= 7000) base = 72 + Math.min(14, (code - 7000) / 100);
+    else if (code >= 6000) base = 62 + Math.min(10, (code - 6000) / 100);
+    if (text.includes("XT")) base += 3;
+    return clampPercent(base);
+  }
+  if (text.includes("ARC")) return 58;
+  return null;
+}
+
+function scoreCpuFromText(value) {
+  const text = normalizeSearchText(value).toUpperCase();
+  const intelMatch = text.match(/I([3579])[-\s]?([0-9]{4,5})?/);
+  if (intelMatch) {
+    const tier = Number(intelMatch[1]);
+    const code = Number(intelMatch[2] || 0);
+    let base = { 3: 46, 5: 63, 7: 79, 9: 91 }[tier] || 60;
+    const generation = code >= 1000 ? Number(String(code).slice(0, 2)) : 0;
+    if (generation >= 14) base += 4;
+    else if (generation >= 13) base += 3;
+    else if (generation >= 12) base += 2;
+    return clampPercent(base);
+  }
+  const ryzenMatch = text.match(/RYZEN\s*([3579])\s*([0-9]{4,5})?/);
+  if (ryzenMatch) {
+    const tier = Number(ryzenMatch[1]);
+    const code = Number(ryzenMatch[2] || 0);
+    let base = { 3: 48, 5: 64, 7: 80, 9: 90 }[tier] || 60;
+    const generation = code >= 1000 ? Number(String(code).slice(0, 1)) : 0;
+    if (generation >= 8) base += 4;
+    else if (generation >= 7) base += 3;
+    else if (generation >= 5) base += 2;
+    return clampPercent(base);
+  }
+  return null;
+}
+
+function scoreRamFromText(value) {
+  const text = normalizeSearchText(value).toUpperCase();
+  const amountMatch = text.match(/([0-9]{1,3})\s*(?:GO|GB)/);
+  if (!amountMatch) return null;
+  const amount = Number(amountMatch[1]);
+  let base = 48;
+  if (amount >= 64) base = 96;
+  else if (amount >= 48) base = 90;
+  else if (amount >= 32) base = 83;
+  else if (amount >= 24) base = 74;
+  else if (amount >= 16) base = 64;
+  else if (amount >= 12) base = 55;
+  if (text.includes("DDR5")) base += 4;
+  if (text.includes("DDR4")) base += 1;
+  return clampPercent(base);
 }
 
 function updateSummary() {
   syncConfiguratorSelectionFromForm();
   const entries = [];
   let total = 0;
+  let selectedComponentsCount = 0;
+  let selectedComponentPriceTotal = 0;
+  let selectedServicesCount = 0;
+  let supportPriorityBoost = 0;
+  let deliveryBoost = 0;
+  const performanceInputs = { gpu: null, cpu: null, ram: null };
 
   form.querySelectorAll('input[type="radio"][data-config-component="1"]:checked').forEach((radio) => {
     const value = Number(radio.value || 0);
+    const optionName = String(radio.dataset.optionName || "");
+    const componentLabel = String(radio.dataset.label || "");
+    const combinedText = `${componentLabel} ${optionName}`;
+    const gpuScore = scoreGpuFromText(combinedText);
+    const cpuScore = scoreCpuFromText(combinedText);
+    const ramScore = scoreRamFromText(combinedText);
     total += value;
-    entries.push(`${radio.dataset.label}: ${radio.dataset.optionName}`);
+    selectedComponentsCount += 1;
+    selectedComponentPriceTotal += Math.max(0, value);
+    if (gpuScore !== null) performanceInputs.gpu = Math.max(performanceInputs.gpu || 0, gpuScore);
+    if (cpuScore !== null) performanceInputs.cpu = Math.max(performanceInputs.cpu || 0, cpuScore);
+    if (ramScore !== null) performanceInputs.ram = Math.max(performanceInputs.ram || 0, ramScore);
+    entries.push(`${radio.dataset.label}: ${optionName}`);
   });
 
   form.querySelectorAll('input[type="checkbox"][data-config-service="1"]').forEach((input) => {
     if (input.checked) {
       const value = Number(input.value || 0);
       total += value;
+      selectedServicesCount += 1;
+      const serviceLabel = String(input.dataset.label || "").toLowerCase();
+      if (serviceLabel.includes("support") || serviceLabel.includes("sav") || serviceLabel.includes("priorit")) {
+        supportPriorityBoost += 24;
+      }
+      if (serviceLabel.includes("express") || serviceLabel.includes("rapide") || serviceLabel.includes("24h")) {
+        deliveryBoost += 12;
+      }
       entries.push(`${input.dataset.label}`);
     }
   });
@@ -9455,8 +10218,72 @@ function updateSummary() {
     ? entries.map((item) => `<li>${item}</li>`).join("")
     : '<li class="summary-empty">Commencez par choisir vos composants pour voir votre configuration s afficher ici.</li>';
   totalPrice.innerHTML = `${formatEuro(total)} <span class="price-ttc">TTC</span>`;
+  updateTrustMeter({
+    selectedComponentsCount,
+    selectedComponentPriceTotal,
+    selectedServicesCount,
+    supportPriorityBoost,
+    deliveryBoost,
+    performanceInputs,
+  });
   setSummarySaveFeedback("");
   updateFpsEstimator();
+}
+
+function clampPercent(value) {
+  return Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+}
+
+function setTrustValue(valueEl, barEl, value) {
+  if (!valueEl || !barEl) return;
+  const safe = clampPercent(value);
+  valueEl.textContent = `${safe}%`;
+  barEl.style.width = `${safe}%`;
+}
+
+function updateTrustMeter(metrics = {}) {
+  const selectedComponentsCount = Math.max(0, Number(metrics.selectedComponentsCount) || 0);
+  const selectedComponentPriceTotal = Math.max(0, Number(metrics.selectedComponentPriceTotal) || 0);
+  const selectedServicesCount = Math.max(0, Number(metrics.selectedServicesCount) || 0);
+  const supportPriorityBoost = Math.max(0, Number(metrics.supportPriorityBoost) || 0);
+  const deliveryBoost = Math.max(0, Number(metrics.deliveryBoost) || 0);
+  const performanceInputs = metrics.performanceInputs && typeof metrics.performanceInputs === "object"
+    ? metrics.performanceInputs
+    : { gpu: null, cpu: null, ram: null };
+
+  let performance = 0;
+  if (selectedComponentsCount > 0) {
+    const gpu = Number(performanceInputs.gpu);
+    const cpu = Number(performanceInputs.cpu);
+    const ram = Number(performanceInputs.ram);
+    const hasGpu = Number.isFinite(gpu) && gpu > 0;
+    const hasCpu = Number.isFinite(cpu) && cpu > 0;
+    const hasRam = Number.isFinite(ram) && ram > 0;
+    if (hasGpu || hasCpu || hasRam) {
+      const weighted = (hasGpu ? gpu * 0.5 : 0) + (hasCpu ? cpu * 0.32 : 0) + (hasRam ? ram * 0.18 : 0);
+      const missingPenalty = (hasGpu ? 0 : 22) + (hasCpu ? 0 : 14) + (hasRam ? 0 : 10);
+      performance = clampPercent(weighted - missingPenalty + 6);
+    } else {
+      const avgComponentPrice = selectedComponentsCount > 0 ? selectedComponentPriceTotal / selectedComponentsCount : 0;
+      performance = clampPercent(50 + Math.min(32, avgComponentPrice / 70) + Math.min(9, selectedComponentsCount * 1.5));
+    }
+  }
+  const warranty = 100;
+  const assembly = selectedComponentsCount === 0
+    ? 0
+    : clampPercent(62 + Math.min(26, selectedComponentsCount * 4.5) + Math.min(12, selectedServicesCount * 2.5));
+  const support = selectedServicesCount === 0
+    ? 40
+    : clampPercent(48 + Math.min(28, selectedServicesCount * 9) + supportPriorityBoost);
+  const delivery = selectedComponentsCount === 0
+    ? 35
+    : clampPercent(68 + Math.min(14, selectedServicesCount * 3) + deliveryBoost);
+
+  setTrustValue(trustPerformanceValueEl, trustPerformanceBarEl, performance);
+  setTrustValue(trustWarrantyValueEl, trustWarrantyBarEl, warranty);
+  setTrustValue(trustAssemblyValueEl, trustAssemblyBarEl, assembly);
+  setTrustValue(trustSupportValueEl, trustSupportBarEl, support);
+  setTrustValue(trustDeliveryValueEl, trustDeliveryBarEl, delivery);
 }
 
 adminShowcaseFileInputs.forEach((input, index) => {
@@ -9500,7 +10327,7 @@ adminConfigImageFileInputs.forEach((input, index) => {
     adminConfigImageNameEls[index].textContent = file.name;
 
     try {
-      adminConfiguratorImagesDraft[index] = await resizeImage(file);
+      adminConfiguratorImagesDraft[index] = await resizeImageForConfigurator(file);
       adminConfigImagePreviewEls[index].src = adminConfiguratorImagesDraft[index];
       adminConfigImagePreviewEls[index].style.display = "block";
       setFeedback(`Image configurateur ${index + 1} prête.`);
@@ -9662,7 +10489,10 @@ function addAdminComponentCategory() {
 }
 
 function addProductsToActiveCategory(count = 1) {
-  if (!Array.isArray(adminComponentsDraft) || adminComponentsDraft.length === 0) return;
+  if (!Array.isArray(adminComponentsDraft) || adminComponentsDraft.length === 0) {
+    setFeedback("Ajoutez d'abord une catégorie.");
+    return;
+  }
   if (!adminComponentsDraft[activeAdminComponentIndex]) return;
   const target = adminComponentsDraft[activeAdminComponentIndex];
   if (!Array.isArray(target.options)) target.options = [];
@@ -9674,6 +10504,7 @@ function addProductsToActiveCategory(count = 1) {
       price: 0,
       image: "",
       description: "",
+      badge: "",
     });
   }
   renderAdminConfiguratorEditor();
@@ -9718,12 +10549,12 @@ if (adminRemoveComponentCategoryBtn) {
   adminRemoveComponentCategoryBtn.addEventListener("click", () => {
     if (!adminComponentsDraft[activeAdminComponentIndex]) return;
     adminComponentsDraft.splice(activeAdminComponentIndex, 1);
-    if (adminComponentsDraft.length === 0) {
-      adminComponentsDraft.push(createEmptyComponentCategory(0));
-      activeAdminComponentIndex = 0;
-      setFeedback("La dernière catégorie a été supprimée. Une catégorie vide a été recréée.");
-    } else if (activeAdminComponentIndex >= adminComponentsDraft.length) {
+    if (activeAdminComponentIndex >= adminComponentsDraft.length) {
       activeAdminComponentIndex = adminComponentsDraft.length - 1;
+    }
+    if (adminComponentsDraft.length === 0) {
+      activeAdminComponentIndex = -1;
+      setFeedback("Toutes les catégories ont été supprimées.");
     }
     renderAdminConfiguratorEditor();
   });
@@ -9861,6 +10692,126 @@ if (adminCrmFilterStatusSelect) {
   adminCrmFilterStatusSelect.addEventListener("change", () => {
     adminCrmFilterStatus = String(adminCrmFilterStatusSelect.value || "all");
     renderAdminCrmEditor();
+  });
+}
+
+[
+  [adminProcessInvoiceNumberInput, "number"],
+  [adminProcessInvoiceDateInput, "issueDate"],
+  [adminProcessInvoiceDueDateInput, "dueDate"],
+  [adminProcessInvoiceClientNameInput, "clientName"],
+  [adminProcessInvoiceClientEmailInput, "clientEmail"],
+  [adminProcessInvoiceClientPhoneInput, "clientPhone"],
+  [adminProcessInvoiceClientAddressInput, "clientAddress"],
+  [adminProcessInvoiceClientPostalInput, "clientPostalCode"],
+  [adminProcessInvoiceClientCityInput, "clientCity"],
+  [adminProcessInvoiceNotesInput, "notes"],
+].forEach(([input, field]) => {
+  if (!input) return;
+  input.addEventListener("input", () => {
+    const value = field === "clientEmail" ? String(input.value || "").trim().toLowerCase() : String(input.value || "");
+    updateAdminProcessInvoiceDraft(field, value);
+  });
+});
+
+if (adminProcessInvoiceAddLineBtn) {
+  adminProcessInvoiceAddLineBtn.addEventListener("click", () => {
+    if (!adminProcessUnlocked) {
+      setAdminProcessFeedback("Déverrouillez l'accès Processus d'abord.");
+      return;
+    }
+    addAdminProcessInvoiceLine();
+  });
+}
+
+if (adminProcessInvoiceResetBtn) {
+  adminProcessInvoiceResetBtn.addEventListener("click", () => {
+    if (!adminProcessUnlocked) {
+      setAdminProcessFeedback("Déverrouillez l'accès Processus d'abord.");
+      return;
+    }
+    resetAdminProcessInvoiceDraft();
+  });
+}
+
+if (adminProcessInvoiceExportBtn) {
+  adminProcessInvoiceExportBtn.addEventListener("click", async () => {
+    if (!adminProcessUnlocked) {
+      setAdminProcessFeedback("Déverrouillez l'accès Processus d'abord.");
+      return;
+    }
+    const invoice = getAdminProcessInvoicePayload();
+    const hasLine = Array.isArray(invoice.lines) && invoice.lines.some((line) => String(line.label || "").trim() || Number(line.unitPrice) > 0);
+    if (!hasLine) {
+      setAdminProcessInvoiceFeedback("Choisissez au moins un produit du configurateur.", "error");
+      return;
+    }
+    adminProcessInvoiceExportBtn.disabled = true;
+    setAdminProcessInvoiceFeedback("Generation du PDF en cours...", "info");
+    try {
+      const payload = await generateProcessInvoicePdf(
+        {
+          ...invoice,
+          clientName: String(invoice.clientName || "").trim() || "Client VortexBox",
+        },
+        false
+      );
+      if (payload.objectUrl) triggerDownloadFromPath(payload.objectUrl, payload.fileName || "");
+      else if (payload.path) triggerDownloadFromPath(`/${String(payload.path).replace(/^\/+/, "")}`, payload.fileName || "");
+      setAdminProcessInvoiceFeedback("PDF facture exporte.", "success");
+    } catch (error) {
+      setAdminProcessInvoiceFeedback(String(error.message || "Export PDF impossible."), "error");
+    } finally {
+      adminProcessInvoiceExportBtn.disabled = false;
+    }
+  });
+}
+
+if (adminProcessInvoiceSaveBtn) {
+  adminProcessInvoiceSaveBtn.addEventListener("click", async () => {
+    if (!adminProcessUnlocked) {
+      setAdminProcessFeedback("Déverrouillez l'accès Processus d'abord.");
+      return;
+    }
+    const invoice = getAdminProcessInvoicePayload();
+    const hasLine = Array.isArray(invoice.lines) && invoice.lines.some((line) => String(line.label || "").trim() || Number(line.unitPrice) > 0);
+    if (!hasLine) {
+      setAdminProcessInvoiceFeedback("Choisissez au moins un produit du configurateur avant sauvegarde.", "error");
+      return;
+    }
+    if (!invoice.clientName.trim()) {
+      setAdminProcessInvoiceFeedback("Renseignez le nom du client avant sauvegarde.", "error");
+      adminProcessInvoiceClientNameInput?.focus();
+      return;
+    }
+    adminProcessInvoiceSaveBtn.disabled = true;
+    setAdminProcessInvoiceFeedback("Sauvegarde PDF client en cours...", "info");
+    try {
+      const payload = await generateProcessInvoicePdf(invoice, true);
+      const savedInvoice = {
+        ...invoice,
+        pdfPath: String(payload.path || "").replace(/^\/+/, ""),
+        pdfFileName: String(payload.fileName || ""),
+        totalTtc: Math.max(0, Number(payload.totalTtc) || invoice.totalTtc || 0),
+        updatedAt: new Date().toISOString(),
+      };
+      const existingIndex = adminProcessInvoicesDraft.findIndex((item) => String(item.id || "") === String(savedInvoice.id || ""));
+      if (existingIndex >= 0) {
+        adminProcessInvoicesDraft[existingIndex] = savedInvoice;
+      } else {
+        adminProcessInvoicesDraft.unshift(savedInvoice);
+      }
+      adminProcessInvoiceDraft = JSON.parse(JSON.stringify(savedInvoice));
+      await persistProcessDraftsNow("Facture client sauvegardee en PDF.", "success");
+      renderAdminProcessusEditor();
+      if (payload.objectUrl) triggerDownloadFromPath(payload.objectUrl, payload.fileName || "");
+      else if (payload.path) triggerDownloadFromPath(`/${String(payload.path).replace(/^\/+/, "")}`, payload.fileName || "");
+      setAdminProcessInvoiceFeedback("Facture client sauvegardee et disponible en archive.", "success");
+    } catch (error) {
+      setAdminProcessInvoiceFeedback(String(error.message || "Sauvegarde facture impossible."), "error");
+    } finally {
+      adminProcessInvoiceSaveBtn.disabled = false;
+    }
   });
 }
 
@@ -10202,6 +11153,80 @@ if (adminProcessGamesAssignmentsListEl) {
     if (action === "remove-process-game-assignment") {
       adminProcessGamesAssignmentsDraft.splice(index, 1);
       await persistProcessDraftsNow("Attribution supprimée.", "info");
+      renderAdminProcessusEditor();
+    }
+  });
+}
+
+if (adminProcessInvoiceLinesEl) {
+  const handleProcessInvoiceLineField = (event) => {
+    const target = event.target;
+    const lineId = String(target.dataset.lineId || "").trim();
+    if (!lineId || !adminProcessInvoiceDraft || !Array.isArray(adminProcessInvoiceDraft.lines)) return;
+    const line = adminProcessInvoiceDraft.lines.find((entry) => String(entry.id || "") === lineId);
+    if (!line) return;
+    const action = String(target.dataset.action || "");
+    if (action === "process-invoice-line-catalog") {
+      const catalogItem = getAdminProcessInvoiceCatalogMap().get(String(target.value || "").trim());
+      line.catalogKey = catalogItem ? catalogItem.key : "";
+      line.label = catalogItem ? catalogItem.shortLabel : "";
+      line.unitPrice = catalogItem ? Math.max(0, Number(catalogItem.price) || 0) : 0;
+      renderAdminProcessInvoicesEditor();
+      return;
+    }
+    if (action === "process-invoice-line-quantity") line.quantity = Math.max(1, Number(target.value) || 1);
+    const totals = calculateProcessInvoiceTotals(adminProcessInvoiceDraft);
+    adminProcessInvoiceDraft.totalTtc = totals.totalTtc;
+    const current = totals.lineItems.find((entry) => entry.id === lineId);
+    const totalEl = Array.from(adminProcessInvoiceLinesEl.querySelectorAll("[data-line-total-id]")).find(
+      (entry) => String(entry.getAttribute("data-line-total-id") || "") === lineId
+    );
+    if (totalEl && current) {
+      totalEl.textContent = `${formatEuro(current.total)} TTC`;
+    }
+    renderAdminProcessInvoiceSummary(totals);
+  };
+  adminProcessInvoiceLinesEl.addEventListener("input", handleProcessInvoiceLineField);
+  adminProcessInvoiceLinesEl.addEventListener("change", handleProcessInvoiceLineField);
+
+  adminProcessInvoiceLinesEl.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-action][data-line-id]");
+    if (!button || !adminProcessInvoiceDraft || !Array.isArray(adminProcessInvoiceDraft.lines)) return;
+    if (button.dataset.action !== "remove-process-invoice-line") return;
+    const lineId = String(button.dataset.lineId || "").trim();
+    adminProcessInvoiceDraft.lines = adminProcessInvoiceDraft.lines.filter((entry) => String(entry.id || "") !== lineId);
+    if (!adminProcessInvoiceDraft.lines.length) {
+      adminProcessInvoiceDraft.lines = [createEmptyProcessInvoiceLine(0)];
+    }
+    renderAdminProcessInvoicesEditor();
+    setAdminProcessInvoiceFeedback("Ligne retiree.", "info");
+  });
+}
+
+if (adminProcessInvoicesListEl) {
+  adminProcessInvoicesListEl.addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-action][data-invoice-id]");
+    if (!button) return;
+    const invoiceId = String(button.dataset.invoiceId || "").trim();
+    const index = adminProcessInvoicesDraft.findIndex((item) => String(item.id || "") === invoiceId);
+    if (index < 0) return;
+    const action = String(button.dataset.action || "");
+    if (action === "load-process-invoice") {
+      adminProcessInvoiceDraft = JSON.parse(JSON.stringify(adminProcessInvoicesDraft[index]));
+      renderAdminProcessInvoicesEditor();
+      setAdminProcessInvoiceFeedback("Facture chargee dans l'editeur.", "success");
+      return;
+    }
+    if (action === "remove-process-invoice") {
+      const removed = adminProcessInvoicesDraft[index];
+      const removedPath = String(removed?.pdfPath || "").replace(/^\/+/, "");
+      if (removedPath) {
+        try {
+          await deleteUploadedFileFromDisk(removedPath);
+        } catch (error) {}
+      }
+      adminProcessInvoicesDraft.splice(index, 1);
+      await persistProcessDraftsNow("Facture archivee supprimee.", "info");
       renderAdminProcessusEditor();
     }
   });
@@ -10983,19 +12008,32 @@ adminComponentsList.addEventListener("input", (event) => {
   if (action === "component-option-description" && !Number.isNaN(oIndex)) {
     adminComponentsDraft[cIndex].options[oIndex].description = String(target.value || "");
   }
+  if (action === "component-option-badge" && !Number.isNaN(oIndex)) {
+    adminComponentsDraft[cIndex].options[oIndex].badge = String(target.value || "");
+  }
 });
 
 adminComponentsList.addEventListener("change", async (event) => {
   const target = event.target;
-  if (!target.classList.contains("admin-component-image-input")) return;
+  const action = target.dataset.action;
   const cIndex = Number(target.dataset.componentIndex);
   const oIndex = Number(target.dataset.optionIndex);
+  if (action === "component-option-badge-preset") {
+    if (Number.isNaN(cIndex) || Number.isNaN(oIndex) || !adminComponentsDraft[cIndex]?.options[oIndex]) return;
+    const value = String(target.value || "");
+    if (value === "custom") return;
+    adminComponentsDraft[cIndex].options[oIndex].badge = value;
+    renderAdminConfiguratorEditor();
+    return;
+  }
+
+  if (!target.classList.contains("admin-component-image-input")) return;
   if (Number.isNaN(cIndex) || Number.isNaN(oIndex) || !adminComponentsDraft[cIndex]?.options[oIndex]) return;
   const file = target.files && target.files[0];
   if (!file) return;
 
   try {
-    adminComponentsDraft[cIndex].options[oIndex].image = await resizeImage(file);
+    adminComponentsDraft[cIndex].options[oIndex].image = await resizeImageForConfigurator(file);
     renderAdminConfiguratorEditor();
     setFeedback("Image produit ajoutée.");
   } catch (error) {
@@ -11014,11 +12052,11 @@ adminComponentsList.addEventListener("click", (event) => {
 
   if (action === "remove-component") {
     adminComponentsDraft.splice(cIndex, 1);
-    if (adminComponentsDraft.length === 0) {
-      adminComponentsDraft.push(createEmptyComponentCategory(0));
-      setFeedback("La dernière catégorie a été supprimée. Une catégorie vide a été recréée.");
-    }
     activeAdminComponentIndex = Math.max(0, Math.min(cIndex, adminComponentsDraft.length - 1));
+    if (adminComponentsDraft.length === 0) {
+      activeAdminComponentIndex = -1;
+      setFeedback("Toutes les catégories ont été supprimées.");
+    }
     renderAdminConfiguratorEditor();
   }
 
@@ -11098,9 +12136,27 @@ adminServicesList.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
 
-  if (button.dataset.action !== "remove-service") return;
+  const action = button.dataset.action;
   const sIndex = Number(button.dataset.serviceIndex);
   if (Number.isNaN(sIndex) || !adminServicesDraft[sIndex]) return;
+
+  if (action === "move-service-up") {
+    if (sIndex <= 0) return;
+    const [moved] = adminServicesDraft.splice(sIndex, 1);
+    adminServicesDraft.splice(sIndex - 1, 0, moved);
+    renderAdminConfiguratorEditor();
+    return;
+  }
+
+  if (action === "move-service-down") {
+    if (sIndex >= adminServicesDraft.length - 1) return;
+    const [moved] = adminServicesDraft.splice(sIndex, 1);
+    adminServicesDraft.splice(sIndex + 1, 0, moved);
+    renderAdminConfiguratorEditor();
+    return;
+  }
+
+  if (action !== "remove-service") return;
   adminServicesDraft.splice(sIndex, 1);
   renderAdminConfiguratorEditor();
 });
@@ -11278,21 +12334,33 @@ heroShowcaseEl.addEventListener("click", (event) => {
 });
 
 if (heroShowcaseEl && window.matchMedia("(pointer:fine)").matches) {
+  let showcaseFxRaf = 0;
+  let showcaseFxCard = null;
+  let showcaseFxX = 0;
+  let showcaseFxY = 0;
   heroShowcaseEl.addEventListener("pointermove", (event) => {
     const card = event.target.closest(".showcase-card");
     if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const px = Math.max(0, Math.min(1, x / rect.width));
-    const py = Math.max(0, Math.min(1, y / rect.height));
-    const rotateY = (px - 0.5) * 12;
-    const rotateX = (0.5 - py) * 10;
+    showcaseFxCard = card;
+    showcaseFxX = event.clientX;
+    showcaseFxY = event.clientY;
+    if (showcaseFxRaf) return;
+    showcaseFxRaf = window.requestAnimationFrame(() => {
+      showcaseFxRaf = 0;
+      if (!showcaseFxCard) return;
+      const rect = showcaseFxCard.getBoundingClientRect();
+      const x = showcaseFxX - rect.left;
+      const y = showcaseFxY - rect.top;
+      const px = Math.max(0, Math.min(1, x / rect.width));
+      const py = Math.max(0, Math.min(1, y / rect.height));
+      const rotateY = (px - 0.5) * 12;
+      const rotateX = (0.5 - py) * 10;
 
-    card.style.setProperty("--sx", `${(px * 100).toFixed(2)}%`);
-    card.style.setProperty("--sy", `${(py * 100).toFixed(2)}%`);
-    card.style.setProperty("--rx", `${rotateX.toFixed(2)}deg`);
-    card.style.setProperty("--ry", `${rotateY.toFixed(2)}deg`);
+      showcaseFxCard.style.setProperty("--sx", `${(px * 100).toFixed(2)}%`);
+      showcaseFxCard.style.setProperty("--sy", `${(py * 100).toFixed(2)}%`);
+      showcaseFxCard.style.setProperty("--rx", `${rotateX.toFixed(2)}deg`);
+      showcaseFxCard.style.setProperty("--ry", `${rotateY.toFixed(2)}deg`);
+    });
   });
 
   heroShowcaseEl.addEventListener("pointerleave", () => {
@@ -11525,7 +12593,7 @@ if (summaryTelegramImageEl) {
   summaryTelegramImageEl.addEventListener("click", (event) => {
     const image = event.target.closest('img[data-action="open-summary-telegram-image"]');
     if (image) {
-      openImageModal(image.src, "Visuel Telegram VortexBox");
+      openImageModal(image.src, "");
       return;
     }
     const button = event.target.closest("button[data-action]");
@@ -11548,7 +12616,7 @@ if (summaryTelegramImageEl) {
     if (!input || !isAdminLiveMode()) return;
     const file = input.files && input.files[0];
     if (!file) return;
-    resizeImage(file)
+    resizeImageForConfigurator(file)
       .then((data) => {
         siteContent.configurator.summaryTelegramImage = data;
         if (!persistSiteContentAuto()) return;
@@ -11573,8 +12641,7 @@ if (summaryExtraImagesEl) {
   summaryExtraImagesEl.addEventListener("click", (event) => {
     const image = event.target.closest('img[data-action="open-summary-extra-image"]');
     if (image) {
-      const slot = String(image.dataset.slot || "1");
-      openImageModal(image.src, `Visuel configurateur supplementaire ${slot}`);
+      openImageModal(image.src, "");
       return;
     }
 
@@ -11605,7 +12672,7 @@ if (summaryExtraImagesEl) {
     const file = input.files && input.files[0];
     if (!file) return;
     const slotIndex = Math.max(0, Number(input.dataset.slot || "1") - 1);
-    resizeImage(file)
+    resizeImageForConfigurator(file)
       .then((data) => {
         const extraImages = Array.isArray(siteContent.configurator.summaryExtraImages)
           ? [...siteContent.configurator.summaryExtraImages]
@@ -12387,7 +13454,6 @@ adminEditor.addEventListener("submit", async (event) => {
 
   const validConfigurator =
     Array.isArray(adminComponentsDraft) &&
-    adminComponentsDraft.length > 0 &&
     adminComponentsDraft.every(
       (component) =>
         component.label?.trim() &&
@@ -12906,6 +13972,13 @@ adminEditor.addEventListener("submit", async (event) => {
           updatedAt: new Date().toISOString(),
         }))
         .filter((item) => item.name || item.email || item.phone || item.note || item.orderNumber),
+      invoices: adminProcessInvoicesDraft
+        .map((item, index) => {
+          const normalized = normalizeProcessInvoices([item])[0] || createEmptyProcessInvoice(index);
+          normalized.totalTtc = calculateProcessInvoiceTotals(normalized).totalTtc;
+          return normalized;
+        })
+        .filter((item) => item.clientName || item.clientEmail || item.number || item.pdfPath),
       gamesFiles: nextProcessGamesFiles
         .map((item, index) => ({
           title:
@@ -13040,6 +14113,12 @@ adminEditor.addEventListener("submit", async (event) => {
     },
     configurator: {
       visualImages: [0, 1, 2].map((i) => adminConfiguratorImagesDraft[i] || ""),
+      imageFitMode:
+        String(adminConfigImageFitModeSelect?.value || siteContent?.configurator?.imageFitMode || "contain")
+          .trim()
+          .toLowerCase() === "cover"
+          ? "cover"
+          : "contain",
       categoryFillImage: persistedCategoryFillImage,
       categoryFillImageSecondary: persistedCategoryFillImageSecondary,
       summaryTelegramImage: persistedSummaryTelegramImage,
@@ -13053,6 +14132,7 @@ adminEditor.addEventListener("submit", async (event) => {
           price: Number(option.price),
           image: option.image || "",
           description: String(option.description || "").trim(),
+          badge: String(option.badge || "").trim(),
         })),
       })),
       services: adminServicesDraft.map((service, index) => ({
@@ -13084,7 +14164,10 @@ adminEditor.addEventListener("submit", async (event) => {
   } else if (diskSaved) {
     setFeedback("✅ Sauvegarde réussie: modifications enregistrées dans le navigateur ET sur disque.", "success");
   } else {
-    setFeedback("✅ Modifications enregistrées dans le navigateur.", "success");
+    setFeedback(
+      "⚠️ Modifications enregistrées seulement dans le navigateur. Reconnectez-vous en mode admin puis cliquez à nouveau sur Enregistrer.",
+      "error"
+    );
   }
   hideAdminUploadProgress();
 });
@@ -13231,6 +14314,13 @@ if (adminEditor) {
     if (target.id === "admin-nav-theme") {
       applyNavTheme(String(adminNavThemeSelect?.value || siteContent.navTheme || "aurora"));
     }
+    if (target.id === "admin-config-image-fit-mode") {
+      const nextMode = String(adminConfigImageFitModeSelect?.value || "contain").trim().toLowerCase() === "cover"
+        ? "cover"
+        : "contain";
+      siteContent.configurator.imageFitMode = nextMode;
+      applyConfiguratorImageFitMode(nextMode);
+    }
   });
 
   adminEditor.addEventListener("dragover", (event) => {
@@ -13373,7 +14463,7 @@ builderFieldsEl.addEventListener("change", (event) => {
     const file = fillInput.files && fillInput.files[0];
     if (!file) return;
     const slot = String(fillInput.dataset.slot || "1");
-    resizeImage(file)
+    resizeImageForConfigurator(file)
       .then((data) => {
         if (slot === "2") {
           siteContent.configurator.categoryFillImageSecondary = data;
@@ -13420,8 +14510,15 @@ builderFieldsEl.addEventListener("click", (event) => {
   }
   const fillImage = event.target.closest('img[data-action="open-config-fill-image"]');
   if (fillImage) {
-    const slot = String(fillImage.dataset.slot || "1");
-    openImageModal(fillImage.src, slot === "2" ? "Visuel configurateur 2" : "Visuel configurateur 1");
+    openImageModal(fillImage.src, "");
+    return;
+  }
+  const productImage = event.target.closest('img[data-action="open-config-product-image"]');
+  if (productImage) {
+    event.preventDefault();
+    event.stopPropagation();
+    const caption = String(productImage.dataset.caption || "").trim();
+    openImageModal(productImage.src, caption);
     return;
   }
   if (clearSelectedBtn) {
@@ -13527,17 +14624,32 @@ function initializePremiumRevealAndSpotlight() {
       ".card, .machine-card, .showcase-card, .technical-card, .review-card, .why-card, .about-card, .config-option-card, .game-cover-card"
     )
   );
+  const canUsePointerSpotlight = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   spotTargets.forEach((el) => {
     el.classList.add("vb-spotlight-target");
+    if (!canUsePointerSpotlight) return;
+    let rafId = 0;
+    let lastClientX = 0;
+    let lastClientY = 0;
     el.addEventListener("pointermove", (event) => {
-      const rect = el.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 100;
-      const y = ((event.clientY - rect.top) / rect.height) * 100;
-      el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
-      el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
-      el.style.setProperty("--vb-spot-a", "1");
+      lastClientX = event.clientX;
+      lastClientY = event.clientY;
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        const rect = el.getBoundingClientRect();
+        const x = ((lastClientX - rect.left) / rect.width) * 100;
+        const y = ((lastClientY - rect.top) / rect.height) * 100;
+        el.style.setProperty("--vb-spot-x", `${Math.max(0, Math.min(100, x)).toFixed(2)}%`);
+        el.style.setProperty("--vb-spot-y", `${Math.max(0, Math.min(100, y)).toFixed(2)}%`);
+        el.style.setProperty("--vb-spot-a", "1");
+      });
     });
     el.addEventListener("pointerleave", () => {
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
       el.style.setProperty("--vb-spot-a", "0");
     });
   });
@@ -13546,6 +14658,21 @@ function initializePremiumRevealAndSpotlight() {
 function initializeUltraPremiumVisuals() {
   mountPremiumPreloader();
   initializePremiumRevealAndSpotlight();
+}
+
+function optimizeMediaLoadingHints() {
+  const images = Array.from(document.querySelectorAll("img"));
+  images.forEach((img, index) => {
+    if (!img.hasAttribute("decoding")) img.setAttribute("decoding", "async");
+    if (!img.hasAttribute("loading")) {
+      img.setAttribute("loading", index < 5 ? "eager" : "lazy");
+    }
+  });
+
+  document.querySelectorAll("video").forEach((video) => {
+    if (!video.hasAttribute("preload")) video.setAttribute("preload", "metadata");
+    if (!video.hasAttribute("playsinline")) video.setAttribute("playsinline", "");
+  });
 }
 
 async function initializeApp() {
@@ -13566,10 +14693,12 @@ async function initializeApp() {
   initializeForgotPasswordFlow();
   initializePageTransitions();
   initializeUltraPremiumVisuals();
+  optimizeMediaLoadingHints();
   startAdminControlCenterClock();
   window.addEventListener("online", updateAdminControlCenter);
   window.addEventListener("offline", updateAdminControlCenter);
   initializeSiteAuth();
+  await validateAdminSessionWithServer();
   refreshNavSessionButtons();
   window.addEventListener("pageshow", refreshNavSessionButtons);
   window.addEventListener("storage", (event) => {

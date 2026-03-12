@@ -6,7 +6,12 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "video:2k:about": "node tools/upscale-videos-local.js --active-about --target=2k",
+    "video:2k:build": "node tools/upscale-videos-local.js --all-machine --target=2k",
+    "video:2k:file": "node tools/upscale-videos-local.js --target=2k",
+    "video:uhd:about": "node tools/upscale-videos-local.js --active-about",
+    "video:uhd:build": "node tools/upscale-videos-local.js --all-machine",
+    "video:uhd:file": "node tools/upscale-videos-local.js"
   }
 }
-
