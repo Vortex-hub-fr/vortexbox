@@ -5535,21 +5535,18 @@ async function hydrateContentFromDiskIfMissing() {
   } catch (error) {
     parsedStored = null;
   }
-  const hasLocalPendingSync = hasContentPendingDiskSync();
+  // If we already have local content, keep it as source of truth for this browser.
+  // This prevents losing admin edits on refresh when server state lags behind.
+  if (parsedStored && typeof parsedStored === "object") {
+    return false;
+  }
   try {
     const response = await fetch("/api/content", { cache: "no-store" });
     if (!response.ok) return false;
     const payload = await response.json();
     if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return false;
-    if (parsedStored && hasLocalPendingSync) {
-      return false;
-    }
-    if (parsedStored) {
-      try {
-        if (JSON.stringify(parsedStored) === JSON.stringify(payload.content)) return false;
-      } catch (error) {}
-    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.content));
+    markContentPendingDiskSync(false);
     return true;
   } catch (error) {
     return false;
