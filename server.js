@@ -238,7 +238,7 @@ function buildAdminSessionClearCookie(req) {
 
 function isTrustedOrigin(req) {
   const originRaw = String(req.headers.origin || "").trim();
-  if (!originRaw) return false;
+  if (!originRaw) return true;
   let originUrl;
   let hostUrl;
   try {
@@ -247,8 +247,9 @@ function isTrustedOrigin(req) {
   } catch (error) {
     return false;
   }
-  const originHost = String(originUrl.hostname || "").toLowerCase();
-  const reqHost = String(hostUrl.hostname || "").toLowerCase();
+  const normalizeHost = (value) => String(value || "").toLowerCase().replace(/^www\./, "");
+  const originHost = normalizeHost(originUrl.hostname);
+  const reqHost = normalizeHost(hostUrl.hostname);
   if (!originHost || !reqHost) return false;
   if (originHost === reqHost) return true;
   if (["localhost", "127.0.0.1"].includes(originHost) && ["localhost", "127.0.0.1"].includes(reqHost)) return true;

@@ -371,6 +371,7 @@ const AUTH_REMEMBER_KEY = "vortexbox-auth-remember";
 const AUTH_RESET_CODES_KEY = "vortexbox-reset-codes";
 const ADMIN_EMAIL = "vortexcore@outlook.fr";
 const STORAGE_KEY = "vortexbox-content";
+const UNSYNCED_CONTENT_KEY = "vortexbox-content-unsynced";
 const SESSION_KEY = "vortexbox-admin";
 const BG_MUSIC_KEY = "vortexbox-bg-music-enabled";
 const COOKIE_CONSENT_KEY = "vortexbox-cookie-consent";
@@ -808,6 +809,7 @@ let pendingActivationEmail = "";
 let activeAdminComponentIndex = 0;
 let selectedConfiguratorState = { components: {}, services: {} };
 let diskApiAvailability = null;
+let lastDiskSyncError = "";
 let vortexBotAdvisor = { active: false, step: "", answers: {} };
 let vortexBotLastRecommendation = null;
 let proofStatsObserver = null;
@@ -839,6 +841,26 @@ let activeConnectionSessionStartAt = 0;
 let activeConnectionTick = null;
 let activeConnectionPersistStep = 0;
 let adminToggleAwaitingOpen = false;
+
+function markContentPendingDiskSync(isPending) {
+  try {
+    if (isPending) localStorage.setItem(UNSYNCED_CONTENT_KEY, "1");
+    else localStorage.removeItem(UNSYNCED_CONTENT_KEY);
+  } catch (error) {}
+}
+
+function hasContentPendingDiskSync() {
+  try {
+    return localStorage.getItem(UNSYNCED_CONTENT_KEY) === "1";
+  } catch (error) {
+    return false;
+  }
+}
+
+function getLastDiskSyncError() {
+  const detail = String(lastDiskSyncError || "").trim();
+  return detail || "Erreur inconnue.";
+}
 
 function revokeAdminAboutPreview(index) {
   const url = adminAboutVideoPreviewUrls[index];
@@ -2487,13 +2509,18 @@ async function validateAdminSessionWithServer() {
       cache: "no-store",
     });
     if (response.status === 401) {
+      lastDiskSyncError = "Session administrateur expirée.";
       handleExpiredAdminSession(
         "Session administrateur expirée (redémarrage serveur). Reconnectez-vous pour sauvegarder sur disque."
       );
       return false;
     }
+    if (!response.ok) {
+      lastDiskSyncError = `Vérification session impossible (HTTP ${response.status}).`;
+    }
     return response.ok;
   } catch (error) {
+    lastDiskSyncError = "Connexion serveur impossible.";
     return false;
   }
 }
@@ -5508,11 +5535,15 @@ async function hydrateContentFromDiskIfMissing() {
   } catch (error) {
     parsedStored = null;
   }
+  const hasLocalPendingSync = hasContentPendingDiskSync();
   try {
     const response = await fetch("/api/content", { cache: "no-store" });
     if (!response.ok) return false;
     const payload = await response.json();
     if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return false;
+    if (parsedStored && hasLocalPendingSync) {
+      return false;
+    }
     if (parsedStored) {
       try {
         if (JSON.stringify(parsedStored) === JSON.stringify(payload.content)) return false;
@@ -9758,7 +9789,7 @@ async function persistProcessDraftsNow(successMessage = "Processus sauvegardé."
   }
   const diskSaved = await saveContentSnapshotToDisk(siteContent).catch(() => false);
   setAdminProcessFeedback(
-    diskSaved ? successMessage : `${successMessage} (local uniquement)`,
+    diskSaved ? successMessage : `${successMessage} (local uniquement - ${getLastDiskSyncError()})`,
     diskSaved ? tone : "info"
   );
   return true;
@@ -9864,10 +9895,10 @@ function readFileAsDataURL(file) {
 }
 
 async function checkDiskApiAvailable() {
-  if (diskApiAvailability !== null) return diskApiAvailability;
+  if (diskApiAvailability === true) return true;
   try {
     const response = await fetch("/api/ping", { cache: "no-store" });
-    diskApiAvailability = response.ok;
+    diskApiAvailability = response.ok === true;
   } catch (error) {
     diskApiAvailability = false;
   }
@@ -10029,18 +10060,48 @@ async function persistDataUrlAsset(value, kind, fileName) {
 }
 
 async function saveContentSnapshotToDisk(content) {
-  if (!(await checkDiskApiAvailable())) return false;
-  const response = await fetch("/api/save-content", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content }),
-  });
-  if (response.status === 401) {
-    handleExpiredAdminSession();
+  lastDiskSyncError = "";
+  if (isAdminSessionAuthorized()) {
+    const sessionValid = await validateAdminSessionWithServer();
+    if (!sessionValid) {
+      if (!lastDiskSyncError) {
+        lastDiskSyncError = "Session administrateur non valide.";
+      }
+      markContentPendingDiskSync(true);
+      return false;
+    }
+  }
+  if (!(await checkDiskApiAvailable())) {
+    lastDiskSyncError = "API disque indisponible.";
+    markContentPendingDiskSync(true);
     return false;
   }
-  return response.ok;
+  try {
+    const response = await fetch("/api/save-content", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (response.status === 401) {
+      lastDiskSyncError = String(payload?.error || "Session administrateur expirée.");
+      handleExpiredAdminSession(lastDiskSyncError);
+      markContentPendingDiskSync(true);
+      return false;
+    }
+    if (!response.ok || !payload?.ok) {
+      lastDiskSyncError = String(payload?.error || `HTTP ${response.status}`);
+      markContentPendingDiskSync(true);
+      return false;
+    }
+    markContentPendingDiskSync(false);
+    return true;
+  } catch (error) {
+    lastDiskSyncError = String(error?.message || "Erreur réseau pendant la sauvegarde.");
+    markContentPendingDiskSync(true);
+    return false;
+  }
 }
 
 async function dataUrlToBlob(dataUrl) {
@@ -10081,12 +10142,15 @@ function persistSiteContentAuto() {
   saveContentSnapshotToDisk(siteContent)
     .then((ok) => {
       if (!ok && isAdminSessionAuthorized()) {
-        setFeedback("⚠️ Sauvegarde disque impossible. Reconnectez-vous en mode admin puis cliquez sur Enregistrer.", "error");
+        setFeedback(
+          `⚠️ Sauvegarde disque impossible (${getLastDiskSyncError()}). Reconnectez-vous en mode admin puis cliquez sur Enregistrer.`,
+          "error"
+        );
       }
     })
     .catch(() => {
       if (isAdminSessionAuthorized()) {
-        setFeedback("⚠️ Sauvegarde disque impossible. Vérifiez le serveur puis enregistrez à nouveau.", "error");
+        setFeedback(`⚠️ Sauvegarde disque impossible (${getLastDiskSyncError()}). Vérifiez le serveur puis enregistrez à nouveau.`, "error");
       }
     });
   return true;
@@ -13117,7 +13181,7 @@ if (profileAdminPhotoUploadBtn) {
     setProfileAdminPhotoFeedback(
       diskSaved
         ? "Photo sauvegardée."
-        : "Photo sauvegardée localement. Sauvegarde disque indisponible actuellement."
+        : `Photo sauvegardée localement. Sauvegarde disque indisponible (${getLastDiskSyncError()}).`
     );
   });
 }
@@ -14156,8 +14220,8 @@ adminEditor.addEventListener("submit", async (event) => {
     setFeedback(
       diskSaved
         ? "FAQ sauvegardee avec succes. Modifications enregistrees dans le navigateur et sur disque."
-        : "FAQ sauvegardee avec succes dans le navigateur.",
-      "success"
+        : `⚠️ FAQ sauvegardée seulement dans le navigateur (${getLastDiskSyncError()}).`,
+      diskSaved ? "success" : "error"
     );
   } else if (strippedLegacyInlineMedia) {
     setFeedback("✅ Modifications enregistrées. Certains anciens médias trop lourds ont été optimisés.", "success");
@@ -14165,7 +14229,7 @@ adminEditor.addEventListener("submit", async (event) => {
     setFeedback("✅ Sauvegarde réussie: modifications enregistrées dans le navigateur ET sur disque.", "success");
   } else {
     setFeedback(
-      "⚠️ Modifications enregistrées seulement dans le navigateur. Reconnectez-vous en mode admin puis cliquez à nouveau sur Enregistrer.",
+      `⚠️ Modifications enregistrées seulement dans le navigateur (${getLastDiskSyncError()}). Reconnectez-vous en mode admin puis cliquez à nouveau sur Enregistrer.`,
       "error"
     );
   }
@@ -14226,7 +14290,7 @@ if (adminRestoreHistoryBtn) {
     setFeedback(
       diskSaved
         ? "Version restaurée avec succès."
-        : "Version restaurée localement. Sauvegarde disque indisponible.",
+        : `Version restaurée localement. Sauvegarde disque indisponible (${getLastDiskSyncError()}).`,
       "success"
     );
   });
