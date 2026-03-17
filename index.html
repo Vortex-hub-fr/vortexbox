@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260313adminfix4" />
+    <link rel="stylesheet" href="styles.css?v=20260313adminfix16" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -301,12 +301,12 @@
           <p class="eyebrow">Sélection 2026</p>
           <h2 id="machines-title">Nos builds premium les plus convoités</h2>
           <p class="section-intro">
-            Choisissez selon votre niveau de performance cible, votre style de jeu
-            et le niveau d’accompagnement que vous attendez.
+            Choisissez la configuration adaptée à votre style de jeu et à vos performances.
           </p>
         </div>
 
         <div class="cards" id="machines-cards"></div>
+        <div class="machines-compare-panel hidden" id="machines-compare-panel" aria-live="polite"></div>
       </section>
 
       <section class="section build-timeline" id="timeline-fabrication">
@@ -376,7 +376,7 @@
             préparée proprement et accompagnée sans zone floue entre la commande, la réception et la prise en main.
           </p>
           <div class="after-order-actions">
-            <a class="cta" href="#configurateur">Finaliser mon build premium</a>
+            <a class="cta" id="finalize-build-cta" href="#configurateur">Finaliser mon build premium</a>
             <a class="after-order-link" href="https://t.me/VortexCore460" target="_blank" rel="noopener noreferrer">Parler a un expert VortexBox</a>
           </div>
         </div>
@@ -879,6 +879,10 @@
                   <input id="admin-showcase-title-0" type="text" />
                 </label>
                 <label>
+                  Icône image 1
+                  <input id="admin-showcase-icon-0" type="text" maxlength="8" placeholder="Ex: ⚡" />
+                </label>
+                <label>
                   Slogan image 1
                   <input id="admin-showcase-slogan-0" type="text" />
                 </label>
@@ -903,6 +907,10 @@
                   <input id="admin-showcase-title-1" type="text" />
                 </label>
                 <label>
+                  Icône image 2
+                  <input id="admin-showcase-icon-1" type="text" maxlength="8" placeholder="Ex: 🛡️" />
+                </label>
+                <label>
                   Slogan image 2
                   <input id="admin-showcase-slogan-1" type="text" />
                 </label>
@@ -925,6 +933,10 @@
                 <label>
                   Titre image 3
                   <input id="admin-showcase-title-2" type="text" />
+                </label>
+                <label>
+                  Icône image 3
+                  <input id="admin-showcase-icon-2" type="text" maxlength="8" placeholder="Ex: 🚀" />
                 </label>
                 <label>
                   Slogan image 3
@@ -990,8 +1002,20 @@
                     <div class="admin-file-field">
                       <input id="admin-config-image-file-0" class="admin-file-input" type="file" accept="image/*" />
                       <div class="admin-file-picker">
-                        <button class="admin-file-button" type="button" data-file-target="admin-config-image-file-0">
-                          Choisir une image
+                        <button class="admin-file-button admin-file-button-icon" type="button" data-file-target="admin-config-image-file-0" aria-label="Uploader image configurateur 1" title="Uploader image configurateur 1">
+                          <span class="admin-icon-glyph admin-icon-glyph-upload" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                              <path d="M12 3.5l4.2 4.2-1.4 1.4-1.8-1.8V14h-2V7.3L9.2 9.1 7.8 7.7 12 3.5z"></path>
+                              <path d="M5 14.5h2V18h10v-3.5h2V20H5z"></path>
+                            </svg>
+                          </span>
+                        </button>
+                        <button class="admin-file-button admin-file-button-disk admin-file-button-icon" type="button" data-action="pick-config-image-disk" data-index="0" aria-label="Choisir image configurateur 1 depuis le disque" title="Choisir image configurateur 1 depuis le disque">
+                          <span class="admin-icon-glyph admin-icon-glyph-disk" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                              <path d="M4 5h7l2 2h7v12H4V5zm2 4v8h12V9H6z"></path>
+                            </svg>
+                          </span>
                         </button>
                       </div>
                       <span id="admin-config-image-name-0" class="admin-file-name">Aucune image</span>
@@ -1007,8 +1031,20 @@
                     <div class="admin-file-field">
                       <input id="admin-config-image-file-1" class="admin-file-input" type="file" accept="image/*" />
                       <div class="admin-file-picker">
-                        <button class="admin-file-button" type="button" data-file-target="admin-config-image-file-1">
-                          Choisir une image
+                        <button class="admin-file-button admin-file-button-icon" type="button" data-file-target="admin-config-image-file-1" aria-label="Uploader image configurateur 2" title="Uploader image configurateur 2">
+                          <span class="admin-icon-glyph admin-icon-glyph-upload" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                              <path d="M12 3.5l4.2 4.2-1.4 1.4-1.8-1.8V14h-2V7.3L9.2 9.1 7.8 7.7 12 3.5z"></path>
+                              <path d="M5 14.5h2V18h10v-3.5h2V20H5z"></path>
+                            </svg>
+                          </span>
+                        </button>
+                        <button class="admin-file-button admin-file-button-disk admin-file-button-icon" type="button" data-action="pick-config-image-disk" data-index="1" aria-label="Choisir image configurateur 2 depuis le disque" title="Choisir image configurateur 2 depuis le disque">
+                          <span class="admin-icon-glyph admin-icon-glyph-disk" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                              <path d="M4 5h7l2 2h7v12H4V5zm2 4v8h12V9H6z"></path>
+                            </svg>
+                          </span>
                         </button>
                       </div>
                       <span id="admin-config-image-name-1" class="admin-file-name">Aucune image</span>
@@ -1024,8 +1060,20 @@
                     <div class="admin-file-field">
                       <input id="admin-config-image-file-2" class="admin-file-input" type="file" accept="image/*" />
                       <div class="admin-file-picker">
-                        <button class="admin-file-button" type="button" data-file-target="admin-config-image-file-2">
-                          Choisir une image
+                        <button class="admin-file-button admin-file-button-icon" type="button" data-file-target="admin-config-image-file-2" aria-label="Uploader image configurateur 3" title="Uploader image configurateur 3">
+                          <span class="admin-icon-glyph admin-icon-glyph-upload" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                              <path d="M12 3.5l4.2 4.2-1.4 1.4-1.8-1.8V14h-2V7.3L9.2 9.1 7.8 7.7 12 3.5z"></path>
+                              <path d="M5 14.5h2V18h10v-3.5h2V20H5z"></path>
+                            </svg>
+                          </span>
+                        </button>
+                        <button class="admin-file-button admin-file-button-disk admin-file-button-icon" type="button" data-action="pick-config-image-disk" data-index="2" aria-label="Choisir image configurateur 3 depuis le disque" title="Choisir image configurateur 3 depuis le disque">
+                          <span class="admin-icon-glyph admin-icon-glyph-disk" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                              <path d="M4 5h7l2 2h7v12H4V5zm2 4v8h12V9H6z"></path>
+                            </svg>
+                          </span>
                         </button>
                       </div>
                       <span id="admin-config-image-name-2" class="admin-file-name">Aucune image</span>
@@ -1375,6 +1423,7 @@
                 <button class="admin-tab active" id="admin-process-subtab-crm" type="button" data-process-subtab="crm" draggable="true">CRM</button>
                 <button class="admin-tab" id="admin-process-subtab-facturation" type="button" data-process-subtab="facturation" draggable="true">Facturation</button>
                 <button class="admin-tab" id="admin-process-subtab-games" type="button" data-process-subtab="games" draggable="true">Games</button>
+                <button class="admin-tab" id="admin-process-subtab-console" type="button" data-process-subtab="console" draggable="true">Console</button>
               </div>
               <div id="admin-process-docs-panel" class="hidden" data-process-section-panel="docs">
                 <div class="admin-machine-toolbar admin-process-invoice-toolbar">
@@ -1510,6 +1559,14 @@
                 <div id="admin-process-games-list" class="admin-machines-list"></div>
                 <div id="admin-process-games-assignments-list" class="admin-machines-list"></div>
               </div>
+              <div id="admin-process-console-panel" class="hidden" data-process-section-panel="console">
+                <div class="admin-machine-toolbar admin-process-invoice-toolbar">
+                  <h5>Console événements</h5>
+                  <button class="admin-secondary" id="admin-process-console-clear" type="button">Vider la console</button>
+                </div>
+                <p id="admin-process-console-meta" class="admin-file-name">Aucun événement enregistré.</p>
+                <div id="admin-process-console-list" class="admin-machines-list"></div>
+              </div>
 
               <section id="admin-process-link-modal" class="admin-process-link-modal hidden" aria-label="Ajouter un lien fournisseur">
                 <article class="admin-process-link-modal-card">
@@ -1596,6 +1653,7 @@
           <div class="admin-actions">
             <button class="cta" id="admin-save" type="submit">Enregistrer</button>
             <button class="admin-secondary" id="admin-reset" type="button">Réinitialiser</button>
+            <button class="admin-secondary" id="admin-repair-cache" type="button">Réparer cache local</button>
             <button class="admin-secondary" id="admin-logout" type="button">Déconnexion</button>
           </div>
           <div class="admin-ops-row">
@@ -1624,19 +1682,60 @@
         <div class="profile-premium-head">
           <div class="profile-identity-row">
             <div class="profile-avatar-uploader">
-              <img
-                id="profile-avatar-img"
-                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
-                alt="Photo utilisateur"
-              />
               <input id="profile-avatar-file" class="admin-file-input" type="file" accept="image/*" />
-              <button class="admin-file-button" id="profile-avatar-pick" type="button">Ajouter une photo</button>
+              <p class="profile-avatar-presets-title">Collection d'avatars premium</p>
+              <div class="profile-avatar-presets" id="profile-avatar-presets" aria-label="Avatars proposés">
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-1.svg" aria-label="Avatar 1">
+                  <img src="uploads/profile-presets/preset-1.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-2.svg" aria-label="Avatar 2">
+                  <img src="uploads/profile-presets/preset-2.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-3.svg" aria-label="Avatar 3">
+                  <img src="uploads/profile-presets/preset-3.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-4.svg" aria-label="Avatar 4">
+                  <img src="uploads/profile-presets/preset-4.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-5.svg" aria-label="Avatar 5">
+                  <img src="uploads/profile-presets/preset-5.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-6.svg" aria-label="Avatar 6">
+                  <img src="uploads/profile-presets/preset-6.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-7.svg" aria-label="Avatar 7">
+                  <img src="uploads/profile-presets/preset-7.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-8.svg" aria-label="Avatar 8">
+                  <img src="uploads/profile-presets/preset-8.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-9.svg" aria-label="Avatar 9">
+                  <img src="uploads/profile-presets/preset-9.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-10.svg" aria-label="Avatar 10">
+                  <img src="uploads/profile-presets/preset-10.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-11.svg" aria-label="Avatar 11">
+                  <img src="uploads/profile-presets/preset-11.svg" alt="" aria-hidden="true" />
+                </button>
+                <button class="profile-avatar-preset-btn" type="button" data-avatar-src="uploads/profile-presets/preset-12.svg" aria-label="Avatar 12">
+                  <img src="uploads/profile-presets/preset-12.svg" alt="" aria-hidden="true" />
+                </button>
+              </div>
             </div>
             <div class="profile-identity-info">
               <p class="profile-premium-badge">Espace client premium</p>
               <h3>Mon profil</h3>
               <p>Gérez votre profil, suivez vos avis et retrouvez vos configurations enregistrées.</p>
             </div>
+            <aside class="profile-selected-avatar-frame" aria-label="Avatar sélectionné">
+              <p class="profile-selected-avatar-label">Avatar actif</p>
+              <img
+                id="profile-avatar-img"
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+                alt="Avatar utilisateur sélectionné"
+              />
+            </aside>
           </div>
           <p id="profile-avatar-feedback" class="admin-feedback"></p>
         </div>
@@ -1688,26 +1787,26 @@
             </label>
             <button class="cta" id="profile-submit-review" type="button">Envoyer mon avis</button>
             <p id="profile-feedback" class="admin-feedback"></p>
-            <div id="profile-admin-photo-tools" class="hidden">
-              <div class="profile-admin-photo-slot">
-                <img
-                  id="profile-admin-photo-preview"
-                  src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
-                  alt="Prévisualisation photo admin"
-                />
-                <input id="profile-admin-photo-file" class="admin-file-input" type="file" accept="image/*" />
-                <div class="profile-admin-photo-actions">
-                  <button class="profile-admin-photo-icon-btn" id="profile-admin-photo-pick" type="button" aria-label="Choisir une photo">
-                    Upload
-                  </button>
-                  <button class="profile-admin-photo-icon-btn" id="profile-admin-photo-upload-btn" type="button" aria-label="Valider l'ajout de la photo">
-                    Save
-                  </button>
-                </div>
-                <p id="profile-admin-photo-name" class="admin-file-name">Aucune image</p>
+            <section class="profile-ultra-module" aria-label="Expérience premium VortexBox">
+              <div class="profile-ultra-head">
+                <span class="profile-ultra-chip">Expérience Ultra Premium</span>
+                <strong>Niveau de service VortexBox</strong>
               </div>
-              <p id="profile-admin-photo-feedback" class="admin-feedback"></p>
-            </div>
+              <div class="profile-ultra-grid">
+                <article class="profile-ultra-card">
+                  <h6>Priorité Support</h6>
+                  <p>Canal direct, réponses rapides et accompagnement de bout en bout.</p>
+                </article>
+                <article class="profile-ultra-card">
+                  <h6>Suivi Personnalisé</h6>
+                  <p>Historique clair de vos demandes, configs et optimisations recommandées.</p>
+                </article>
+                <article class="profile-ultra-card">
+                  <h6>Statut Client</h6>
+                  <p class="profile-ultra-status"><span class="dot"></span>Premium actif</p>
+                </article>
+              </div>
+            </section>
           </article>
         </div>
 
@@ -1847,6 +1946,6 @@
 
     <div class="admin-toast-stack" id="admin-toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="script.js?v=20260313adminfix4"></script>
+    <script src="script.js?v=20260313adminfix45"></script>
   </body>
 </html>

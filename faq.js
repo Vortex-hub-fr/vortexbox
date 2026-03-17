@@ -84,6 +84,34 @@ let gamesCurrentPage = 1;
 let gamesPageSize = 24;
 let gamesCatalogCache = [];
 
+function bindVortexBotFallbackDelegation() {
+  if (window.__vbBotFallbackBound) return;
+  window.__vbBotFallbackBound = true;
+  document.addEventListener("click", (event) => {
+    const toggle = event.target.closest(".vortexbot-toggle, #vortexbot-toggle");
+    if (toggle) {
+      if (toggle.dataset.vbBound === "1") return;
+      const scope = toggle.closest(".vortexbot") || document;
+      const panel = scope.querySelector(".vortexbot-panel, #vortexbot-panel");
+      if (!panel) return;
+      const opening = panel.classList.contains("hidden");
+      panel.classList.toggle("hidden", !opening);
+      toggle.setAttribute("aria-expanded", opening ? "true" : "false");
+      return;
+    }
+    const closeBtn = event.target.closest(".vortexbot-close, #vortexbot-close");
+    if (closeBtn) {
+      if (closeBtn.dataset.vbBound === "1") return;
+      const scope = closeBtn.closest(".vortexbot") || document;
+      const panel = scope.querySelector(".vortexbot-panel, #vortexbot-panel");
+      const localToggle = scope.querySelector(".vortexbot-toggle, #vortexbot-toggle");
+      if (!panel) return;
+      panel.classList.add("hidden");
+      localToggle?.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -182,17 +210,17 @@ const SUPPORT_SAV_FALLBACK = {
     {
       title: "Diagnostic rapide",
       text: "Analyse guidée de votre build et vérifications prioritaires en moins de 24h.",
-      ctaLabel: "Ouvrir un ticket",
+      ctaLabel: "",
     },
     {
       title: "Garantie matérielle 2 ans",
       text: "Prise en charge des pièces éligibles et suivi transparent de votre dossier SAV.",
-      ctaLabel: "Voir la garantie",
+      ctaLabel: "",
     },
     {
       title: "Support Telegram",
       text: "Échange direct avec l'équipe VortexBox pour accélérer vos demandes.",
-      ctaLabel: "Contacter sur Telegram",
+      ctaLabel: "",
     },
   ],
   steps: [
@@ -2687,12 +2715,9 @@ function renderSupportSav() {
     supportSavCardsEl.innerHTML = content.cards
       .map(
         (item) => `
-        <article class="about-card">
+        <article class="about-card support-sav-card">
           <h3>${escapeHtml(item.title)}</h3>
           <p>${escapeHtml(item.text)}</p>
-          <a class="cta" href="${escapeHtml(content.telegramUrl || "https://t.me/VortexCore460")}" target="_blank" rel="noopener noreferrer">${escapeHtml(
-            item.ctaLabel || "En savoir plus"
-          )}</a>
         </article>
       `
       )
@@ -2748,6 +2773,8 @@ function setVortexBotOpen(isOpen) {
 
 function initializeVortexBot() {
   if (!vortexBotEl || !vortexBotToggleEl || !vortexBotPanelEl) return;
+  vortexBotToggleEl.dataset.vbBound = "1";
+  if (vortexBotCloseEl) vortexBotCloseEl.dataset.vbBound = "1";
 
   vortexBotToggleEl.addEventListener("click", () => {
     const opening = vortexBotPanelEl.classList.contains("hidden");
@@ -3102,6 +3129,7 @@ function optimizeMediaLoadingHints() {
 }
 
 async function initializeFaqPage() {
+  bindVortexBotFallbackDelegation();
   refreshNavSessionButtons();
   const hydratedUserState = await hydrateUserStateFromDisk();
   if (!hydratedUserState) persistUserStateToDiskAuto();

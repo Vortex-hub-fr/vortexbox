@@ -106,6 +106,34 @@ let aboutVideoIntersectionObserver = null;
 const aboutVideoKeyUrlCache = new Map();
 const aboutVideoUhdUrlCache = new Map();
 let userStatePersistTimer = null;
+
+function bindVortexBotFallbackDelegation() {
+  if (window.__vbBotFallbackBound) return;
+  window.__vbBotFallbackBound = true;
+  document.addEventListener("click", (event) => {
+    const toggle = event.target.closest(".vortexbot-toggle, #vortexbot-toggle");
+    if (toggle) {
+      if (toggle.dataset.vbBound === "1") return;
+      const scope = toggle.closest(".vortexbot") || document;
+      const panel = scope.querySelector(".vortexbot-panel, #vortexbot-panel");
+      if (!panel) return;
+      const opening = panel.classList.contains("hidden");
+      panel.classList.toggle("hidden", !opening);
+      toggle.setAttribute("aria-expanded", opening ? "true" : "false");
+      return;
+    }
+    const closeBtn = event.target.closest(".vortexbot-close, #vortexbot-close");
+    if (closeBtn) {
+      if (closeBtn.dataset.vbBound === "1") return;
+      const scope = closeBtn.closest(".vortexbot") || document;
+      const panel = scope.querySelector(".vortexbot-panel, #vortexbot-panel");
+      const localToggle = scope.querySelector(".vortexbot-toggle, #vortexbot-toggle");
+      if (!panel) return;
+      panel.classList.add("hidden");
+      localToggle?.setAttribute("aria-expanded", "false");
+    }
+  });
+}
 const LEGAL_FALLBACK = {
   footerContactEmail: "VortexCore@outlook.Fr",
   legal: {
@@ -2037,6 +2065,8 @@ function setVortexBotOpen(isOpen) {
 
 function initializeVortexBot() {
   if (!vortexBotEl || !vortexBotToggleEl || !vortexBotPanelEl) return;
+  vortexBotToggleEl.dataset.vbBound = "1";
+  if (vortexBotCloseEl) vortexBotCloseEl.dataset.vbBound = "1";
 
   vortexBotToggleEl.addEventListener("click", () => {
     const opening = vortexBotPanelEl.classList.contains("hidden");
@@ -2487,6 +2517,7 @@ function optimizeMediaLoadingHints() {
 }
 
 async function initializeAboutPage() {
+  bindVortexBotFallbackDelegation();
   const hydratedUserState = await hydrateUserStateFromDisk();
   if (!hydratedUserState) persistUserStateToDiskAuto();
   applyNavThemeFromStorage();

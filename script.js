@@ -22,6 +22,7 @@ const fpsGtaEl = document.getElementById("fps-gta");
 const heroTitleEl = document.getElementById("hero-title");
 const machinesTitleEl = document.getElementById("machines-title");
 const machinesCardsEl = document.getElementById("machines-cards");
+const machinesComparePanelEl = document.getElementById("machines-compare-panel");
 const heroShowcaseEl = document.getElementById("hero-showcase");
 const imageModalEl = document.getElementById("image-modal");
 const imageModalImgEl = document.getElementById("image-modal-img");
@@ -47,6 +48,7 @@ const configuratorSectionEl = document.getElementById("configurateur");
 const configuratorVisualEl = document.getElementById("configurator-visual");
 const openConfiguratorLinkEl = document.getElementById("open-configurator-link");
 const openConfiguratorCtaEl = document.getElementById("open-configurator-cta");
+const finalizeBuildCtaEl = document.getElementById("finalize-build-cta");
 const mobileOpenConfiguratorEl = document.getElementById("mobile-open-configurator");
 const promoCodeInputEl = document.getElementById("promo-code-input");
 const promoApplyBtnEl = document.getElementById("promo-apply-btn");
@@ -107,6 +109,34 @@ const vortexBotToggleEl = document.getElementById("vortexbot-toggle");
 const vortexBotPanelEl = document.getElementById("vortexbot-panel");
 const vortexBotCloseEl = document.getElementById("vortexbot-close");
 const vortexBotMessagesEl = document.getElementById("vortexbot-messages");
+
+function bindVortexBotFallbackDelegation() {
+  if (window.__vbBotFallbackBound) return;
+  window.__vbBotFallbackBound = true;
+  document.addEventListener("click", (event) => {
+    const toggle = event.target.closest(".vortexbot-toggle, #vortexbot-toggle");
+    if (toggle) {
+      if (toggle.dataset.vbBound === "1") return;
+      const scope = toggle.closest(".vortexbot") || document;
+      const panel = scope.querySelector(".vortexbot-panel, #vortexbot-panel");
+      if (!panel) return;
+      const opening = panel.classList.contains("hidden");
+      panel.classList.toggle("hidden", !opening);
+      toggle.setAttribute("aria-expanded", opening ? "true" : "false");
+      return;
+    }
+    const closeBtn = event.target.closest(".vortexbot-close, #vortexbot-close");
+    if (closeBtn) {
+      if (closeBtn.dataset.vbBound === "1") return;
+      const scope = closeBtn.closest(".vortexbot") || document;
+      const panel = scope.querySelector(".vortexbot-panel, #vortexbot-panel");
+      const localToggle = scope.querySelector(".vortexbot-toggle, #vortexbot-toggle");
+      if (!panel) return;
+      panel.classList.add("hidden");
+      localToggle?.setAttribute("aria-expanded", "false");
+    }
+  });
+}
 
 const adminToggle = document.getElementById("admin-toggle");
 const adminPanel = document.getElementById("admin-panel");
@@ -236,6 +266,9 @@ const adminGamesAssignMaxDownloadsInput = document.getElementById("admin-games-a
 const adminGamesAssignExpiryInput = document.getElementById("admin-games-assign-expiry");
 const adminGamesAssignBtn = document.getElementById("admin-games-assign-btn");
 const adminProcessGamesAssignmentsListEl = document.getElementById("admin-process-games-assignments-list");
+const adminProcessConsoleListEl = document.getElementById("admin-process-console-list");
+const adminProcessConsoleMetaEl = document.getElementById("admin-process-console-meta");
+const adminProcessConsoleClearBtn = document.getElementById("admin-process-console-clear");
 const adminOpenProcessInstallModalBtn = document.getElementById("admin-open-process-install-modal");
 const adminProcessDocsPanel = document.getElementById("admin-process-docs-panel");
 const adminProcessAchatsPanel = document.getElementById("admin-process-achats-panel");
@@ -288,6 +321,7 @@ const adminAboutWatermarkEnabledSelect = document.getElementById("admin-about-wa
 const adminAddAboutGalleryPhotoBtn = document.getElementById("admin-add-about-gallery-photo");
 const adminAboutGalleryList = document.getElementById("admin-about-gallery-list");
 const adminReset = document.getElementById("admin-reset");
+const adminRepairCacheBtn = document.getElementById("admin-repair-cache");
 const adminLogout = document.getElementById("admin-logout");
 const adminFeedback = document.getElementById("admin-feedback");
 const adminUploadProgressWrapEl = document.getElementById("admin-upload-progress-wrap");
@@ -310,6 +344,7 @@ const profileSaveNameBtn = document.getElementById("profile-save-name");
 const profileAvatarImgEl = document.getElementById("profile-avatar-img");
 const profileAvatarFileInput = document.getElementById("profile-avatar-file");
 const profileAvatarPickBtn = document.getElementById("profile-avatar-pick");
+const profileAvatarPresetsEl = document.getElementById("profile-avatar-presets");
 const profileAvatarFeedbackEl = document.getElementById("profile-avatar-feedback");
 const profileCurrentPasswordInput = document.getElementById("profile-current-password");
 const profileNewPasswordInput = document.getElementById("profile-new-password");
@@ -352,6 +387,7 @@ const adminKpiLastSaveEl = document.getElementById("admin-kpi-last-save");
 const adminToastStackEl = document.getElementById("admin-toast-stack");
 
 const adminShowcaseTitleInputs = [0, 1, 2].map((i) => document.getElementById(`admin-showcase-title-${i}`));
+const adminShowcaseIconInputs = [0, 1, 2].map((i) => document.getElementById(`admin-showcase-icon-${i}`));
 const adminShowcaseSloganInputs = [0, 1, 2].map((i) => document.getElementById(`admin-showcase-slogan-${i}`));
 const adminShowcaseFileInputs = [0, 1, 2].map((i) => document.getElementById(`admin-showcase-file-${i}`));
 const adminShowcaseFileNames = [0, 1, 2].map((i) => document.getElementById(`admin-showcase-file-name-${i}`));
@@ -371,6 +407,7 @@ const AUTH_REMEMBER_KEY = "vortexbox-auth-remember";
 const AUTH_RESET_CODES_KEY = "vortexbox-reset-codes";
 const ADMIN_EMAIL = "vortexcore@outlook.fr";
 const STORAGE_KEY = "vortexbox-content";
+const AUTHORITATIVE_CONTENT_KEY = "vortexbox-content-authoritative";
 const UNSYNCED_CONTENT_KEY = "vortexbox-content-unsynced";
 const SESSION_KEY = "vortexbox-admin";
 const BG_MUSIC_KEY = "vortexbox-bg-music-enabled";
@@ -388,10 +425,14 @@ const ADMIN_LAST_BACKUP_KEY = "vortexbox-admin-last-backup";
 const VORTEXBOT_HISTORY_KEY = "vortexbox-vortexbot-history";
 const VORTEXBOT_MEMORY_KEY = "vortexbox-vortexbot-memory";
 const AI_ADVISOR_DEEP_LINK_KEY = "vortexbox-ai-advisor-start";
-const ADMIN_HISTORY_LIMIT = 20;
+const ADMIN_HISTORY_LIMIT = 5;
 const ADMIN_PROCESS_SUBTABS_ORDER_KEY = "vortexbox-admin-process-subtabs-order";
 const ADMIN_PROCESS_QUICKLINKS_ORDER_KEY = "vortexbox-admin-process-quicklinks-order";
 const ADMIN_PROCESS_UNLOCKED_KEY = "vortexbox-admin-process-unlocked";
+const ADMIN_PROCESS_CONSOLE_KEY = "vortexbox-admin-process-console";
+const ADMIN_PROCESS_CONSOLE_LIMIT = 200;
+const TECH_IMAGE_FALLBACK_MAP_KEY = "vortexbox-tech-image-fallback-map";
+const IS_LOCAL_DISK_ONLY = ["localhost", "127.0.0.1"].includes(String(window.location.hostname || "").toLowerCase());
 const MAX_ABOUT_GALLERY_PHOTOS = 40;
 const EMPTY_IMAGE_DATA_URI = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 const MEDIA_DB_NAME = "vortexbox-media-db";
@@ -477,9 +518,9 @@ const DEFAULT_CONTENT = {
     },
   ],
   showcase: [
-    { title: "Frame Rate Max", slogan: "Chaque FPS compte.", image: PREMIUM_GALLERY_IMAGES[0] },
-    { title: "Design Premium", slogan: "Sobriété, airflow, précision.", image: PREMIUM_GALLERY_IMAGES[1] },
-    { title: "Upgrade Ready", slogan: "Pensé pour durer.", image: PREMIUM_GALLERY_IMAGES[2] },
+    { title: "Frame Rate Max", icon: "⚡", slogan: "Chaque FPS compte.", image: PREMIUM_GALLERY_IMAGES[0] },
+    { title: "Design Premium", icon: "🛡️", slogan: "Sobriété, airflow, précision.", image: PREMIUM_GALLERY_IMAGES[1] },
+    { title: "Upgrade Ready", icon: "🚀", slogan: "Pensé pour durer.", image: PREMIUM_GALLERY_IMAGES[2] },
   ],
   technicalSheets: [
     {
@@ -803,6 +844,7 @@ let adminProcessUnlocked = false;
 let adminConfiguratorImagesDraft = ["", "", ""];
 let adminAboutVideosDraft = [];
 let adminAboutGalleryDraft = cloneDefaultContent().aboutGallery;
+let machineCompareSelection = [];
 let adminAboutVideoPreviewUrls = ["", "", "", "", "", ""];
 let authMode = "user";
 let pendingActivationEmail = "";
@@ -841,6 +883,9 @@ let activeConnectionSessionStartAt = 0;
 let activeConnectionTick = null;
 let activeConnectionPersistStep = 0;
 let adminToggleAwaitingOpen = false;
+let adminProcessConsoleEntries = [];
+let adminProcessConsoleCaptureBound = false;
+let technicalImageFallbackMapCache = null;
 
 function markContentPendingDiskSync(isPending) {
   try {
@@ -857,9 +902,308 @@ function hasContentPendingDiskSync() {
   }
 }
 
+function loadAuthoritativeContentSnapshot() {
+  try {
+    const raw = localStorage.getItem(AUTHORITATIVE_CONTENT_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function isLargeDataUrl(value) {
+  const raw = String(value || "");
+  return raw.startsWith("data:") && raw.length > 1200;
+}
+
+function compactValueForStorage(value, depth = 0) {
+  if (depth > 6) return null;
+  if (typeof value === "string") {
+    if (isLargeDataUrl(value)) return "";
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => compactValueForStorage(item, depth + 1));
+  }
+  if (value && typeof value === "object") {
+    const out = {};
+    Object.keys(value).forEach((key) => {
+      const next = compactValueForStorage(value[key], depth + 1);
+      out[key] = next;
+    });
+    return out;
+  }
+  return value;
+}
+
+function buildAuthoritativeMediaSnapshot(content) {
+  const source = content && typeof content === "object" ? content : {};
+  const pickPath = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (isLargeDataUrl(raw)) return "";
+    return raw;
+  };
+  return {
+    _updatedAt: Math.max(0, Number(source?._updatedAt || Date.now())),
+    showcase: Array.isArray(source.showcase)
+      ? source.showcase.slice(0, 3).map((item) => ({ image: pickPath(item?.image) }))
+      : [],
+    technicalSheets: Array.isArray(source.technicalSheets)
+      ? source.technicalSheets.slice(0, MAX_TECHNICAL_SHEETS).map((item) => ({ image: pickPath(item?.image) }))
+      : [],
+    gamesCatalog: Array.isArray(source.gamesCatalog)
+      ? source.gamesCatalog.slice(0, 200).map((item) => ({ image: pickPath(item?.image) }))
+      : [],
+    aboutVideos: Array.isArray(source.aboutVideos)
+      ? source.aboutVideos.slice(0, 6).map((item) => ({
+          videoData: pickPath(item?.videoData),
+          videoWebm: pickPath(item?.videoWebm),
+        }))
+      : [],
+    configurator:
+      source.configurator && typeof source.configurator === "object"
+        ? {
+            imageFitMode:
+              String(source.configurator.imageFitMode || "contain").trim().toLowerCase() === "cover"
+                ? "cover"
+                : "contain",
+            visualImages: Array.isArray(source.configurator.visualImages)
+              ? [0, 1, 2].map((i) => pickPath(source.configurator.visualImages[i]))
+              : ["", "", ""],
+            categoryFillImage: pickPath(source.configurator.categoryFillImage),
+            categoryFillImageSecondary: pickPath(source.configurator.categoryFillImageSecondary),
+            summaryTelegramImage: pickPath(source.configurator.summaryTelegramImage),
+            summaryTelegramTitle: String(source.configurator.summaryTelegramTitle || "").trim(),
+            summaryExtraImages: Array.isArray(source.configurator.summaryExtraImages)
+              ? [0, 1].map((i) => pickPath(source.configurator.summaryExtraImages[i]))
+              : ["", ""],
+            components: Array.isArray(source.configurator.components)
+              ? source.configurator.components.map((component) => ({
+                  id: String(component?.id || "").trim(),
+                  label: String(component?.label || "").trim(),
+                  options: Array.isArray(component?.options)
+                    ? component.options.map((option) => ({
+                        name: String(option?.name || "").trim(),
+                        price: Number(option?.price) || 0,
+                        image: pickPath(option?.image),
+                        description: String(option?.description || "").trim(),
+                        badge: String(option?.badge || "").trim(),
+                      }))
+                    : [],
+                }))
+              : [],
+            services: Array.isArray(source.configurator.services)
+              ? source.configurator.services.map((service) => ({
+                  id: String(service?.id || "").trim(),
+                  label: String(service?.label || "").trim(),
+                  price: Number(service?.price) || 0,
+                  checked: Boolean(service?.checked),
+                  description: String(service?.description || "").trim(),
+                }))
+              : [],
+          }
+        : null,
+  };
+}
+
+function pruneAdminLocalStorageFootprint() {
+  try {
+    const history = loadAdminHistory();
+    if (Array.isArray(history) && history.length) {
+      const compactHistory = history.slice(0, 3).map((entry) => ({
+        ...entry,
+        content: compactValueForStorage(entry?.content),
+      }));
+      localStorage.setItem(ADMIN_HISTORY_KEY, JSON.stringify(compactHistory));
+    }
+  } catch (error) {}
+
+  try {
+    const rawMap = localStorage.getItem(TECH_IMAGE_FALLBACK_MAP_KEY);
+    const parsed = rawMap ? JSON.parse(rawMap) : {};
+    if (parsed && typeof parsed === "object") {
+      const entries = Object.entries(parsed)
+        .filter(([, value]) => typeof value === "string" && value.startsWith("data:image/"))
+        .slice(-20);
+      const reduced = Object.fromEntries(entries);
+      localStorage.setItem(TECH_IMAGE_FALLBACK_MAP_KEY, JSON.stringify(reduced));
+      technicalImageFallbackMapCache = reduced;
+    }
+  } catch (error) {}
+
+  // Aggressive quota relief: clear non-critical caches/history if storage is near limit.
+  try {
+    [
+      VORTEXBOT_HISTORY_KEY,
+      VORTEXBOT_MEMORY_KEY,
+      ADMIN_PROCESS_CONSOLE_KEY,
+      USER_ACTIVITY_KEY,
+      USER_FAVORITES_KEY,
+      TECH_IMAGE_FALLBACK_MAP_KEY,
+    ].forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch (innerError) {}
+    });
+    technicalImageFallbackMapCache = {};
+  } catch (error) {}
+}
+
+function saveAuthoritativeContentSnapshot(content) {
+  try {
+    if (content && typeof content === "object") {
+      localStorage.setItem(AUTHORITATIVE_CONTENT_KEY, JSON.stringify(buildAuthoritativeMediaSnapshot(content)));
+    }
+  } catch (error) {}
+}
+
+function resolveMostRecentContentCandidate(baseContent) {
+  const base = baseContent && typeof baseContent === "object" ? baseContent : cloneDefaultContent();
+  const authoritative = loadAuthoritativeContentSnapshot();
+  if (!authoritative || typeof authoritative !== "object") return base;
+  const pickMedia = (incoming, fallback = "") => {
+    const raw = String(incoming || "").trim();
+    if (!raw) return String(fallback || "");
+    if (isLargeDataUrl(raw)) return String(fallback || "");
+    return raw;
+  };
+  const mergeConfiguratorComponents = (baseComponents, authComponents) => {
+    const safeBase = Array.isArray(baseComponents) ? baseComponents : [];
+    if (!Array.isArray(authComponents) || !authComponents.length) return safeBase;
+    return safeBase.map((baseComp, compIndex) => {
+      const authComp =
+        authComponents.find(
+          (candidate) =>
+            String(candidate?.id || "").trim() &&
+            String(baseComp?.id || "").trim() &&
+            String(candidate.id).trim() === String(baseComp.id).trim()
+        ) || authComponents[compIndex];
+      if (!authComp || typeof authComp !== "object") return baseComp;
+      const baseOptions = Array.isArray(baseComp?.options) ? baseComp.options : [];
+      const authOptions = Array.isArray(authComp.options) ? authComp.options : [];
+      const mergedOptions = baseOptions.map((baseOpt, optIndex) => {
+        const authOpt =
+          authOptions.find((candidate) => String(candidate?.name || "").trim() === String(baseOpt?.name || "").trim()) ||
+          authOptions[optIndex];
+        if (!authOpt || typeof authOpt !== "object") return baseOpt;
+        return {
+          ...baseOpt,
+          ...authOpt,
+          image: pickMedia(authOpt.image, baseOpt.image),
+        };
+      });
+      return {
+        ...baseComp,
+        ...authComp,
+        options: mergedOptions,
+      };
+    });
+  };
+  const baseUpdatedAt = Math.max(0, Number(base?._updatedAt || 0));
+  const authUpdatedAt = Math.max(0, Number(authoritative?._updatedAt || 0));
+  if (authUpdatedAt > baseUpdatedAt) {
+    const next = JSON.parse(JSON.stringify(base));
+    if (Array.isArray(next.showcase) && Array.isArray(authoritative.showcase)) {
+      next.showcase = next.showcase.map((item, index) => ({
+        ...item,
+        image: pickMedia(authoritative.showcase[index]?.image, item?.image || ""),
+      }));
+    }
+    if (Array.isArray(next.technicalSheets) && Array.isArray(authoritative.technicalSheets)) {
+      next.technicalSheets = next.technicalSheets.map((item, index) => ({
+        ...item,
+        image: pickMedia(authoritative.technicalSheets[index]?.image, item?.image || ""),
+      }));
+    }
+    if (Array.isArray(next.gamesCatalog) && Array.isArray(authoritative.gamesCatalog)) {
+      next.gamesCatalog = next.gamesCatalog.map((item, index) => ({
+        ...item,
+        image: pickMedia(authoritative.gamesCatalog[index]?.image, item?.image || ""),
+      }));
+    }
+    if (Array.isArray(next.aboutVideos) && Array.isArray(authoritative.aboutVideos)) {
+      next.aboutVideos = next.aboutVideos.map((item, index) => ({
+        ...item,
+        videoData: pickMedia(authoritative.aboutVideos[index]?.videoData, item?.videoData || ""),
+        videoWebm: pickMedia(authoritative.aboutVideos[index]?.videoWebm, item?.videoWebm || ""),
+      }));
+    }
+    if (authoritative.configurator && typeof authoritative.configurator === "object") {
+      const baseConfig = normalizeConfigurator(next.configurator || {});
+      const authConfig = authoritative.configurator;
+      next.configurator = {
+        ...baseConfig,
+        imageFitMode: authConfig.imageFitMode === "cover" ? "cover" : "contain",
+        visualImages: Array.isArray(authConfig.visualImages)
+          ? [0, 1, 2].map((i) => pickMedia(authConfig.visualImages[i], baseConfig.visualImages[i] || ""))
+          : baseConfig.visualImages,
+        categoryFillImage: pickMedia(authConfig.categoryFillImage, baseConfig.categoryFillImage || ""),
+        categoryFillImageSecondary: pickMedia(authConfig.categoryFillImageSecondary, baseConfig.categoryFillImageSecondary || ""),
+        summaryTelegramImage: pickMedia(authConfig.summaryTelegramImage, baseConfig.summaryTelegramImage || ""),
+        summaryTelegramTitle: String(authConfig.summaryTelegramTitle || baseConfig.summaryTelegramTitle || ""),
+        summaryExtraImages: Array.isArray(authConfig.summaryExtraImages)
+          ? [0, 1].map((i) => pickMedia(authConfig.summaryExtraImages[i], baseConfig.summaryExtraImages[i] || ""))
+          : baseConfig.summaryExtraImages,
+        components: Array.isArray(authConfig.components) && authConfig.components.length
+          ? mergeConfiguratorComponents(baseConfig.components, authConfig.components)
+          : baseConfig.components,
+        services: Array.isArray(authConfig.services) && authConfig.services.length
+          ? authConfig.services
+          : baseConfig.services,
+      };
+    }
+    next._updatedAt = authUpdatedAt;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch (error) {}
+    return next;
+  }
+  return base;
+}
+
 function getLastDiskSyncError() {
   const detail = String(lastDiskSyncError || "").trim();
   return detail || "Erreur inconnue.";
+}
+
+function loadTechnicalImageFallbackMap() {
+  if (technicalImageFallbackMapCache && typeof technicalImageFallbackMapCache === "object") {
+    return technicalImageFallbackMapCache;
+  }
+  try {
+    const raw = localStorage.getItem(TECH_IMAGE_FALLBACK_MAP_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    technicalImageFallbackMapCache = parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    technicalImageFallbackMapCache = {};
+  }
+  return technicalImageFallbackMapCache;
+}
+
+function saveTechnicalImageFallbackMap(map) {
+  const safeMap = map && typeof map === "object" ? map : {};
+  technicalImageFallbackMapCache = safeMap;
+  try {
+    localStorage.setItem(TECH_IMAGE_FALLBACK_MAP_KEY, JSON.stringify(safeMap));
+  } catch (error) {}
+}
+
+function setTechnicalImageFallback(pathValue, dataUrl) {
+  const key = String(pathValue || "").trim();
+  const fallback = String(dataUrl || "").trim();
+  if (!key || !fallback || !fallback.startsWith("data:image/")) return;
+  const map = { ...loadTechnicalImageFallbackMap(), [key]: fallback };
+  saveTechnicalImageFallbackMap(map);
+}
+
+function getTechnicalImageFallback(pathValue) {
+  const key = String(pathValue || "").trim();
+  if (!key) return "";
+  const map = loadTechnicalImageFallbackMap();
+  const value = String(map[key] || "").trim();
+  return value.startsWith("data:image/") ? value : "";
 }
 
 function revokeAdminAboutPreview(index) {
@@ -2336,6 +2680,8 @@ function handleVortexBotIntent(intent) {
 
 function initializeVortexBot() {
   if (!vortexBotEl || !vortexBotToggleEl || !vortexBotPanelEl) return;
+  vortexBotToggleEl.dataset.vbBound = "1";
+  if (vortexBotCloseEl) vortexBotCloseEl.dataset.vbBound = "1";
 
   vortexBotToggleEl.addEventListener("click", () => {
     const opening = vortexBotPanelEl.classList.contains("hidden");
@@ -2423,9 +2769,19 @@ function isAllowedOutlookEmail(email) {
   return /@outlook\.(com|fr)$/i.test(String(email || "").trim());
 }
 
+function isAdminEmailAlias(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized === ADMIN_EMAIL) return true;
+  const [local = "", domain = ""] = String(ADMIN_EMAIL).split("@");
+  if (local && domain === "outlook.fr" && normalized === `${local}@outlook.com`) return true;
+  if (local && domain === "outlook.com" && normalized === `${local}@outlook.fr`) return true;
+  return normalized === "votexcore.fr" || normalized === "votexcore@outlook.fr" || normalized === "votexcore@outlook.com";
+}
+
 function isAdminEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
-  return normalized === ADMIN_EMAIL || normalized === "votexcore.fr";
+  return isAdminEmailAlias(normalized);
 }
 
 function getCurrentAuthEmail() {
@@ -2926,7 +3282,11 @@ function applyUserStateSnapshot(snapshot) {
     );
   }
   if (typeof snapshot.adminProfilePhoto === "string") {
-    localStorage.setItem(ADMIN_PROFILE_PHOTO_KEY, snapshot.adminProfilePhoto);
+    const incoming = String(snapshot.adminProfilePhoto || "");
+    const current = String(localStorage.getItem(ADMIN_PROFILE_PHOTO_KEY) || "");
+    if (incoming.trim() || !current.trim()) {
+      localStorage.setItem(ADMIN_PROFILE_PHOTO_KEY, incoming);
+    }
   }
 }
 
@@ -2934,6 +3294,7 @@ async function saveUserStateSnapshotToDisk(snapshot) {
   try {
     const response = await fetch("/api/save-user-state", {
       method: "POST",
+      credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ state: snapshot }),
     });
@@ -3503,7 +3864,7 @@ function getUserProfilePhoto(email) {
   const normalizedEmail = String(email || "").trim().toLowerCase();
   if (!normalizedEmail) return "";
   if (isAdminEmail(normalizedEmail)) {
-    return String(localStorage.getItem(ADMIN_PROFILE_PHOTO_KEY) || "");
+    return String(localStorage.getItem(ADMIN_PROFILE_PHOTO_KEY) || "") || String(siteContent?.adminProfileReviewPhoto || "");
   }
   const users = loadSiteUsers();
   const found = users.find((user) => user.email === normalizedEmail);
@@ -3516,12 +3877,30 @@ function setUserProfilePhoto(email, photoData) {
   if (!normalizedEmail) return false;
   if (isAdminEmail(normalizedEmail)) {
     localStorage.setItem(ADMIN_PROFILE_PHOTO_KEY, value);
+    siteContent.adminProfileReviewPhoto = value;
+    saveUserStateSnapshotToDisk(buildUserStateSnapshot()).catch(() => {});
     persistUserStateToDiskAuto();
     return true;
   }
   const users = loadSiteUsers();
-  const found = users.find((user) => user.email === normalizedEmail);
-  if (!found) return false;
+  let found = users.find((user) => user.email === normalizedEmail);
+  if (!found) {
+    // Ensure avatar persistence even if the users store was reset/empty.
+    found = {
+      email: normalizedEmail,
+      displayName: getDisplayNameFromEmail(normalizedEmail),
+      profilePhoto: "",
+      password: "",
+      totalConnectionSeconds: 0,
+      lastSeenAt: new Date().toISOString(),
+      isActive: true,
+      activationCode: "",
+      activationSentAt: "",
+      revoked: false,
+      blacklisted: false,
+    };
+    users.push(found);
+  }
   found.profilePhoto = value;
   saveSiteUsers(users);
   renderAdminUsersManager();
@@ -4145,6 +4524,17 @@ function normalizePriceLabel(value) {
   return raw.includes("€") ? raw : `${raw} €`;
 }
 
+function formatBuildPriceDisplay(value) {
+  const raw = String(value || "").trim();
+  const numeric = Number(raw.replace(/[^0-9,.-]/g, "").replace(",", "."));
+  if (Number.isFinite(numeric)) {
+    const rounded = Math.round(numeric);
+    const grouped = String(rounded).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return `${grouped} €`;
+  }
+  return normalizePriceLabel(raw).replace(/\u202f|\u00a0/g, " ");
+}
+
 function getConfiguratorCategorySelectLabel(label) {
   const raw = String(label || "").trim();
   if (!raw) return "";
@@ -4347,6 +4737,10 @@ function normalizeShowcase(showcase) {
     const item = showcase[index] || {};
     return {
       title: typeof item.title === "string" ? item.title : fallback[index].title,
+      icon:
+        typeof item.icon === "string" && item.icon.trim()
+          ? item.icon.trim().slice(0, 8)
+          : fallback[index].icon,
       slogan: typeof item.slogan === "string" ? item.slogan : fallback[index].slogan,
       image:
         typeof item.image === "string" && item.image.trim()
@@ -5023,6 +5417,8 @@ function normalizeConfigurator(configurator) {
           : ""
       )
     : ["", ""];
+  const imageFitMode =
+    String(configurator.imageFitMode || "contain").trim().toLowerCase() === "cover" ? "cover" : "contain";
 
   return {
     visualImages,
@@ -5330,6 +5726,7 @@ function normalizeLegalContent(legal) {
 }
 
 function loadContent() {
+  if (IS_LOCAL_DISK_ONLY) return cloneDefaultContent();
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) return cloneDefaultContent();
 
@@ -5528,38 +5925,93 @@ function loadContent() {
 }
 
 async function hydrateContentFromDiskIfMissing() {
-  const rawStored = localStorage.getItem(STORAGE_KEY);
   let parsedStored = null;
-  try {
-    parsedStored = rawStored ? JSON.parse(rawStored) : null;
-  } catch (error) {
-    parsedStored = null;
-  }
-  // If we already have local content, keep it as source of truth for this browser.
-  // This prevents losing admin edits on refresh when server state lags behind.
-  if (parsedStored && typeof parsedStored === "object") {
-    return false;
+  if (!IS_LOCAL_DISK_ONLY) {
+    const rawStored = localStorage.getItem(STORAGE_KEY);
+    try {
+      parsedStored = rawStored ? JSON.parse(rawStored) : null;
+    } catch (error) {
+      parsedStored = null;
+    }
   }
   try {
     const response = await fetch("/api/content", { cache: "no-store" });
-    if (!response.ok) return false;
+    if (!response.ok) return null;
     const payload = await response.json();
-    if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return false;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.content));
+    if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return null;
+    const diskContent = payload.content;
+    if (IS_LOCAL_DISK_ONLY) {
+      markContentPendingDiskSync(false);
+      return diskContent;
+    }
+    if (parsedStored) {
+      try {
+        if (JSON.stringify(parsedStored) === JSON.stringify(diskContent)) {
+          markContentPendingDiskSync(false);
+          return diskContent;
+        }
+      } catch (error) {}
+    }
+    // Source de vérité au chargement: le contenu disque doit gagner
+    // pour éviter les pertes d'uploads après refresh/restart.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(diskContent));
+    saveAuthoritativeContentSnapshot(diskContent);
     markContentPendingDiskSync(false);
-    return true;
+    return diskContent;
   } catch (error) {
-    return false;
+    return null;
   }
 }
 
 let siteContent = loadContent();
+siteContent = resolveMostRecentContentCandidate(siteContent);
 
 function renderMachines() {
+  const parseEuroAmount = (value) => {
+    const raw = String(value || "").replace(/\s/g, "").replace(/€/g, "").replace(",", ".");
+    const match = raw.match(/(\d+(?:\.\d+)?)/);
+    return match ? Number(match[1]) : 0;
+  };
+  const tierTone = (badge, price) => {
+    const text = String(badge || "").toLowerCase();
+    if (text.includes("best")) return "hot";
+    if (text.includes("ultra") || text.includes("premium")) return "ultra";
+    if (text.includes("perf") || text.includes("rapport")) return "smart";
+    const tier = inferTierFromPrice(parseEuroAmount(price));
+    if (tier >= 4) return "ultra";
+    if (tier >= 3) return "hot";
+    return "smart";
+  };
+  const buildSignals = (machine, index) => {
+    const specsText = Array.isArray(machine?.specs) ? machine.specs.join(" ").toLowerCase() : "";
+    const price = parseEuroAmount(machine?.price);
+    const tier = inferTierFromPrice(price);
+    const gpuScore = /5090|5080|5070|4090|4080|4070|7900|7900xtx/.test(specsText) ? 92 : /5060|4060|7700|7800|4070/.test(specsText) ? 82 : 72;
+    const cpuScore = /i9|ryzen 9|ultra 9|14900|7950|9900/.test(specsText) ? 92 : /i7|ryzen 7|ultra 7|14700|7800/.test(specsText) ? 84 : 74;
+    const ramScore = /64\s?go|64gb/.test(specsText) ? 90 : /32\s?go|32gb/.test(specsText) ? 82 : 74;
+    const fps = Math.max(66, Math.min(99, Math.round((gpuScore * 0.5 + cpuScore * 0.3 + ramScore * 0.2 + tier * 5) / 1.15)));
+    const silence = Math.max(62, Math.min(95, Math.round(72 + tier * 4)));
+    const upgrade = Math.max(64, Math.min(96, Math.round(70 + tier * 5)));
+    const fitMap = [
+      ["Competitif 240Hz", "AAA QHD Ultra", "Streaming + capture"],
+      ["AAA QHD Ultra", "Creation + gaming", "4K ready"],
+      ["1080p ultra stable", "Faible latence", "Upgrade evolutif"],
+    ];
+    const fit = fitMap[index] || fitMap[2];
+    return { fps, silence, upgrade, fit };
+  };
+
+  const adminLive = isAdminLiveMode();
   machinesCardsEl.innerHTML = siteContent.machines
     .map((machine, index) => {
       const badgeFallback = index === 0 ? "Best-seller" : index === 1 ? "Ultra premium" : "Meilleur rapport perf/prix";
       const badge = String(machine.badge || "").trim() || badgeFallback;
+      const tone = tierTone(badge, machine.price);
+      const signals = buildSignals(machine, index);
+      const image = (getMachineImages(machine)[0] || siteContent?.showcase?.[index]?.image || PREMIUM_GALLERY_IMAGES[index % 3] || "").trim();
+      const imageSrc = resolveSiteMediaSrc(image);
+      const isCompared = machineCompareSelection.includes(index);
+      const priceLabel = formatBuildPriceDisplay(machine.price);
       const chips = index === 0
         ? ["FPS élevé", "QHD Ready", "Streaming fluide"]
         : index === 1
@@ -5574,7 +6026,20 @@ function renderMachines() {
       <article class="card machine-card" data-machine-index="${index}" role="button" tabindex="0" aria-label="Voir le détail du build ${escapeHtml(machine.name)}">
         <div class="machine-card-top">
           <h3>${machine.name}</h3>
-          <span class="machine-badge">${badge}</span>
+          <span class="machine-badge machine-badge--${tone}">${badge}</span>
+          ${
+            adminLive
+              ? `<div class="machine-admin-sort-controls" aria-label="Déplacer le build">
+                  <button class="showcase-admin-btn machine-sort-btn" type="button" data-action="machine-left" data-machine-index="${index}" aria-label="Déplacer ce build à gauche" ${index === 0 ? "disabled" : ""}>←</button>
+                  <button class="showcase-admin-btn machine-sort-btn" type="button" data-action="machine-right" data-machine-index="${index}" aria-label="Déplacer ce build à droite" ${
+                    index === siteContent.machines.length - 1 ? "disabled" : ""
+                  }>→</button>
+                </div>`
+              : ""
+          }
+        </div>
+        <div class="machine-media-stage">
+          <img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(machine.name)}" />
         </div>
         <p class="machine-description">${machine.description}</p>
         <div class="machine-user-fit">
@@ -5583,20 +6048,88 @@ function renderMachines() {
         <div class="machine-chips">
           ${chips.map((chip) => `<span>${chip}</span>`).join("")}
         </div>
+        <div class="machine-bars">
+          <div class="machine-bar"><span>FPS</span><strong>${signals.fps}%</strong><i><b style="width:${signals.fps}%"></b></i></div>
+          <div class="machine-bar"><span>Silence</span><strong>${signals.silence}%</strong><i><b style="width:${signals.silence}%"></b></i></div>
+          <div class="machine-bar"><span>Upgrade</span><strong>${signals.upgrade}%</strong><i><b style="width:${signals.upgrade}%"></b></i></div>
+        </div>
+        <div class="machine-fit-tags">
+          ${signals.fit.map((item) => `<span>${item}</span>`).join("")}
+        </div>
         <ul class="machine-specs">${machine.specs.map((spec) => `<li>${spec}</li>`).join("")}</ul>
-        <p class="machine-reassurance">Montage atelier, validation premium et accompagnement apres livraison.</p>
-        <p class="price">${machine.price}</p>
+        <p class="machine-reassurance">Montage atelier • validation intensive • support prioritaire.</p>
+        <div class="machine-card-bottom">
+          <p class="price">${priceLabel} <span class="price-ttc">TTC</span></p>
+          <button class="machine-compare-btn ${isCompared ? "is-active" : ""}" type="button" data-action="toggle-machine-compare" data-machine-index="${index}" aria-pressed="${isCompared ? "true" : "false"}">
+            ${isCompared ? "Retirer" : "Comparer"}
+          </button>
+        </div>
       </article>
     `;
     })
     .join("");
+  renderMachinesComparePanel();
+}
+
+function renderMachinesComparePanel() {
+  if (!machinesComparePanelEl) return;
+  const selected = machineCompareSelection
+    .filter((index) => Number.isInteger(index) && siteContent?.machines?.[index])
+    .slice(0, 2)
+    .map((index) => ({ index, machine: siteContent.machines[index] }));
+  machineCompareSelection = selected.map((item) => item.index);
+  if (!selected.length) {
+    machinesComparePanelEl.classList.add("hidden");
+    machinesComparePanelEl.innerHTML = "";
+    return;
+  }
+  const rows = ["Prix", "Badge", "Positionnement"];
+  const fit = (idx) => (idx === 0 ? "Competitif / QHD" : idx === 1 ? "QHD / 4K / Creation" : "Gaming evolutif");
+  machinesComparePanelEl.classList.remove("hidden");
+  machinesComparePanelEl.innerHTML = `
+    <div class="machines-compare-head">
+      <strong>Comparaison build premium</strong>
+      <button type="button" class="machine-compare-clear" data-action="clear-machine-compare">Effacer</button>
+    </div>
+    <div class="machines-compare-grid">
+      <div class="machines-compare-col">
+        <h4>${escapeHtml(selected[0].machine.name || "Build 1")}</h4>
+        <ul>
+          <li><span>${rows[0]}</span><strong>${escapeHtml(selected[0].machine.price || "-")}</strong></li>
+          <li><span>${rows[1]}</span><strong>${escapeHtml(selected[0].machine.badge || "Premium")}</strong></li>
+          <li><span>${rows[2]}</span><strong>${escapeHtml(fit(selected[0].index))}</strong></li>
+        </ul>
+      </div>
+      ${
+        selected[1]
+          ? `<div class="machines-compare-col">
+              <h4>${escapeHtml(selected[1].machine.name || "Build 2")}</h4>
+              <ul>
+                <li><span>${rows[0]}</span><strong>${escapeHtml(selected[1].machine.price || "-")}</strong></li>
+                <li><span>${rows[1]}</span><strong>${escapeHtml(selected[1].machine.badge || "Premium")}</strong></li>
+                <li><span>${rows[2]}</span><strong>${escapeHtml(fit(selected[1].index))}</strong></li>
+              </ul>
+            </div>`
+          : `<div class="machines-compare-col machines-compare-col-empty">
+              <h4>Ajoutez un 2e build</h4>
+              <p>Cliquez sur “Comparer” sur une autre carte pour afficher la comparaison complète.</p>
+            </div>`
+      }
+    </div>
+  `;
 }
 
 function renderShowcase() {
   heroShowcaseEl.innerHTML = siteContent.showcase
     .map((item, index) => {
-      const media = item.image
-        ? `<img src="${item.image}" alt="${escapeHtml(item.title)}" />`
+      const showcaseRaw = String(item?.image || "").trim();
+      const showcaseSrc = showcaseRaw ? resolveSiteMediaSrc(showcaseRaw) : "";
+      const showcaseFallbackData = getTechnicalImageFallback(showcaseRaw);
+      const media = showcaseSrc
+        ? `
+            <img class="showcase-media-backfill" src="${showcaseSrc}" data-media-fallback="${escapeHtml(showcaseFallbackData)}" alt="" aria-hidden="true" />
+            <img class="showcase-media-main" src="${showcaseSrc}" data-media-fallback="${escapeHtml(showcaseFallbackData)}" alt="${escapeHtml(item.title)}" />
+          `
         : '<div class="showcase-placeholder" aria-hidden="true"></div>';
 
       return `
@@ -5607,6 +6140,7 @@ function renderShowcase() {
             <button class="showcase-admin-btn" type="button" data-action="showcase-right" data-index="${index}" aria-label="Déplacer à droite">▶</button>
           </div>
           <div class="showcase-overlay">
+            ${item.icon ? `<span class="showcase-icon" aria-hidden="true">${escapeHtml(String(item.icon).slice(0, 8))}</span>` : ""}
             <h4>${item.title}</h4>
             <p>${item.slogan}</p>
           </div>
@@ -5625,16 +6159,28 @@ function renderTechnicalSheets() {
 
   technicalSheetsGridEl.innerHTML = siteContent.technicalSheets
     .map((sheet, index) => {
-      const imageMedia = sheet.image
-        ? sheet.image
-        : PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length];
+      const imageRaw = String(sheet?.image || "").trim();
+      const fallbackImage = String(PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length] || "").trim();
+      const imageMedia = imageRaw
+        ? resolveSiteMediaSrc(imageRaw)
+        : resolveSiteMediaSrc(fallbackImage);
+      const imageFallbackData = getTechnicalImageFallback(imageRaw);
       const downloadHref = resolveTechnicalSheetHref(sheet, index);
-      const downloadFileName = sanitizeFileName(
-        String(sheet?.fileName || `fiche-technique-${index + 1}.pdf`),
-        `fiche-technique-${index + 1}.pdf`
-      );
-      const downloadIcon = downloadHref
-        ? `<a class="technical-download-icon" href="${escapeHtml(downloadHref)}" download="${escapeHtml(downloadFileName)}" aria-label="Télécharger la fiche technique" title="Télécharger la fiche technique">
+      const inferImageExt = (src) => {
+        const clean = String(src || "").split("?")[0].split("#")[0].toLowerCase();
+        const match = clean.match(/\.([a-z0-9]{2,5})$/i);
+        return match ? match[1] : "webp";
+      };
+      const imageDownloadHref = imageMedia || "";
+      const effectiveDownloadHref = downloadHref || imageDownloadHref;
+      const downloadFileName = downloadHref
+        ? sanitizeFileName(String(sheet?.fileName || `fiche-technique-${index + 1}.pdf`), `fiche-technique-${index + 1}.pdf`)
+        : sanitizeFileName(
+            `${String(sheet?.title || `fiche-technique-${index + 1}`)}.${inferImageExt(imageMedia)}`,
+            `fiche-technique-image-${index + 1}.${inferImageExt(imageMedia)}`
+          );
+      const downloadIcon = effectiveDownloadHref
+        ? `<a class="technical-download-icon" href="${escapeHtml(effectiveDownloadHref)}" download="${escapeHtml(downloadFileName)}" aria-label="Télécharger la fiche technique" title="Télécharger la fiche technique">
             <span class="technical-download-icon-glyph" aria-hidden="true">↓</span>
           </a>`
         : `<span class="technical-download-icon disabled" aria-disabled="true" title="Fiche indisponible">
@@ -5644,13 +6190,18 @@ function renderTechnicalSheets() {
       return `
         <article class="technical-card" data-tech-index="${index}" role="button" tabindex="0" aria-label="Agrandir la fiche technique ${escapeHtml(sheet.title)}">
           <div class="technical-jacket-shell">
+            <div class="technical-premium-head">
+              <img class="technical-premium-logo" src="/favicon-vb.svg?v=2" alt="VB" />
+              <span class="technical-premium-label">${escapeHtml(String(sheet.title || `Fiche technique ${index + 1}`).trim())}</span>
+              <span class="technical-premium-badge">OFFICIEL</span>
+            </div>
             <div class="technical-admin-controls">
               <button class="showcase-admin-btn" type="button" data-action="tech-left" data-tech-index="${index}" aria-label="Déplacer à gauche">◀</button>
               <button class="showcase-admin-btn" type="button" data-action="tech-right" data-tech-index="${index}" aria-label="Déplacer à droite">▶</button>
             </div>
             <div class="technical-flip technical-flip-static">
               <div class="technical-face technical-face-front technical-face-single">
-                <img class="technical-media" src="${imageMedia}" alt="${escapeHtml(sheet.title)}" />
+                <img class="technical-media" src="${escapeHtml(imageMedia)}" data-media-fallback="${escapeHtml(imageFallbackData)}" alt="${escapeHtml(sheet.title)}" />
                 ${downloadIcon}
               </div>
             </div>
@@ -5663,6 +6214,19 @@ function renderTechnicalSheets() {
   initializeTechnicalPremiumEffects();
 }
 
+function resolveSiteMediaSrc(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^(data:|blob:|https?:\/\/)/i.test(raw)) return raw;
+  if (raw.startsWith("/")) return raw;
+  const normalized = raw.replace(/^\.\/+/, "").replace(/^\/+/, "");
+  try {
+    return new URL(normalized, document.baseURI || window.location.href).toString();
+  } catch (error) {
+    return normalized;
+  }
+}
+
 function resolveTechnicalSheetHref(sheet, index) {
   if (!sheet || typeof sheet !== "object") return "";
   const memoryHref = String(technicalSheetDownloadUrls[String(index)] || "").trim();
@@ -5670,8 +6234,14 @@ function resolveTechnicalSheetHref(sheet, index) {
 
   const raw = String(sheet.fileData || "").trim();
   if (!raw) return "";
-  if (/^(data:|blob:|https?:\/\/|\/)/i.test(raw)) return raw;
-  return `/${raw.replace(/^\/+/, "")}`;
+  if (/^(data:|blob:|https?:\/\/)/i.test(raw)) return raw;
+  if (raw.startsWith("/")) return raw;
+  const normalized = raw.replace(/^\.\/+/, "").replace(/^\/+/, "");
+  try {
+    return new URL(normalized, document.baseURI || window.location.href).toString();
+  } catch (error) {
+    return normalized;
+  }
 }
 
 function initializeTechnicalPremiumEffects() {
@@ -5884,9 +6454,21 @@ function setProfilePasswordFeedback(message) {
   profilePasswordFeedbackEl.textContent = String(message || "");
 }
 
-function setProfileAvatarFeedback(message) {
+function setProfileAvatarFeedback(message, tone = "") {
   if (!profileAvatarFeedbackEl) return;
   profileAvatarFeedbackEl.textContent = String(message || "");
+  profileAvatarFeedbackEl.classList.remove("success", "error", "info");
+  if (!message) return;
+  profileAvatarFeedbackEl.classList.add(tone || "info");
+}
+
+function syncProfileAvatarPresetSelection(photoSrc = "") {
+  if (!profileAvatarPresetsEl) return;
+  const normalizedSrc = String(photoSrc || "").trim();
+  profileAvatarPresetsEl.querySelectorAll(".profile-avatar-preset-btn").forEach((button) => {
+    const buttonSrc = String(button.getAttribute("data-avatar-src") || "").trim();
+    button.classList.toggle("is-selected", !!normalizedSrc && buttonSrc === normalizedSrc);
+  });
 }
 
 function setProfileAdminPhotoFeedback(message) {
@@ -6231,6 +6813,7 @@ function openUserProfilePanel() {
   if (profileAvatarImgEl) {
     profileAvatarImgEl.src = profilePhoto || EMPTY_IMAGE_DATA_URI;
   }
+  syncProfileAvatarPresetSelection(profilePhoto);
   setProfileFeedback("");
   setProfilePasswordFeedback("");
   setProfileAvatarFeedback("");
@@ -6274,28 +6857,41 @@ function getConfiguratorMediaControls(actionPrefix, slot, hasImage) {
   return `
     <div class="config-media-admin-controls">
       <input class="config-fill-input" id="${actionPrefix}-input-${slot}" data-slot="${slot}" data-media-role="${actionPrefix}" type="file" accept="image/*" />
-      <button class="config-media-admin-btn" type="button" data-action="${actionPrefix}-pick" data-slot="${slot}" aria-label="Ajouter ou remplacer le visuel" title="Ajouter ou remplacer le visuel">
-        <span aria-hidden="true">+</span>
+      <button class="config-media-admin-btn" type="button" data-action="${actionPrefix}-pick" data-slot="${slot}" aria-label="Uploader une image" title="Uploader une image">
+        <span class="config-media-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="M12 3.5l4.2 4.2-1.4 1.4-1.8-1.8V14h-2V7.3L9.2 9.1 7.8 7.7 12 3.5z"></path>
+            <path d="M5 14.5h2V18h10v-3.5h2V20H5z"></path>
+          </svg>
+        </span>
+      </button>
+      <button class="config-media-admin-btn" type="button" data-action="${actionPrefix}-disk" data-slot="${slot}" aria-label="Choisir une image depuis le disque" title="Choisir une image depuis le disque">
+        <span class="config-media-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="M4 5h7l2 2h7v12H4V5zm2 4v8h12V9H6z"></path>
+          </svg>
+        </span>
       </button>
       ${hasImage ? `
         <button class="config-media-admin-btn config-media-admin-btn-remove" type="button" data-action="${actionPrefix}-remove" data-slot="${slot}" aria-label="Supprimer le visuel" title="Supprimer le visuel">
-          <span aria-hidden="true">×</span>
+          <span class="config-media-icon" aria-hidden="true">✕</span>
         </button>
       ` : ""}
     </div>
   `;
 }
 
-function renderSummaryMediaFrame(src, alt, action, slot = "") {
+function renderSummaryMediaFrame(src, alt, action, slot = "", fallbackSrc = "") {
   const slotAttr = slot ? ` data-slot="${slot}"` : "";
+  const fallbackAttr = fallbackSrc ? ` data-media-fallback="${escapeHtml(resolveSiteMediaSrc(fallbackSrc))}"` : "";
   if (!src) {
     return `<div class="summary-telegram-placeholder">Ajoutez une image HD 6 x 6 cm</div>`;
   }
 
   return `
     <div class="summary-media-stage">
-      <img class="summary-media-backdrop" src="${src}" alt="" aria-hidden="true" />
-      <img src="${src}" alt="${escapeHtml(alt)}" data-action="${action}"${slotAttr} />
+      <img class="summary-media-backdrop" src="${src}" alt="" aria-hidden="true"${fallbackAttr} />
+      <img src="${src}" alt="${escapeHtml(alt)}" data-action="${action}"${slotAttr}${fallbackAttr} />
     </div>
   `;
 }
@@ -6304,9 +6900,10 @@ function renderSummaryTelegramImage(image, title = "") {
   if (!summaryTelegramImageEl) return;
   const src = typeof image === "string" ? image : "";
   const safeTitle = String(title || "").trim();
+  const fallback = PREMIUM_GALLERY_IMAGES[0] || "";
   summaryTelegramImageEl.innerHTML = src
     ? `
-      ${renderSummaryMediaFrame(src, "Visuel Telegram VortexBox", "open-summary-telegram-image")}
+      ${renderSummaryMediaFrame(src, "Visuel Telegram VortexBox", "open-summary-telegram-image", "", fallback)}
       ${getConfiguratorMediaControls("summary-telegram", "main", true)}
       ${safeTitle ? `<p class="summary-media-caption">${escapeHtml(safeTitle)}</p>` : ""}
     `
@@ -6323,11 +6920,18 @@ function renderSummaryExtraImages(images) {
     .map((image, index) => {
       const slot = String(index + 1);
       const hasImage = Boolean(image.trim());
+      const fallback = PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length] || PREMIUM_GALLERY_IMAGES[0] || "";
       return `
         <article class="summary-extra-image-card">
           ${
             hasImage
-              ? renderSummaryMediaFrame(image, `Visuel configurateur supplementaire ${slot}`, "open-summary-extra-image", slot)
+              ? renderSummaryMediaFrame(
+                  image,
+                  `Visuel configurateur supplementaire ${slot}`,
+                  "open-summary-extra-image",
+                  slot,
+                  fallback
+                )
               : '<div class="summary-telegram-placeholder">Ajoutez une image HD 6 x 6 cm</div>'
           }
           ${getConfiguratorMediaControls("summary-extra", slot, hasImage)}
@@ -6338,9 +6942,62 @@ function renderSummaryExtraImages(images) {
 }
 
 function renderConfigurator() {
-  const config = siteContent.configurator;
+  const defaultConfigurator =
+    DEFAULT_CONTENT && DEFAULT_CONTENT.configurator && typeof DEFAULT_CONTENT.configurator === "object"
+      ? DEFAULT_CONTENT.configurator
+      : { components: [], services: [] };
+  const rawConfigurator =
+    siteContent && siteContent.configurator && typeof siteContent.configurator === "object"
+      ? siteContent.configurator
+      : defaultConfigurator;
+
+  const safeComponents = Array.isArray(rawConfigurator.components)
+    ? rawConfigurator.components
+        .map((component) => {
+          if (!component || typeof component !== "object") return null;
+          return {
+            ...component,
+            label:
+              typeof component.label === "string" && component.label.trim()
+                ? component.label.trim()
+                : "Catégorie",
+            options: Array.isArray(component.options)
+              ? component.options
+                  .filter((option) => option && typeof option === "object")
+                  .map((option) => ({
+                    ...option,
+                    name:
+                      typeof option.name === "string" && option.name.trim()
+                        ? option.name.trim()
+                        : "Produit",
+                    price: Number.isFinite(Number(option.price)) ? Number(option.price) : 0,
+                  }))
+              : [],
+          };
+        })
+        .filter(Boolean)
+    : [];
+
+  const safeServices = Array.isArray(rawConfigurator.services)
+    ? rawConfigurator.services
+        .filter((service) => service && typeof service === "object")
+        .map((service) => ({
+          ...service,
+          label:
+            typeof service.label === "string" && service.label.trim() ? service.label.trim() : "Service",
+          price: Number.isFinite(Number(service.price)) ? Number(service.price) : 0,
+        }))
+    : [];
+
+  const config = {
+    ...defaultConfigurator,
+    ...rawConfigurator,
+    components: safeComponents,
+    services: safeServices,
+  };
+
   reconcileConfiguratorSelectionWithContent(config);
-  const componentCount = Array.isArray(config.components) ? config.components.length : 0;
+  const componentCount = config.components.length;
   const selectedComponentCount = Math.max(0, Object.values(selectedConfiguratorState.components || {}).filter(Boolean).length);
   const selectedServiceCount = Math.max(0, Object.values(selectedConfiguratorState.services || {}).filter(Boolean).length);
   const step1Active = selectedComponentCount > 0;
@@ -6364,15 +7021,18 @@ function renderConfigurator() {
       <div class="configurator-visual-gallery">
         ${configImages
           .map(
-            (image, index) => `
+            (image, index) => {
+              const fallback = PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length] || PREMIUM_GALLERY_IMAGES[0] || "";
+              return `
           <article class="config-visual-card" data-config-visual-index="${index}">
-            <img src="${image}" alt="Visuel configurateur ${index + 1}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'} />
+            <img src="${escapeHtml(resolveSiteMediaSrc(image))}" data-media-fallback="${escapeHtml(resolveSiteMediaSrc(fallback))}" alt="Visuel configurateur ${index + 1}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'} />
             <div class="showcase-admin-controls">
               <button class="showcase-admin-btn" type="button" data-action="config-visual-left" data-index="${index}" aria-label="Déplacer à gauche">◀</button>
               <button class="showcase-admin-btn" type="button" data-action="config-visual-right" data-index="${index}" aria-label="Déplacer à droite">▶</button>
             </div>
           </article>
         `
+            }
           )
           .join("")}
       </div>
@@ -6393,7 +7053,8 @@ function renderConfigurator() {
       const optionsHtml = component.options
         .map((option, optionIndex) => {
           const optionId = `config-${componentIndex}-${optionIndex}`;
-          const image = option.image || PREMIUM_GALLERY_IMAGES[optionIndex % PREMIUM_GALLERY_IMAGES.length];
+          const fallbackImage = PREMIUM_GALLERY_IMAGES[optionIndex % PREMIUM_GALLERY_IMAGES.length] || PREMIUM_GALLERY_IMAGES[0] || "";
+          const image = option.image || fallbackImage;
           const descriptionHtml = formatInfoParagraphs(option.description);
           const optionTag = getConfiguratorOptionTag(optionIndex, component.options.length, option.badge || "");
           return `
@@ -6441,7 +7102,8 @@ function renderConfigurator() {
                 ×
               </button>
               <img
-                src="${image}"
+                src="${escapeHtml(resolveSiteMediaSrc(image))}"
+                data-media-fallback="${escapeHtml(resolveSiteMediaSrc(fallbackImage))}"
                 alt="${escapeHtml(option.name)}"
                 loading="lazy"
                 decoding="async"
@@ -6597,7 +7259,7 @@ function renderConfigurator() {
               ${
                 categoryFillImage
                   ? `
-                    <img src="${categoryFillImage}" alt="Visuel complémentaire configurateur 1" data-action="open-config-fill-image" data-slot="1" loading="lazy" decoding="async" />
+                    <img src="${escapeHtml(resolveSiteMediaSrc(categoryFillImage))}" data-media-fallback="${escapeHtml(resolveSiteMediaSrc(PREMIUM_GALLERY_IMAGES[0] || ""))}" alt="Visuel complémentaire configurateur 1" data-action="open-config-fill-image" data-slot="1" loading="lazy" decoding="async" />
                     <p class="config-category-fill-slogan">VortexBox - Une machine premium, pensée pour performer sans compromis.</p>
                     <div class="config-category-fill-badge">
                       <span class="config-category-fill-badge-icon">✦</span>
@@ -6612,7 +7274,7 @@ function renderConfigurator() {
               ${
                 categoryFillImageSecondary
                   ? `
-                    <img src="${categoryFillImageSecondary}" alt="Visuel complémentaire configurateur 2" data-action="open-config-fill-image" data-slot="2" loading="lazy" decoding="async" />
+                    <img src="${escapeHtml(resolveSiteMediaSrc(categoryFillImageSecondary))}" data-media-fallback="${escapeHtml(resolveSiteMediaSrc(PREMIUM_GALLERY_IMAGES[1] || PREMIUM_GALLERY_IMAGES[0] || ""))}" alt="Visuel complémentaire configurateur 2" data-action="open-config-fill-image" data-slot="2" loading="lazy" decoding="async" />
                     <p class="config-category-fill-slogan">VortexBox - L’alliance de la puissance, de la maîtrise thermique et de la finition premium.</p>
                     <div class="config-category-fill-badge">
                       <span class="config-category-fill-badge-icon">✦</span>
@@ -6644,6 +7306,19 @@ function renderConfigurator() {
     </section>
   `;
 
+  // Failsafe: never leave all configurator panels hidden.
+  const categorySelectEl = builderFieldsEl.querySelector("#config-category-select");
+  const panelEls = Array.from(builderFieldsEl.querySelectorAll(".config-panel[data-config-panel]"));
+  if (panelEls.length) {
+    const selectedIndex = Number(categorySelectEl?.value);
+    const hasMatchingSelected = panelEls.some((panel) => Number(panel.dataset.configPanel) === selectedIndex);
+    const targetIndex = hasMatchingSelected ? selectedIndex : Number(panelEls[0].dataset.configPanel || 0);
+    if (categorySelectEl && !hasMatchingSelected) categorySelectEl.value = String(targetIndex);
+    panelEls.forEach((panel) => {
+      panel.classList.toggle("active", Number(panel.dataset.configPanel) === targetIndex);
+    });
+  }
+
   if (promoCodeInputEl) {
     if (activePromoCode) promoCodeInputEl.value = activePromoCode;
   }
@@ -6674,8 +7349,20 @@ function applyContent() {
   renderTechnicalSheets();
   renderReviews();
   hydrateTechnicalSheetDownloads().catch(() => {});
-  renderConfigurator();
-  updateSummary();
+  try {
+    renderConfigurator();
+    updateSummary();
+  } catch (error) {
+    console.error("[VortexBox] configurator render failed", error);
+    if (builderFieldsEl) {
+      builderFieldsEl.innerHTML = `
+        <section class="config-group-card">
+          <h3>Configurateur temporairement indisponible</h3>
+          <p class="config-panel-lead">Une erreur d affichage a ete detectee. Ouvrez le mode admin puis cliquez sur Enregistrer pour regenerer la configuration.</p>
+        </section>
+      `;
+    }
+  }
   renderPremiumBreadcrumb();
   refreshUserDownloadsBadge();
 }
@@ -6877,6 +7564,17 @@ function setPreview(index, image) {
   }
 }
 
+function updateShowcaseFieldLive(index) {
+  if (!Array.isArray(siteContent.showcase) || !siteContent.showcase[index]) return;
+  siteContent.showcase[index].title =
+    String(adminShowcaseTitleInputs[index]?.value || "").trim() || DEFAULT_CONTENT.showcase[index].title;
+  siteContent.showcase[index].icon =
+    String(adminShowcaseIconInputs[index]?.value || "").trim().slice(0, 8) || DEFAULT_CONTENT.showcase[index].icon;
+  siteContent.showcase[index].slogan =
+    String(adminShowcaseSloganInputs[index]?.value || "").trim() || DEFAULT_CONTENT.showcase[index].slogan;
+  renderShowcase();
+}
+
 function openImageModal(src, caption) {
   if (!src) return;
   const shouldRestoreMachineModal = Boolean(machineModalEl && !machineModalEl.classList.contains("hidden"));
@@ -7044,11 +7742,14 @@ function openMachineModal(machine) {
 
 function openTechnicalSheetModal(sheet, index) {
   if (!sheet) return;
-  const imageSrc = sheet.image || PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length];
+  const imageRaw = String(sheet?.image || "").trim();
+  const fallbackImage = String(PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length] || "").trim();
+  const imageSrc = resolveSiteMediaSrc(imageRaw || fallbackImage);
+  const imageFallbackData = getTechnicalImageFallback(imageRaw);
 
   machineModalContentEl.innerHTML = `
-    <article class="technical-modal-card technical-modal-image-wrap">
-      <img class="technical-modal-cover" src="${imageSrc}" alt="${escapeHtml(sheet.title)}" />
+    <article class="technical-modal-card technical-modal-image-only technical-modal-image-wrap">
+      <img class="technical-modal-cover technical-modal-cover-full" src="${escapeHtml(imageSrc)}" data-media-fallback="${escapeHtml(imageFallbackData)}" alt="${escapeHtml(sheet.title)}" />
     </article>
   `;
   machineModalEl.classList.remove("hidden");
@@ -7134,8 +7835,10 @@ function renderAdminMachinesEditor() {
 
 function renderAdminTechnicalSheetsEditor() {
   adminTechnicalSheetsList.innerHTML = adminTechnicalSheetsDraft
-    .map(
-      (sheet, index) => `
+    .map((sheet, index) => {
+      const imageRaw = String(sheet?.image || "").trim();
+      const previewSrc = imageRaw ? resolveSiteMediaSrc(imageRaw) : "";
+      return `
       <article class="admin-tech-card">
         <div class="admin-machine-header">
           <h5>Fiche ${index + 1}</h5>
@@ -7147,10 +7850,10 @@ function renderAdminTechnicalSheetsEditor() {
           <div class="admin-file-field">
             <input class="admin-file-input admin-tech-image-input" type="file" accept="image/*" data-tech-index="${index}" />
             <div class="admin-file-picker"><button class="admin-file-button" type="button" data-action="pick-tech-image" data-tech-index="${index}">Choisir une image</button></div>
-            <span class="admin-file-name">${sheet.image ? "Image prête" : "Aucune image"}</span>
+            <span class="admin-file-name">${previewSrc ? "Image prête" : "Aucune image"}</span>
           </div>
         </label>
-        <img class="admin-preview" alt="Aperçu fiche ${index + 1}" style="display:${sheet.image ? "block" : "none"};" src="${sheet.image || ""}" />
+        <img class="admin-preview" alt="Aperçu fiche ${index + 1}" style="display:${previewSrc ? "block" : "none"};" src="${escapeHtml(previewSrc)}" />
         <label>
           Fichier technique téléchargeable
           <div class="admin-file-field">
@@ -7160,8 +7863,8 @@ function renderAdminTechnicalSheetsEditor() {
           </div>
         </label>
       </article>
-    `
-    )
+    `;
+    })
     .join("");
 }
 
@@ -7243,7 +7946,10 @@ function renderAdminConfiguratorEditor() {
                 <input type="text" data-action="component-option-badge" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" value="${escapeHtml(option.badge || "")}" placeholder="Badge (ex: Equilibre conseille, Signature premium)" />
                 <div class="admin-file-field">
                   <input class="admin-file-input admin-component-image-input" type="file" accept="image/*" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" />
-                  <div class="admin-file-picker"><button class="admin-file-button" type="button" data-action="pick-component-image" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}">Image produit</button></div>
+                  <div class="admin-file-picker">
+                    <button class="admin-file-button admin-file-button-icon" type="button" data-action="pick-component-image" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" aria-label="Uploader image produit" title="Uploader image produit"><span class="admin-icon-glyph admin-icon-glyph-upload" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M12 3.5l4.2 4.2-1.4 1.4-1.8-1.8V14h-2V7.3L9.2 9.1 7.8 7.7 12 3.5z"></path><path d="M5 14.5h2V18h10v-3.5h2V20H5z"></path></svg></span></button>
+                    <button class="admin-file-button admin-file-button-disk admin-file-button-icon" type="button" data-action="pick-component-image-disk" data-component-index="${activeAdminComponentIndex}" data-option-index="${oIndex}" aria-label="Choisir image produit sur disque" title="Choisir image produit sur disque"><span class="admin-icon-glyph admin-icon-glyph-disk" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M4 5h7l2 2h7v12H4V5zm2 4v8h12V9H6z"></path></svg></span></button>
+                  </div>
                   <span class="admin-file-name">${option.image ? "Image prête" : "Aucune image"}</span>
                 </div>
               </div>
@@ -7458,6 +8164,152 @@ function renderAdminReviewsEditor() {
     .join("");
 }
 
+function loadAdminProcessConsole() {
+  try {
+    const raw = localStorage.getItem(ADMIN_PROCESS_CONSOLE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((entry) => ({
+        id: String(entry?.id || ""),
+        at: String(entry?.at || ""),
+        level: String(entry?.level || "error"),
+        source: String(entry?.source || "app"),
+        message: String(entry?.message || ""),
+        details: String(entry?.details || ""),
+      }))
+      .filter((entry) => entry.message)
+      .slice(0, ADMIN_PROCESS_CONSOLE_LIMIT);
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveAdminProcessConsole(entries) {
+  try {
+    localStorage.setItem(
+      ADMIN_PROCESS_CONSOLE_KEY,
+      JSON.stringify((Array.isArray(entries) ? entries : []).slice(0, ADMIN_PROCESS_CONSOLE_LIMIT))
+    );
+  } catch (error) {}
+}
+
+function recordAdminProcessConsole(level, source, message, details = "") {
+  const text = String(message || "").trim();
+  if (!text) return;
+  if (!adminProcessConsoleEntries.length) {
+    adminProcessConsoleEntries = loadAdminProcessConsole();
+  }
+  const entry = {
+    id: `proc-console-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    at: new Date().toISOString(),
+    level: String(level || "error").trim().toLowerCase() || "error",
+    source: String(source || "app").trim() || "app",
+    message: text,
+    details: String(details || "").trim(),
+  };
+  adminProcessConsoleEntries.unshift(entry);
+  adminProcessConsoleEntries = adminProcessConsoleEntries.slice(0, ADMIN_PROCESS_CONSOLE_LIMIT);
+  saveAdminProcessConsole(adminProcessConsoleEntries);
+  if (activeAdminProcessSubtab === "console") {
+    renderAdminProcessConsoleEditor();
+  }
+}
+
+function renderAdminProcessConsoleEditor() {
+  if (!adminProcessConsoleListEl || !adminProcessConsoleMetaEl) return;
+  if (!adminProcessConsoleEntries.length) {
+    adminProcessConsoleEntries = loadAdminProcessConsole();
+  }
+  const entries = Array.isArray(adminProcessConsoleEntries) ? adminProcessConsoleEntries : [];
+  if (!entries.length) {
+    adminProcessConsoleMetaEl.textContent = "Aucun événement enregistré.";
+    adminProcessConsoleListEl.innerHTML = "<p>Aucun événement pour le moment.</p>";
+    return;
+  }
+  const latestAt = new Date(entries[0].at);
+  const latestLabel = Number.isNaN(latestAt.getTime()) ? entries[0].at : latestAt.toLocaleString("fr-FR");
+  adminProcessConsoleMetaEl.textContent = `${entries.length} événement(s) enregistré(s). Dernier: ${latestLabel}`;
+  adminProcessConsoleListEl.innerHTML = entries
+    .map((entry) => {
+      const at = new Date(entry.at);
+      const dateLabel = Number.isNaN(at.getTime()) ? entry.at : at.toLocaleString("fr-FR");
+      const levelLabel = String(entry.level || "error").toUpperCase();
+      const details = entry.details
+        ? `<pre class="admin-process-console-details">${escapeHtml(entry.details)}</pre>`
+        : "";
+      return `
+        <article class="admin-tech-card">
+          <div class="admin-machine-header">
+            <h5>${escapeHtml(levelLabel)} · ${escapeHtml(entry.source || "app")}</h5>
+            <span class="admin-file-name">${escapeHtml(dateLabel)}</span>
+          </div>
+          <p>${escapeHtml(entry.message)}</p>
+          ${details}
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function initializeAdminProcessConsoleCapture() {
+  if (adminProcessConsoleCaptureBound) return;
+  adminProcessConsoleCaptureBound = true;
+
+  // Resource loading errors (img/script/link) do not always bubble to window.error.
+  // Capture them explicitly so the admin console shows broken media URLs.
+  window.addEventListener(
+    "error",
+    (event) => {
+      const target = event?.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target instanceof HTMLImageElement) {
+        const mediaFallback = String(target.dataset.mediaFallback || "").trim();
+        if (mediaFallback && target.dataset.mediaFallbackApplied !== "1") {
+          target.dataset.mediaFallbackApplied = "1";
+          target.src = mediaFallback;
+          return;
+        }
+      }
+      const tag = String(target.tagName || "").toLowerCase();
+      if (!["img", "video", "audio", "script", "link"].includes(tag)) return;
+      const attrSrc = String(target.getAttribute("src") || target.getAttribute("href") || "").trim();
+      const currentSrc =
+        typeof target.currentSrc === "string" && target.currentSrc.trim()
+          ? target.currentSrc.trim()
+          : "";
+      const sourceUrl = currentSrc || attrSrc;
+      if (!sourceUrl) return;
+      const message = `Ressource ${tag.toUpperCase()} non chargée.`;
+      const details = sourceUrl;
+      recordAdminProcessConsole("error", "resource", message, details);
+    },
+    true
+  );
+
+  window.addEventListener("error", (event) => {
+    const message = String(event?.message || "Erreur JavaScript").trim();
+    const source = String(event?.filename || "window.error");
+    const location = event?.lineno ? `${source}:${event.lineno}:${event.colno || 0}` : source;
+    recordAdminProcessConsole("error", "js", message, location);
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event?.reason;
+    const message =
+      typeof reason === "string"
+        ? reason
+        : String(reason?.message || "Promesse rejetée sans gestion.");
+    const details = (() => {
+      try {
+        if (reason && typeof reason === "object") return JSON.stringify(reason, null, 2);
+      } catch (error) {}
+      return "";
+    })();
+    recordAdminProcessConsole("error", "promise", message, details);
+  });
+}
+
 function setAdminProcessFeedback(message, tone = "") {
   if (!adminProcessFeedbackEl) return;
   const text = String(message || "");
@@ -7468,6 +8320,7 @@ function setAdminProcessFeedback(message, tone = "") {
   const variant = tone || (isError ? "error" : isSuccess ? "success" : "info");
   if (text) {
     adminProcessFeedbackEl.classList.add(variant);
+    recordAdminProcessConsole(variant, "processus", text);
     if (adminEditor && !adminEditor.classList.contains("hidden")) {
       showAdminToast(text, variant);
     }
@@ -8606,7 +9459,10 @@ function setAdminProcessInvoiceFeedback(message, tone = "") {
   adminProcessInvoiceFeedbackEl.textContent = text;
   adminProcessInvoiceFeedbackEl.classList.remove("success", "error", "info");
   if (!text) return;
-  adminProcessInvoiceFeedbackEl.classList.add(tone || "info");
+  const inferredError = /(impossible|erreur|invalide|échou|echec|refus|introuvable)/i.test(text);
+  const variant = tone || (inferredError ? "error" : "info");
+  adminProcessInvoiceFeedbackEl.classList.add(variant);
+  recordAdminProcessConsole(variant, "facturation", text);
 }
 
 function calculateProcessInvoiceTotals(invoice) {
@@ -9069,6 +9925,7 @@ function triggerDownloadFromPath(href, fileName = "") {
 function renderAdminProcessusEditor() {
   if (!adminProcessList) return;
   setAdminProcessSubtab(activeAdminProcessSubtab);
+  renderAdminProcessConsoleEditor();
   renderAdminCrmEditor();
   renderAdminProcessInvoicesEditor();
   renderAdminProcessGamesEditor();
@@ -9256,7 +10113,9 @@ function fillAdminFields() {
   adminMachinesDraft = normalizeMachines(JSON.parse(JSON.stringify(siteContent.machines))).map((machine) =>
     ensureMachineBackFields(machine)
   );
-  adminTechnicalSheetsDraft = JSON.parse(JSON.stringify(siteContent.technicalSheets || []));
+  adminTechnicalSheetsDraft = normalizeTechnicalSheets(
+    JSON.parse(JSON.stringify(siteContent.technicalSheets || []))
+  );
   adminAboutVideosDraft = JSON.parse(JSON.stringify(siteContent.aboutVideos || cloneDefaultContent().aboutVideos));
   adminAboutGalleryDraft = JSON.parse(JSON.stringify(siteContent.aboutGallery || cloneDefaultContent().aboutGallery));
   if (!Array.isArray(adminAboutGalleryDraft.photos)) adminAboutGalleryDraft.photos = [];
@@ -9384,6 +10243,7 @@ function fillAdminFields() {
   adminShowcaseImages = siteContent.showcase.map((item) => item.image || "");
   siteContent.showcase.forEach((item, index) => {
     adminShowcaseTitleInputs[index].value = item.title;
+    if (adminShowcaseIconInputs[index]) adminShowcaseIconInputs[index].value = String(item.icon || "");
     adminShowcaseSloganInputs[index].value = item.slogan;
     adminShowcaseFileInputs[index].value = "";
     adminShowcaseFileNames[index].textContent = "Aucun fichier choisi";
@@ -9605,6 +10465,7 @@ function setFeedback(message, tone = "") {
   const inferredSuccess = /(enregistr|réussi|prêt|ajout|supprim|déverrouillé|mis à jour|réactivé|retiré)/i.test(text);
   const variant = tone || (inferredError ? "error" : inferredSuccess ? "success" : "info");
   adminFeedback.classList.add(variant);
+  recordAdminProcessConsole(variant, "admin", text);
   if (adminEditor && !adminEditor.classList.contains("hidden")) {
     showAdminToast(text, variant);
   }
@@ -9660,7 +10521,12 @@ function loadAdminHistory() {
 }
 
 function saveAdminHistory(history) {
-  localStorage.setItem(ADMIN_HISTORY_KEY, JSON.stringify(Array.isArray(history) ? history.slice(0, ADMIN_HISTORY_LIMIT) : []));
+  const list = Array.isArray(history) ? history.slice(0, ADMIN_HISTORY_LIMIT) : [];
+  const compact = list.map((entry) => ({
+    ...entry,
+    content: compactValueForStorage(entry?.content),
+  }));
+  localStorage.setItem(ADMIN_HISTORY_KEY, JSON.stringify(compact));
 }
 
 function clearAdminHistory() {
@@ -9725,18 +10591,12 @@ function pushAdminHistorySnapshot(content) {
 
 function scheduleAdminAutosave() {
   if (adminAutosaveTimer) clearTimeout(adminAutosaveTimer);
-  setAdminAutosaveStatus("Brouillon détecté. Auto-save dans 1 minute...", "info");
+  setAdminAutosaveStatus("Brouillon détecté. Sauvegarde auto sécurisée prête (clic Enregistrer recommandé).", "info");
   adminAutosaveTimer = window.setTimeout(() => {
     if (!adminEditor || adminEditor.classList.contains("hidden")) return;
-    try {
-      adminEditor.requestSubmit();
-      adminAutosaveLastAt = new Date().toISOString();
-      const date = new Date(adminAutosaveLastAt).toLocaleTimeString("fr-FR");
-      setAdminAutosaveStatus(`Auto-save effectué à ${date}`, "success");
-      renderAdminOverviewKpis();
-    } catch (error) {
-      setAdminAutosaveStatus("Auto-save impossible.", "error");
-    }
+    adminAutosaveLastAt = new Date().toISOString();
+    const date = new Date(adminAutosaveLastAt).toLocaleTimeString("fr-FR");
+    setAdminAutosaveStatus(`Brouillon mis à jour à ${date}. Cliquez Enregistrer pour valider définitivement.`, "info");
   }, 60000);
 }
 
@@ -9891,6 +10751,54 @@ function readFileAsDataURL(file) {
   });
 }
 
+async function resolveAdminImageValue(file, kind, fallbackFileName, resizeFn = resizeImage, options = {}) {
+  const strictDisk = Boolean(options && options.strictDisk);
+  if (file && (await checkDiskApiAvailable())) {
+    try {
+      const normalizedKind = String(kind || "").trim().toLowerCase();
+      const normalizedFallback = String(fallbackFileName || "").trim().toLowerCase();
+      const useFixedConfiguratorTarget =
+        normalizedKind === "configurator" && /^configurator-(1|2|3)\.webp$/.test(normalizedFallback);
+
+      let safeName = sanitizeFileName(String(file.name || fallbackFileName), fallbackFileName);
+      if (useFixedConfiguratorTarget) {
+        safeName = sanitizeFileName(String(fallbackFileName || safeName), safeName);
+      }
+
+      let path = "";
+      if (useFixedConfiguratorTarget) {
+        const resized = await resizeFn(file);
+        path = await uploadDataUrlToDisk(kind, safeName, resized);
+      } else {
+        path = await uploadBlobToDisk(kind, safeName, file);
+      }
+      if (typeof path === "string" && path.trim()) return path.trim();
+    } catch (error) {
+      lastDiskSyncError = String(error?.message || "Upload image disque impossible.");
+      if (strictDisk) {
+        throw new Error(lastDiskSyncError);
+      }
+    }
+  }
+  if (strictDisk) {
+    throw new Error(lastDiskSyncError || "Upload disque requis pour cette image.");
+  }
+  try {
+    const resized = await resizeFn(file);
+    if (typeof resized === "string" && resized.length > 900000) {
+      // Keep fallback payload small enough for localStorage persistence.
+      return await exportImageDataUrl(file, { maxLongEdge: 1920, quality: 0.86 });
+    }
+    return resized;
+  } catch (error) {
+    try {
+      return await exportImageDataUrl(file, { maxLongEdge: 1920, quality: 0.86 });
+    } catch (compressError) {
+      return readFileAsDataURL(file);
+    }
+  }
+}
+
 async function checkDiskApiAvailable() {
   if (diskApiAvailability === true) return true;
   try {
@@ -9920,6 +10828,27 @@ async function uploadDataUrlToDisk(kind, fileName, dataUrl) {
     throw new Error("Chemin fichier manquant");
   }
   return payload.path;
+}
+
+async function savePremiumPhotoSource(slot, dataUrl) {
+  const safeSlot = Number(slot);
+  if (!Number.isInteger(safeSlot) || safeSlot < 1 || safeSlot > 3) {
+    throw new Error("Slot premium invalide.");
+  }
+  const response = await fetch("/api/save-premium-photo-source", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slot: safeSlot, dataUrl }),
+  });
+  if (response.status === 401) {
+    throw new Error(handleExpiredAdminSession());
+  }
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok || !payload?.path) {
+    throw new Error(String(payload?.error || "Sauvegarde premium impossible."));
+  }
+  return String(payload.path || "").trim();
 }
 
 async function deleteUploadedFileFromDisk(filePath) {
@@ -10056,6 +10985,154 @@ async function persistDataUrlAsset(value, kind, fileName) {
   }
 }
 
+async function fetchExistingUploads(kind, type = "image") {
+  const safeKind = String(kind || "").trim().toLowerCase();
+  if (!safeKind) return [];
+  const safeType = String(type || "image").trim().toLowerCase();
+  const response = await fetch(
+    `/api/uploads-list?kind=${encodeURIComponent(safeKind)}&type=${encodeURIComponent(safeType)}`,
+    { credentials: "same-origin", cache: "no-store" }
+  );
+  if (response.status === 401) {
+    throw new Error(handleExpiredAdminSession());
+  }
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(String(payload?.error || "Liste des fichiers indisponible."));
+  }
+  return Array.isArray(payload.files) ? payload.files : [];
+}
+
+async function pickExistingUploadPath(kind, label = "image") {
+  const files = await fetchExistingUploads(kind, "image");
+  if (!files.length) {
+    throw new Error(`Aucune ${label} disponible dans le dossier ${kind}.`);
+  }
+  const visible = files.slice(0, 30);
+  const listing = visible.map((item, idx) => `${idx + 1}. ${item.name}`).join("\n");
+  const answer = window.prompt(
+    `Choisir ${label} depuis le disque (${kind})\nEntrez un numéro (1-${visible.length}) ou une partie du nom:\n\n${listing}`,
+    "1"
+  );
+  if (answer === null) return "";
+  const raw = String(answer || "").trim();
+  if (!raw) return "";
+  const numeric = Number(raw);
+  if (Number.isInteger(numeric) && numeric >= 1 && numeric <= visible.length) {
+    return String(visible[numeric - 1].path || "");
+  }
+  const needle = raw.toLowerCase();
+  const found = files.find((item) => String(item?.name || "").toLowerCase().includes(needle));
+  if (found?.path) return String(found.path);
+  throw new Error("Aucune image ne correspond à votre sélection.");
+}
+
+function isInlineDataUrl(value) {
+  return typeof value === "string" && value.startsWith("data:");
+}
+
+function collectInlineMediaRefs(value, currentPath = [], acc = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => collectInlineMediaRefs(item, currentPath.concat(String(index)), acc));
+    return acc;
+  }
+  if (value && typeof value === "object") {
+    Object.keys(value).forEach((key) => {
+      collectInlineMediaRefs(value[key], currentPath.concat(key), acc);
+    });
+    return acc;
+  }
+  if (isInlineDataUrl(value)) {
+    acc.push({ path: currentPath, value });
+  }
+  return acc;
+}
+
+function getNestedValue(root, path) {
+  let ref = root;
+  for (let i = 0; i < path.length; i += 1) {
+    if (!ref || typeof ref !== "object") return undefined;
+    ref = ref[path[i]];
+  }
+  return ref;
+}
+
+function setNestedValue(root, path, nextValue) {
+  let ref = root;
+  for (let i = 0; i < path.length - 1; i += 1) {
+    const key = path[i];
+    if (!ref[key] || typeof ref[key] !== "object") {
+      ref[key] = /^\d+$/.test(path[i + 1]) ? [] : {};
+    }
+    ref = ref[key];
+  }
+  ref[path[path.length - 1]] = nextValue;
+}
+
+function inferUploadKindForPath(path) {
+  const joined = path.join(".");
+  if (joined.startsWith("showcase.")) return "showcase";
+  if (joined.startsWith("technicalSheets.") && joined.endsWith(".image")) return "technical-images";
+  if (joined.startsWith("technicalSheets.") && joined.endsWith(".fileData")) return "technical-docs";
+  if (joined.startsWith("gamesCatalog.")) return "games-covers";
+  if (joined.startsWith("aboutGallery.photos.")) return "about-gallery";
+  if (joined.startsWith("aboutVideos.") && joined.endsWith(".videoData")) return "about-videos";
+  if (joined.startsWith("machines.") && joined.includes(".image")) return "machine-images";
+  if (joined.startsWith("processus.files.") && joined.endsWith(".fileData")) return "processus";
+  if (joined.startsWith("configurator.components.") && joined.endsWith(".image")) return "component-images";
+  if (joined.startsWith("configurator.")) return "configurator";
+  return "misc";
+}
+
+function inferUploadFileNameForPath(root, path, fallbackExt = "webp") {
+  const joined = path.join(".");
+  const safeTail = sanitizeFileName(path[path.length - 1] || "asset", "asset");
+  if (joined.startsWith("gamesCatalog.")) {
+    const index = Number(path[1] || 0);
+    const title = String(root?.gamesCatalog?.[index]?.title || `game-${index + 1}`);
+    return `${sanitizeFileName(title, `game-${index + 1}`)}.webp`;
+  }
+  if (joined.startsWith("technicalSheets.") && joined.endsWith(".fileData")) {
+    const index = Number(path[1] || 0);
+    const fileName = String(root?.technicalSheets?.[index]?.fileName || `fiche-technique-${index + 1}.pdf`);
+    return sanitizeFileName(fileName, `fiche-technique-${index + 1}.pdf`);
+  }
+  if (joined.startsWith("aboutVideos.") && joined.endsWith(".videoData")) {
+    const index = Number(path[1] || 0);
+    const fileName = String(root?.aboutVideos?.[index]?.fileName || `about-video-${index + 1}.mp4`);
+    return sanitizeFileName(fileName, `about-video-${index + 1}.mp4`);
+  }
+  if (joined.startsWith("processus.files.") && joined.endsWith(".fileData")) {
+    const index = Number(path[2] || 0);
+    const fileName = String(root?.processus?.files?.[index]?.fileName || `processus-${index + 1}.pdf`);
+    return sanitizeFileName(fileName, `processus-${index + 1}.pdf`);
+  }
+  return `${sanitizeFileName(safeTail, safeTail)}.${fallbackExt}`;
+}
+
+async function materializeInlineMediaForDisk(content) {
+  if (!content || typeof content !== "object") return content;
+  const refs = collectInlineMediaRefs(content);
+  if (!refs.length) return content;
+
+  let changed = false;
+  for (const ref of refs) {
+    const currentValue = getNestedValue(content, ref.path);
+    if (!isInlineDataUrl(currentValue)) continue;
+    const kind = inferUploadKindForPath(ref.path);
+    const ext =
+      currentValue.startsWith("data:application/pdf") ? "pdf" : currentValue.startsWith("data:video/") ? "mp4" : "webp";
+    const fileName = inferUploadFileNameForPath(content, ref.path, ext);
+    const persisted = await persistDataUrlAsset(currentValue, kind, fileName);
+    if (typeof persisted === "string" && persisted && persisted !== currentValue) {
+      setNestedValue(content, ref.path, persisted);
+      changed = true;
+    }
+  }
+
+  return changed ? content : content;
+}
+
 async function saveContentSnapshotToDisk(content) {
   lastDiskSyncError = "";
   if (isAdminSessionAuthorized()) {
@@ -10074,11 +11151,62 @@ async function saveContentSnapshotToDisk(content) {
     return false;
   }
   try {
+    const contentToSave = await materializeInlineMediaForDisk(content);
+    const mergeConfiguratorMediaFromSource = (target, source) => {
+      if (!target || typeof target !== "object") return target;
+      if (!source || typeof source !== "object") return target;
+      const out = { ...target };
+      const tgtCfg = normalizeConfigurator(out.configurator || {});
+      const srcCfg = normalizeConfigurator(source.configurator || {});
+
+      const pickNonEmpty = (value, fallback = "") => {
+        const raw = String(value || "").trim();
+        return raw || String(fallback || "").trim();
+      };
+
+      tgtCfg.visualImages = [0, 1, 2].map((i) => pickNonEmpty(srcCfg.visualImages?.[i], tgtCfg.visualImages?.[i]));
+      tgtCfg.categoryFillImage = pickNonEmpty(srcCfg.categoryFillImage, tgtCfg.categoryFillImage);
+      tgtCfg.categoryFillImageSecondary = pickNonEmpty(
+        srcCfg.categoryFillImageSecondary,
+        tgtCfg.categoryFillImageSecondary
+      );
+      tgtCfg.summaryTelegramImage = pickNonEmpty(srcCfg.summaryTelegramImage, tgtCfg.summaryTelegramImage);
+      tgtCfg.summaryExtraImages = [0, 1].map((i) =>
+        pickNonEmpty(srcCfg.summaryExtraImages?.[i], tgtCfg.summaryExtraImages?.[i])
+      );
+
+      const srcComponents = Array.isArray(srcCfg.components) ? srcCfg.components : [];
+      const tgtComponents = Array.isArray(tgtCfg.components) ? tgtCfg.components : [];
+      tgtCfg.components = tgtComponents.map((targetComp, cIndex) => {
+        const sourceComp =
+          srcComponents.find((candidate) => String(candidate?.id || "").trim() === String(targetComp?.id || "").trim()) ||
+          srcComponents[cIndex];
+        if (!sourceComp || typeof sourceComp !== "object") return targetComp;
+        const sourceOptions = Array.isArray(sourceComp.options) ? sourceComp.options : [];
+        const targetOptions = Array.isArray(targetComp.options) ? targetComp.options : [];
+        const mergedOptions = targetOptions.map((targetOpt, oIndex) => {
+          const sourceOpt =
+            sourceOptions.find(
+              (candidate) => String(candidate?.name || "").trim() === String(targetOpt?.name || "").trim()
+            ) || sourceOptions[oIndex];
+          if (!sourceOpt || typeof sourceOpt !== "object") return targetOpt;
+          return {
+            ...targetOpt,
+            image: pickNonEmpty(sourceOpt.image, targetOpt.image),
+          };
+        });
+        return { ...targetComp, options: mergedOptions };
+      });
+
+      out.configurator = normalizeConfigurator(tgtCfg);
+      return out;
+    };
+
     const response = await fetch("/api/save-content", {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content: contentToSave }),
     });
     const payload = await response.json().catch(() => ({}));
     if (response.status === 401) {
@@ -10092,12 +11220,141 @@ async function saveContentSnapshotToDisk(content) {
       markContentPendingDiskSync(true);
       return false;
     }
+    if (payload?.ignoredStaleWrite) {
+      // Auto-réparation: fusionner les médias configurateur dans le snapshot disque courant
+      // puis resauvegarder avec un timestamp plus récent.
+      try {
+        const latestDisk = await getDiskContentSnapshotSafe();
+        if (latestDisk && typeof latestDisk === "object") {
+          const repaired = mergeConfiguratorMediaFromSource(
+            { ...latestDisk, _updatedAt: Date.now() },
+            contentToSave
+          );
+          const retryResponse = await fetch("/api/save-content", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: repaired }),
+          });
+          const retryPayload = await retryResponse.json().catch(() => ({}));
+          if (retryResponse.ok && retryPayload?.ok && !retryPayload?.ignoredStaleWrite) {
+            try {
+              if (!IS_LOCAL_DISK_ONLY) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(repaired));
+              }
+              saveAuthoritativeContentSnapshot(repaired);
+            } catch (syncError) {}
+            markContentPendingDiskSync(false);
+            return true;
+          }
+        }
+      } catch (retryError) {}
+      lastDiskSyncError = "Une sauvegarde plus récente est déjà présente sur disque.";
+      markContentPendingDiskSync(true);
+      return false;
+    }
+    // Keep the exact just-saved snapshot as local source of truth.
+    // Re-fetching /api/content here can race and overwrite recent admin edits.
+    try {
+      if (contentToSave && typeof contentToSave === "object") {
+        if (!IS_LOCAL_DISK_ONLY) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(contentToSave));
+        }
+        saveAuthoritativeContentSnapshot(contentToSave);
+      }
+    } catch (syncError) {}
+
+    // Post-save consistency check + self-heal for media sections that may get
+    // overwritten by out-of-order saves or stale drafts.
+    try {
+      const verifyResponse = await fetch("/api/content", { cache: "no-store" });
+      if (verifyResponse.ok) {
+        const verifyPayload = await verifyResponse.json().catch(() => null);
+        const diskContent =
+          verifyPayload?.ok && verifyPayload?.content && typeof verifyPayload.content === "object"
+            ? verifyPayload.content
+            : null;
+        if (diskContent && contentToSave && typeof contentToSave === "object") {
+          const normalizePathValue = (value) => String(value || "").trim();
+          const expectedShowcase = Array.isArray(contentToSave.showcase) ? contentToSave.showcase : [];
+          const diskShowcase = Array.isArray(diskContent.showcase) ? diskContent.showcase : [];
+          const expectedTech = Array.isArray(contentToSave.technicalSheets) ? contentToSave.technicalSheets : [];
+          const diskTech = Array.isArray(diskContent.technicalSheets) ? diskContent.technicalSheets : [];
+          const expectedGames = Array.isArray(contentToSave.gamesCatalog) ? contentToSave.gamesCatalog : [];
+          const diskGames = Array.isArray(diskContent.gamesCatalog) ? diskContent.gamesCatalog : [];
+          const expectedVideos = Array.isArray(contentToSave.aboutVideos) ? contentToSave.aboutVideos : [];
+          const diskVideos = Array.isArray(diskContent.aboutVideos) ? diskContent.aboutVideos : [];
+          const expectedConfigurator = normalizeConfigurator(contentToSave.configurator || {});
+          const diskConfigurator = normalizeConfigurator(diskContent.configurator || {});
+
+          const hasShowcaseMismatch = expectedShowcase.some(
+            (item, i) => normalizePathValue(item?.image) !== normalizePathValue(diskShowcase[i]?.image)
+          );
+          const hasTechMismatch = expectedTech.some(
+            (item, i) => normalizePathValue(item?.image) !== normalizePathValue(diskTech[i]?.image)
+          );
+          const hasGamesMismatch = expectedGames.some(
+            (item, i) => normalizePathValue(item?.image) !== normalizePathValue(diskGames[i]?.image)
+          );
+          const hasVideosMismatch = expectedVideos.some((item, i) => {
+            return (
+              normalizePathValue(item?.videoData) !== normalizePathValue(diskVideos[i]?.videoData) ||
+              normalizePathValue(item?.videoWebm) !== normalizePathValue(diskVideos[i]?.videoWebm)
+            );
+          });
+          const hasConfiguratorMismatch =
+            JSON.stringify(expectedConfigurator) !== JSON.stringify(diskConfigurator);
+
+          if (hasShowcaseMismatch || hasTechMismatch || hasGamesMismatch || hasVideosMismatch || hasConfiguratorMismatch) {
+            const repairContent = {
+              ...diskContent,
+              _updatedAt: Date.now(),
+              showcase: contentToSave.showcase,
+              technicalSheets: contentToSave.technicalSheets,
+              gamesCatalog: contentToSave.gamesCatalog,
+              aboutVideos: contentToSave.aboutVideos,
+              configurator: contentToSave.configurator,
+            };
+            const repairResponse = await fetch("/api/save-content", {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content: repairContent }),
+            });
+            const repairPayload = await repairResponse.json().catch(() => ({}));
+            if (!repairResponse.ok || !repairPayload?.ok || repairPayload?.ignoredStaleWrite) {
+              lastDiskSyncError = String(repairPayload?.error || "Auto-réparation disque impossible.");
+              markContentPendingDiskSync(true);
+              return false;
+            }
+            try {
+              if (!IS_LOCAL_DISK_ONLY) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(repairContent));
+              }
+              saveAuthoritativeContentSnapshot(repairContent);
+            } catch (repairStorageError) {}
+          }
+        }
+      }
+    } catch (verifyError) {}
     markContentPendingDiskSync(false);
     return true;
   } catch (error) {
     lastDiskSyncError = String(error?.message || "Erreur réseau pendant la sauvegarde.");
     markContentPendingDiskSync(true);
     return false;
+  }
+}
+
+async function getDiskContentSnapshotSafe() {
+  try {
+    const response = await fetch("/api/content", { cache: "no-store" });
+    if (!response.ok) return null;
+    const payload = await response.json().catch(() => null);
+    if (!payload?.ok || !payload?.content || typeof payload.content !== "object") return null;
+    return payload.content;
+  } catch (error) {
+    return null;
   }
 }
 
@@ -10124,25 +11381,133 @@ function syncConfiguratorSelectionFromForm() {
   selectedConfiguratorState = { components, services };
 }
 
+function syncConfiguratorDraftToSiteContent() {
+  if (!siteContent || typeof siteContent !== "object") return;
+  if (!siteContent.configurator || typeof siteContent.configurator !== "object") {
+    siteContent.configurator = {};
+  }
+
+  const nextConfigurator = siteContent.configurator;
+
+  if (Array.isArray(adminConfiguratorImagesDraft) && adminConfiguratorImagesDraft.length) {
+    const currentVisualImages = Array.isArray(nextConfigurator.visualImages)
+      ? [0, 1, 2].map((i) => String(nextConfigurator.visualImages[i] || "").trim())
+      : ["", "", ""];
+    // Important: never overwrite persisted images with empty admin draft slots.
+    nextConfigurator.visualImages = [0, 1, 2].map((i) => {
+      const draftValue = String(adminConfiguratorImagesDraft[i] || "").trim();
+      const currentValue = String(currentVisualImages[i] || "").trim();
+      return draftValue || currentValue;
+    });
+  }
+
+  if (Array.isArray(adminComponentsDraft) && adminComponentsDraft.length) {
+    const existingComponents = Array.isArray(nextConfigurator.components) ? nextConfigurator.components : [];
+    nextConfigurator.components = adminComponentsDraft.map((component, cIndex) => {
+      const componentId = sanitizeId(component?.id || component?.label, `categorie-${cIndex + 1}`);
+      const existingComp =
+        existingComponents.find(
+          (candidate) => String(candidate?.id || "").trim() === String(componentId).trim()
+        ) || existingComponents[cIndex];
+      const existingOptions = Array.isArray(existingComp?.options) ? existingComp.options : [];
+      const draftOptions = Array.isArray(component?.options) ? component.options : [];
+      const options = draftOptions.map((option, oIndex) => {
+        const existingByName = existingOptions.find(
+          (candidate) =>
+            String(candidate?.name || "").trim() &&
+            String(candidate?.name || "").trim() === String(option?.name || "").trim()
+        );
+        const existingByIndex = existingOptions[oIndex];
+        const persistedImage = String(existingByName?.image || existingByIndex?.image || "").trim();
+        return {
+          name: String(option?.name || "").trim(),
+          price: Number(option?.price) || 0,
+          image: String(option?.image || "").trim() || persistedImage,
+          description: String(option?.description || "").trim(),
+          badge: String(option?.badge || "").trim(),
+        };
+      });
+
+      return {
+        id: componentId,
+        label: String(component?.label || "").trim(),
+        options,
+      };
+    });
+  }
+
+  if (Array.isArray(adminServicesDraft) && adminServicesDraft.length) {
+    nextConfigurator.services = adminServicesDraft.map((service, sIndex) => ({
+      id: sanitizeId(service?.id || service?.label, `service-${sIndex + 1}`),
+      label: String(service?.label || "").trim(),
+      price: Number(service?.price) || 0,
+      checked: Boolean(service?.checked),
+      description: String(service?.description || "").trim(),
+    }));
+  }
+
+  if (adminConfigImageFitModeSelect) {
+    nextConfigurator.imageFitMode =
+      String(adminConfigImageFitModeSelect.value || nextConfigurator.imageFitMode || "contain").trim().toLowerCase() === "cover"
+        ? "cover"
+        : "contain";
+  }
+
+  if (adminConfigSummaryTitleInput) {
+    nextConfigurator.summaryTelegramTitle = String(adminConfigSummaryTitleInput.value || "").trim();
+  }
+
+  siteContent.configurator = normalizeConfigurator(nextConfigurator);
+}
+
 function persistSiteContent() {
+  syncConfiguratorDraftToSiteContent();
+  if (siteContent && typeof siteContent === "object") {
+    siteContent._updatedAt = Date.now();
+  }
+  if (IS_LOCAL_DISK_ONLY) return true;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(siteContent));
     return true;
   } catch (error) {
-    setFeedback("Stockage saturé. Réduisez la taille ou le nombre de fichiers.");
-    return false;
+    pruneAdminLocalStorageFootprint();
+    try {
+      syncConfiguratorDraftToSiteContent();
+      if (siteContent && typeof siteContent === "object") {
+        siteContent._updatedAt = Date.now();
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(compactValueForStorage(siteContent)));
+      return true;
+    } catch (retryError) {
+      // Final fallback: keep working in memory and allow disk save to continue.
+      try {
+        if (siteContent && typeof siteContent === "object") {
+          saveAuthoritativeContentSnapshot(compactValueForStorage(siteContent));
+        }
+      } catch (snapshotError) {}
+      setFeedback(
+        "Stockage navigateur saturé. Sauvegarde locale limitée, mais enregistrement disque maintenu.",
+        "info"
+      );
+      return true;
+    }
   }
 }
 
 function persistSiteContentAuto() {
   if (!persistSiteContent()) return false;
   saveContentSnapshotToDisk(siteContent)
-    .then((ok) => {
+    .then(async (ok) => {
       if (!ok && isAdminSessionAuthorized()) {
-        setFeedback(
-          `⚠️ Sauvegarde disque impossible (${getLastDiskSyncError()}). Reconnectez-vous en mode admin puis cliquez sur Enregistrer.`,
-          "error"
-        );
+        const mediaSaved = await saveConfiguratorMediaToDisk(siteContent?.configurator || {}).catch(() => false);
+        if (mediaSaved) {
+          setFeedback("Images configurateur sécurisées sur disque.", "success");
+        } else {
+          setFeedback(
+            `⚠️ Sauvegarde disque impossible (${getLastDiskSyncError()}). Reconnectez-vous en mode admin puis cliquez sur Enregistrer.`,
+            "error"
+          );
+        }
       }
     })
     .catch(() => {
@@ -10151,6 +11516,233 @@ function persistSiteContentAuto() {
       }
     });
   return true;
+}
+
+function persistAdminMediaDraftSnapshot() {
+  // Keep media edits resilient even when full admin form validation blocks global save.
+  if (Array.isArray(siteContent.showcase)) {
+    for (let i = 0; i < 3; i += 1) {
+      if (!siteContent.showcase[i]) continue;
+      if (typeof adminShowcaseImages[i] === "string" && adminShowcaseImages[i].trim()) {
+        siteContent.showcase[i].image = adminShowcaseImages[i];
+      }
+    }
+  }
+
+  if (!siteContent.configurator || typeof siteContent.configurator !== "object") {
+    siteContent.configurator = {};
+  }
+  if (Array.isArray(adminConfiguratorImagesDraft)) {
+    const currentVisualImages = Array.isArray(siteContent.configurator.visualImages)
+      ? [0, 1, 2].map((i) => String(siteContent.configurator.visualImages[i] || "").trim())
+      : ["", "", ""];
+    siteContent.configurator.visualImages = [0, 1, 2].map((i) => {
+      const draftValue = String(adminConfiguratorImagesDraft[i] || "").trim();
+      const currentValue = String(currentVisualImages[i] || "").trim();
+      return draftValue || currentValue;
+    });
+  }
+
+  if (Array.isArray(siteContent.technicalSheets) && Array.isArray(adminTechnicalSheetsDraft)) {
+    siteContent.technicalSheets = siteContent.technicalSheets.map((sheet, index) => ({
+      ...sheet,
+      image:
+        typeof adminTechnicalSheetsDraft[index]?.image === "string" && adminTechnicalSheetsDraft[index].image.trim()
+          ? adminTechnicalSheetsDraft[index].image
+          : sheet?.image || "",
+    }));
+  }
+
+  if (Array.isArray(siteContent.machines) && Array.isArray(adminMachinesDraft)) {
+    siteContent.machines = siteContent.machines.map((machine, index) => {
+      const draft = adminMachinesDraft[index];
+      if (!draft) return machine;
+      const draftImages = getMachineImages(draft);
+      if (!draftImages.length) return machine;
+      return {
+        ...machine,
+        image: draftImages[0] || "",
+        images: draftImages,
+      };
+    });
+  }
+
+  if (
+    siteContent.configurator &&
+    Array.isArray(siteContent.configurator.components) &&
+    Array.isArray(adminComponentsDraft)
+  ) {
+    siteContent.configurator.components = siteContent.configurator.components.map((component, cIndex) => {
+      const draftComponent = adminComponentsDraft[cIndex];
+      if (!draftComponent || !Array.isArray(component?.options) || !Array.isArray(draftComponent.options)) {
+        return component;
+      }
+      const nextOptions = component.options.map((option, oIndex) => {
+        const draftOption = draftComponent.options[oIndex];
+        const draftImage = typeof draftOption?.image === "string" ? draftOption.image.trim() : "";
+        if (!draftImage) return option;
+        return { ...option, image: draftImage };
+      });
+      return { ...component, options: nextOptions };
+    });
+  }
+
+  if (
+    siteContent.aboutGallery &&
+    typeof siteContent.aboutGallery === "object" &&
+    adminAboutGalleryDraft &&
+    Array.isArray(adminAboutGalleryDraft.photos)
+  ) {
+    siteContent.aboutGallery = {
+      ...siteContent.aboutGallery,
+      photos: adminAboutGalleryDraft.photos
+        .map((item, index) => ({
+          title: String(item?.title || `Photo ${index + 1}`).trim(),
+          image: String(item?.image || "").trim(),
+        }))
+        .filter((item) => item.image),
+    };
+  }
+
+  if (!persistSiteContent()) return false;
+  saveContentSnapshotToDisk(siteContent).catch(() => {});
+  return true;
+}
+
+async function persistAdminContentNow(successMessage = "Modification enregistrée.") {
+  if (!persistSiteContent()) {
+    setFeedback("Stockage local saturé. Réduisez la taille des médias.", "error");
+    return false;
+  }
+  const diskSaved = await saveContentSnapshotToDisk(siteContent).catch(() => false);
+  if (diskSaved) {
+    if (siteContent?.configurator && typeof siteContent.configurator === "object") {
+      const configMediaSaved = await saveConfiguratorMediaToDisk(siteContent.configurator).catch(() => false);
+      if (!configMediaSaved) {
+        setFeedback(`Sauvegarde partielle: ${getLastDiskSyncError()}`, "error");
+        return false;
+      }
+    }
+    setFeedback(successMessage, "success");
+    return true;
+  }
+  if (siteContent?.configurator && typeof siteContent.configurator === "object") {
+    const configMediaSaved = await saveConfiguratorMediaToDisk(siteContent.configurator).catch(() => false);
+    if (configMediaSaved) {
+      setFeedback(`${successMessage} (images configurateur sécurisées sur disque)`, "success");
+      return true;
+    }
+  }
+  setFeedback(`${successMessage} (local uniquement: ${getLastDiskSyncError()})`, "info");
+  return false;
+}
+
+async function saveTechnicalSheetImageToDisk(index, imagePath) {
+  const safeIndex = Number(index);
+  const safeImage = String(imagePath || "").trim();
+  if (!Number.isInteger(safeIndex) || safeIndex < 0 || !safeImage) return false;
+  if (isAdminSessionAuthorized()) {
+    const sessionValid = await validateAdminSessionWithServer();
+    if (!sessionValid) {
+      if (!lastDiskSyncError) lastDiskSyncError = "Session administrateur non valide.";
+      markContentPendingDiskSync(true);
+      return false;
+    }
+  }
+  if (!(await checkDiskApiAvailable())) {
+    lastDiskSyncError = "API disque indisponible.";
+    markContentPendingDiskSync(true);
+    return false;
+  }
+  try {
+    const response = await fetch("/api/save-technical-sheet-image", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ index: safeIndex, image: safeImage }),
+    });
+    if (response.status === 404) {
+      // Fallback for servers not yet restarted with the dedicated endpoint.
+      return saveContentSnapshotToDisk(siteContent);
+    }
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.ok) {
+      lastDiskSyncError = String(payload?.error || `HTTP ${response.status}`);
+      markContentPendingDiskSync(true);
+      return false;
+    }
+    markContentPendingDiskSync(false);
+    return true;
+  } catch (error) {
+    lastDiskSyncError = String(error?.message || "Erreur réseau pendant la sauvegarde de l'image.");
+    markContentPendingDiskSync(true);
+    return false;
+  }
+}
+
+async function saveConfiguratorMediaToDisk(configurator) {
+  const source = configurator && typeof configurator === "object" ? configurator : {};
+  const payload = {
+    visualImages: Array.isArray(source.visualImages)
+      ? [0, 1, 2].map((i) => String(source.visualImages[i] || "").trim())
+      : ["", "", ""],
+    categoryFillImage: String(source.categoryFillImage || "").trim(),
+    categoryFillImageSecondary: String(source.categoryFillImageSecondary || "").trim(),
+    summaryTelegramImage: String(source.summaryTelegramImage || "").trim(),
+    summaryExtraImages: Array.isArray(source.summaryExtraImages)
+      ? [0, 1].map((i) => String(source.summaryExtraImages[i] || "").trim())
+      : ["", ""],
+    components: Array.isArray(source.components)
+      ? source.components.map((component, cIndex) => ({
+          id: String(component?.id || "").trim() || `categorie-${cIndex + 1}`,
+          label: String(component?.label || "").trim(),
+          options: Array.isArray(component?.options)
+            ? component.options.map((option) => ({
+                name: String(option?.name || "").trim(),
+                image: String(option?.image || "").trim(),
+              }))
+            : [],
+        }))
+      : [],
+  };
+
+  if (isAdminSessionAuthorized()) {
+    const sessionValid = await validateAdminSessionWithServer();
+    if (!sessionValid) {
+      if (!lastDiskSyncError) lastDiskSyncError = "Session administrateur non valide.";
+      markContentPendingDiskSync(true);
+      return false;
+    }
+  }
+  if (!(await checkDiskApiAvailable())) {
+    lastDiskSyncError = "API disque indisponible.";
+    markContentPendingDiskSync(true);
+    return false;
+  }
+
+  try {
+    const response = await fetch("/api/save-configurator-media", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ configurator: payload }),
+    });
+    if (response.status === 404) {
+      return saveContentSnapshotToDisk(siteContent);
+    }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data?.ok) {
+      lastDiskSyncError = String(data?.error || `HTTP ${response.status}`);
+      markContentPendingDiskSync(true);
+      return false;
+    }
+    markContentPendingDiskSync(false);
+    return true;
+  } catch (error) {
+    lastDiskSyncError = String(error?.message || "Erreur réseau pendant la sauvegarde configurateur.");
+    markContentPendingDiskSync(true);
+    return false;
+  }
 }
 
 function normalizeSearchText(value) {
@@ -10357,14 +11949,46 @@ adminShowcaseFileInputs.forEach((input, index) => {
 
     adminShowcaseFileNames[index].textContent = file.name;
     try {
-      const resized = await resizeImage(file);
-      adminShowcaseImages[index] = resized;
-      setPreview(index, resized);
-      setFeedback(`Image ${index + 1} prête.`);
+      const previousImage = String(siteContent.showcase?.[index]?.image || "");
+      const mediaValue = await resolveAdminImageValue(
+        file,
+        "showcase",
+        `showcase-${index + 1}.webp`,
+        resizeImage,
+        { strictDisk: true }
+      );
+      adminShowcaseImages[index] = mediaValue;
+      try {
+        const fallbackData = await exportImageDataUrl(file, { maxLongEdge: 1400, quality: 0.84 });
+        setTechnicalImageFallback(mediaValue, fallbackData);
+      } catch (fallbackError) {}
+      setPreview(index, mediaValue);
+      if (siteContent.showcase?.[index]) {
+        siteContent.showcase[index].image = mediaValue;
+      }
+      const saved = await persistAdminContentNow(`Image ${index + 1} enregistrée.`);
+      if (!saved) {
+        adminShowcaseImages[index] = previousImage;
+        if (siteContent.showcase?.[index]) siteContent.showcase[index].image = previousImage;
+        setPreview(index, previousImage);
+      }
     } catch (error) {
-      setFeedback(`Image ${index + 1} invalide.`);
+      setFeedback(
+        `Image ${index + 1} non sauvegardée sur disque (${String(error?.message || getLastDiskSyncError())}).`,
+        "error"
+      );
     }
   });
+});
+
+[0, 1, 2].forEach((index) => {
+  const syncShowcaseMeta = async () => {
+    updateShowcaseFieldLive(index);
+    await persistAdminContentNow(`Bloc Exigence premium ${index + 1} enregistré.`);
+  };
+  adminShowcaseTitleInputs[index]?.addEventListener("change", syncShowcaseMeta);
+  adminShowcaseSloganInputs[index]?.addEventListener("change", syncShowcaseMeta);
+  adminShowcaseIconInputs[index]?.addEventListener("change", syncShowcaseMeta);
 });
 
 adminStaticFileButtons.forEach((button) => {
@@ -10375,6 +11999,60 @@ adminStaticFileButtons.forEach((button) => {
     const input = document.getElementById(targetId);
     triggerFileInput(input);
   });
+});
+
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest('button[data-action="pick-config-image-disk"]');
+  if (!button) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const index = Number(button.dataset.index);
+  if (Number.isNaN(index) || index < 0 || index > 2) return;
+  try {
+    const previous = Array.isArray(siteContent?.configurator?.visualImages)
+      ? siteContent.configurator.visualImages.slice(0, 3)
+      : ["", "", ""];
+    const selectedPath = await pickExistingUploadPath("configurator", `l'image configurateur ${index + 1}`);
+    if (!selectedPath) return;
+    adminConfiguratorImagesDraft[index] = selectedPath;
+    if (adminConfigImagePreviewEls[index]) {
+      adminConfigImagePreviewEls[index].src = selectedPath;
+      adminConfigImagePreviewEls[index].style.display = "block";
+    }
+    if (adminConfigImageNameEls[index]) {
+      adminConfigImageNameEls[index].textContent = String(selectedPath).split("/").pop() || "Image sélectionnée";
+    }
+    if (!siteContent.configurator || typeof siteContent.configurator !== "object") {
+      siteContent.configurator = {};
+    }
+    const current = Array.isArray(siteContent.configurator.visualImages)
+      ? siteContent.configurator.visualImages.slice(0, 3)
+      : ["", "", ""];
+    current[index] = selectedPath;
+    siteContent.configurator.visualImages = [0, 1, 2].map((i) => current[i] || "");
+    const saved = await persistAdminContentNow(`Image configurateur ${index + 1} sélectionnée depuis disque.`);
+    if (!saved) {
+      adminConfiguratorImagesDraft[index] = previous[index] || "";
+      siteContent.configurator.visualImages = [0, 1, 2].map((i) => previous[i] || "");
+      if (adminConfigImagePreviewEls[index]) {
+        if (previous[index]) {
+          adminConfigImagePreviewEls[index].src = previous[index];
+          adminConfigImagePreviewEls[index].style.display = "block";
+        } else {
+          adminConfigImagePreviewEls[index].removeAttribute("src");
+          adminConfigImagePreviewEls[index].style.display = "none";
+        }
+      }
+      if (adminConfigImageNameEls[index]) {
+        adminConfigImageNameEls[index].textContent = previous[index]
+          ? String(previous[index]).split("/").pop() || "Image prête"
+          : "Aucune image";
+      }
+      renderConfigurator();
+    }
+  } catch (error) {
+    setFeedback(`Sélection disque impossible (${String(error?.message || "erreur inconnue")}).`, "error");
+  }
 });
 
 adminConfigImageFileInputs.forEach((input, index) => {
@@ -10388,24 +12066,67 @@ adminConfigImageFileInputs.forEach((input, index) => {
     adminConfigImageNameEls[index].textContent = file.name;
 
     try {
-      adminConfiguratorImagesDraft[index] = await resizeImageForConfigurator(file);
+      const previous = Array.isArray(siteContent?.configurator?.visualImages)
+        ? siteContent.configurator.visualImages.slice(0, 3)
+        : ["", "", ""];
+      const nextVisualPath = await resolveAdminImageValue(
+        file,
+        "configurator",
+        `configurator-${index + 1}.webp`,
+        resizeImageForConfigurator,
+        { strictDisk: true }
+      );
+      adminConfiguratorImagesDraft[index] = nextVisualPath;
       adminConfigImagePreviewEls[index].src = adminConfiguratorImagesDraft[index];
       adminConfigImagePreviewEls[index].style.display = "block";
-      setFeedback(`Image configurateur ${index + 1} prête.`);
+      if (!siteContent.configurator || typeof siteContent.configurator !== "object") {
+        siteContent.configurator = {};
+      }
+      const current = Array.isArray(siteContent.configurator.visualImages)
+        ? siteContent.configurator.visualImages.slice(0, 3)
+        : ["", "", ""];
+      current[index] = adminConfiguratorImagesDraft[index];
+      siteContent.configurator.visualImages = [0, 1, 2].map((i) => current[i] || "");
+      const saved = await persistAdminContentNow(`Image configurateur ${index + 1} enregistrée.`);
+      if (!saved) {
+        adminConfiguratorImagesDraft[index] = previous[index] || "";
+        siteContent.configurator.visualImages = [0, 1, 2].map((i) => previous[i] || "");
+        if (previous[index]) {
+          adminConfigImagePreviewEls[index].src = previous[index];
+          adminConfigImagePreviewEls[index].style.display = "block";
+          adminConfigImageNameEls[index].textContent = String(previous[index]).split("/").pop() || "Image prête";
+        } else {
+          adminConfigImagePreviewEls[index].removeAttribute("src");
+          adminConfigImagePreviewEls[index].style.display = "none";
+          adminConfigImageNameEls[index].textContent = "Aucune image";
+        }
+        renderConfigurator();
+      } else {
+        renderConfigurator();
+      }
     } catch (error) {
-      setFeedback(`Image configurateur ${index + 1} invalide.`);
+      adminConfigImageNameEls[index].textContent = file.name || "Aucune image";
+      setFeedback(
+        `Upload image configurateur ${index + 1} impossible (${String(error?.message || getLastDiskSyncError())}).`,
+        "error"
+      );
     }
   });
 });
 
 adminConfigImageRemoveBtns.forEach((button, index) => {
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
     adminConfiguratorImagesDraft[index] = "";
     adminConfigImageFileInputs[index].value = "";
     adminConfigImageNameEls[index].textContent = "Aucune image";
     adminConfigImagePreviewEls[index].removeAttribute("src");
     adminConfigImagePreviewEls[index].style.display = "none";
-    setFeedback(`Image configurateur ${index + 1} supprimée.`);
+    persistAdminMediaDraftSnapshot();
+    const saved = await persistAdminContentNow(`Image configurateur ${index + 1} supprimée.`);
+    if (!saved) {
+      const mediaSaved = await saveConfiguratorMediaToDisk(siteContent.configurator).catch(() => false);
+      if (mediaSaved) setFeedback(`Suppression image ${index + 1} sécurisée sur disque.`, "success");
+    }
   });
 });
 
@@ -10717,6 +12438,15 @@ if (adminProcessSubtabButtons.length) {
         openAdminProcessLinkModal(tabName, -1);
       }
     });
+  });
+}
+
+if (adminProcessConsoleClearBtn) {
+  adminProcessConsoleClearBtn.addEventListener("click", () => {
+    adminProcessConsoleEntries = [];
+    saveAdminProcessConsole(adminProcessConsoleEntries);
+    renderAdminProcessConsoleEditor();
+    setAdminProcessFeedback("Console erreurs vidée.", "success");
   });
 }
 
@@ -11805,6 +13535,7 @@ if (adminAboutGalleryList) {
     if (Number.isNaN(index) || !adminAboutGalleryDraft.photos[index]) return;
     adminAboutGalleryDraft.photos.splice(index, 1);
     renderAdminAboutGalleryEditor();
+    persistAdminMediaDraftSnapshot();
     setFeedback("Photo défilante supprimée.");
   });
 
@@ -11820,6 +13551,7 @@ if (adminAboutGalleryList) {
       adminAboutGalleryDraft.photos[index].image = await resizeImageForAboutZoom(file);
       adminAboutGalleryDraft.photos[index].fileName = file.name;
       renderAdminAboutGalleryEditor();
+      persistAdminMediaDraftSnapshot();
       setFeedback(`Photo défilante ${index + 1} prête.`);
     } catch (error) {
       setFeedback(`Photo défilante ${index + 1} invalide.`);
@@ -11896,6 +13628,7 @@ adminMachinesList.addEventListener("click", (event) => {
   if (action === "remove-machine-image") {
     setMachineImages(adminMachinesDraft[machineIndex], []);
     renderAdminMachinesEditor();
+    persistAdminMediaDraftSnapshot();
     return;
   }
 
@@ -11907,6 +13640,7 @@ adminMachinesList.addEventListener("click", (event) => {
     images.splice(imageIndex, 1);
     setMachineImages(adminMachinesDraft[machineIndex], images);
     renderAdminMachinesEditor();
+    persistAdminMediaDraftSnapshot();
     return;
   }
 
@@ -11950,22 +13684,18 @@ adminMachinesList.addEventListener("change", async (event) => {
         `build-image-${machineIndex + 1}-${i + 1}.webp`
       );
       const uploadPayload = await uploadBlobToDiskDetailed("machine-images", safeName, file);
-      if (uploadPayload && typeof uploadPayload.path === "string" && uploadPayload.path) {
-        uploaded.push(uploadPayload.path);
-      } else {
-        try {
-          uploaded.push(await resizeImage(file));
-        } catch (resizeError) {
-          uploaded.push(await readFileAsDataURL(file));
-        }
+      if (!(uploadPayload && typeof uploadPayload.path === "string" && uploadPayload.path)) {
+        throw new Error("Upload disque requis pour les images build.");
       }
+      uploaded.push(uploadPayload.path);
     }
     const current = getMachineImages(adminMachinesDraft[machineIndex]);
     setMachineImages(adminMachinesDraft[machineIndex], [...current, ...uploaded]);
     renderAdminMachinesEditor();
+    persistAdminMediaDraftSnapshot();
     setFeedback(`${uploaded.length} image(s) du build ajoutée(s).`);
   } catch (error) {
-    setFeedback("Image du build invalide.");
+    setFeedback(`Image du build non sauvegardée sur disque (${String(error?.message || getLastDiskSyncError())}).`, "error");
   }
 });
 
@@ -12017,11 +13747,43 @@ adminTechnicalSheetsList.addEventListener("change", async (event) => {
     if (!file) return;
 
     try {
-      adminTechnicalSheetsDraft[index].image = await resizeImage(file);
-      setFeedback(`Image de fiche ${index + 1} prête.`);
+      const previousImage = String(adminTechnicalSheetsDraft[index].image || "");
+      const nextImagePath = await resolveAdminImageValue(
+        file,
+        "technical-images",
+        `technical-image-${index + 1}.webp`,
+        resizeImage,
+        { strictDisk: true }
+      );
+      adminTechnicalSheetsDraft[index].image = nextImagePath;
+      try {
+        const fallbackData = await exportImageDataUrl(file, { maxLongEdge: 1400, quality: 0.84 });
+        setTechnicalImageFallback(nextImagePath, fallbackData);
+      } catch (fallbackError) {}
+      if (Array.isArray(siteContent.technicalSheets) && siteContent.technicalSheets[index]) {
+        siteContent.technicalSheets[index].image = nextImagePath;
+      }
+      if (!persistSiteContent()) {
+        setFeedback("Stockage local saturé. Réduisez la taille des médias.", "error");
+        adminTechnicalSheetsDraft[index].image = previousImage;
+        if (Array.isArray(siteContent.technicalSheets) && siteContent.technicalSheets[index]) {
+          siteContent.technicalSheets[index].image = previousImage;
+        }
+        return;
+      }
+      const diskSaved = await saveTechnicalSheetImageToDisk(index, nextImagePath);
+      if (diskSaved) {
+        setFeedback(`Image de fiche ${index + 1} enregistrée.`, "success");
+      } else {
+        adminTechnicalSheetsDraft[index].image = previousImage;
+        if (Array.isArray(siteContent.technicalSheets) && siteContent.technicalSheets[index]) {
+          siteContent.technicalSheets[index].image = previousImage;
+        }
+        setFeedback(`Image de fiche ${index + 1} non sauvegardée sur disque (${getLastDiskSyncError()}).`, "error");
+      }
       renderAdminTechnicalSheetsEditor();
     } catch (error) {
-      setFeedback(`Image de fiche ${index + 1} invalide.`);
+      setFeedback(`Image de fiche ${index + 1} non sauvegardée sur disque (${String(error?.message || getLastDiskSyncError())}).`, "error");
     }
   }
 
@@ -12094,11 +13856,17 @@ adminComponentsList.addEventListener("change", async (event) => {
   if (!file) return;
 
   try {
-    adminComponentsDraft[cIndex].options[oIndex].image = await resizeImageForConfigurator(file);
+    adminComponentsDraft[cIndex].options[oIndex].image = await resolveAdminImageValue(
+      file,
+      "component-images",
+      `component-${cIndex + 1}-option-${oIndex + 1}.webp`,
+      resizeImageForConfigurator,
+      { strictDisk: true }
+    );
     renderAdminConfiguratorEditor();
-    setFeedback("Image produit ajoutée.");
+    await persistAdminContentNow("Image produit enregistrée.");
   } catch (error) {
-    setFeedback("Image produit invalide.");
+    setFeedback(`Image produit non sauvegardée sur disque (${String(error?.message || getLastDiskSyncError())}).`, "error");
   }
 });
 
@@ -12153,6 +13921,22 @@ adminComponentsList.addEventListener("click", (event) => {
       `.admin-component-image-input[data-component-index="${cIndex}"][data-option-index="${oIndex}"]`
     );
     triggerFileInput(input);
+  }
+
+  if (action === "pick-component-image-disk") {
+    event.preventDefault();
+    event.stopPropagation();
+    if (Number.isNaN(oIndex) || !adminComponentsDraft[cIndex]?.options[oIndex]) return;
+    pickExistingUploadPath("component-images", "l'image produit")
+      .then(async (selectedPath) => {
+        if (!selectedPath) return;
+        adminComponentsDraft[cIndex].options[oIndex].image = selectedPath;
+        renderAdminConfiguratorEditor();
+        await persistAdminContentNow("Image produit sélectionnée depuis disque.");
+      })
+      .catch((error) => {
+        setFeedback(`Sélection disque impossible (${String(error?.message || "erreur inconnue")}).`, "error");
+      });
   }
 
   if (action === "remove-component-image") {
@@ -12435,12 +14219,59 @@ if (heroShowcaseEl && window.matchMedia("(pointer:fine)").matches) {
 }
 
 machinesCardsEl.addEventListener("click", (event) => {
+  const sortButton = event.target.closest(".machine-sort-btn[data-action][data-machine-index]");
+  if (sortButton && isAdminLiveMode()) {
+    event.preventDefault();
+    event.stopPropagation();
+    const index = Number(sortButton.dataset.machineIndex);
+    if (Number.isNaN(index)) return;
+    const direction = String(sortButton.dataset.action || "");
+    const targetIndex = direction === "machine-left" ? index - 1 : direction === "machine-right" ? index + 1 : index;
+    if (targetIndex < 0 || targetIndex >= siteContent.machines.length || targetIndex === index) return;
+
+    [siteContent.machines[index], siteContent.machines[targetIndex]] = [siteContent.machines[targetIndex], siteContent.machines[index]];
+    if (Array.isArray(adminMachinesDraft) && adminMachinesDraft.length === siteContent.machines.length) {
+      [adminMachinesDraft[index], adminMachinesDraft[targetIndex]] = [adminMachinesDraft[targetIndex], adminMachinesDraft[index]];
+    }
+    machineCompareSelection = machineCompareSelection.map((item) =>
+      item === index ? targetIndex : item === targetIndex ? index : item
+    );
+    if (!persistSiteContentAuto()) return;
+    renderMachines();
+    if (typeof renderAdminMachineCards === "function") renderAdminMachineCards();
+    setFeedback("Ordre des builds mis à jour.");
+    return;
+  }
+
+  const compareButton = event.target.closest(".machine-compare-btn[data-machine-index]");
+  if (compareButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    const index = Number(compareButton.dataset.machineIndex);
+    if (Number.isNaN(index)) return;
+    if (machineCompareSelection.includes(index)) {
+      machineCompareSelection = machineCompareSelection.filter((item) => item !== index);
+    } else if (machineCompareSelection.length >= 2) {
+      machineCompareSelection = [machineCompareSelection[1], index];
+    } else {
+      machineCompareSelection = [...machineCompareSelection, index];
+    }
+    renderMachines();
+    return;
+  }
   const card = event.target.closest(".machine-card");
   if (!card) return;
   const index = Number(card.dataset.machineIndex);
   if (Number.isNaN(index)) return;
   activeMachineModalIndex = index;
   openMachineModal(siteContent.machines[index]);
+});
+
+machinesComparePanelEl?.addEventListener("click", (event) => {
+  const clearBtn = event.target.closest(".machine-compare-clear[data-action='clear-machine-compare']");
+  if (!clearBtn) return;
+  machineCompareSelection = [];
+  renderMachines();
 });
 
 machinesCardsEl.addEventListener("keydown", (event) => {
@@ -12516,15 +14347,10 @@ if (machineModalContentEl) {
           `build-image-live-${activeMachineModalIndex + 1}-${i + 1}.webp`
         );
         const uploadPayload = await uploadBlobToDiskDetailed("machine-images", safeName, file);
-        if (uploadPayload && typeof uploadPayload.path === "string" && uploadPayload.path) {
-          uploaded.push(uploadPayload.path);
-        } else {
-          try {
-            uploaded.push(await resizeImage(file));
-          } catch (resizeError) {
-            uploaded.push(await readFileAsDataURL(file));
-          }
+        if (!(uploadPayload && typeof uploadPayload.path === "string" && uploadPayload.path)) {
+          throw new Error("Upload disque requis pour les images build.");
         }
+        uploaded.push(uploadPayload.path);
       }
       const current = getMachineImages(siteContent.machines[activeMachineModalIndex]);
       setMachineImages(siteContent.machines[activeMachineModalIndex], [...current, ...uploaded]);
@@ -12533,7 +14359,7 @@ if (machineModalContentEl) {
       openMachineModal(siteContent.machines[activeMachineModalIndex]);
       renderMachines();
     } catch (error) {
-      setFeedback("Image build invalide.");
+      setFeedback(`Image build non sauvegardée sur disque (${String(error?.message || getLastDiskSyncError())}).`, "error");
     }
   });
 }
@@ -12551,7 +14377,7 @@ technicalSheetsGridEl.addEventListener("click", (event) => {
         siteContent.technicalSheets[index],
         siteContent.technicalSheets[index - 1],
       ];
-      if (!persistSiteContent()) return;
+      if (!persistSiteContentAuto()) return;
       renderTechnicalSheets();
       return;
     }
@@ -12561,7 +14387,7 @@ technicalSheetsGridEl.addEventListener("click", (event) => {
         siteContent.technicalSheets[index],
         siteContent.technicalSheets[index + 1],
       ];
-      if (!persistSiteContent()) return;
+      if (!persistSiteContentAuto()) return;
       renderTechnicalSheets();
     }
     return;
@@ -12665,10 +14491,38 @@ if (summaryTelegramImageEl) {
       triggerFileInput(input);
       return;
     }
+    if (button.dataset.action === "summary-telegram-disk") {
+      const previousImage = String(siteContent?.configurator?.summaryTelegramImage || "");
+      pickExistingUploadPath("configurator", "l'image résumé Telegram")
+        .then(async (selectedPath) => {
+          if (!selectedPath) return;
+          siteContent.configurator.summaryTelegramImage = selectedPath;
+          const saved = await persistAdminContentNow("Image résumé sélectionnée depuis disque.");
+          if (!saved) {
+            siteContent.configurator.summaryTelegramImage = previousImage;
+            renderSummaryTelegramImage(
+              previousImage,
+              String(siteContent.configurator.summaryTelegramTitle || "")
+            );
+            return;
+          }
+          renderSummaryTelegramImage(
+            selectedPath,
+            String(siteContent.configurator.summaryTelegramTitle || "")
+          );
+        })
+        .catch((error) => {
+          setFeedback(`Sélection disque impossible (${String(error?.message || "erreur inconnue")}).`, "error");
+        });
+      return;
+    }
     if (button.dataset.action === "summary-telegram-remove") {
       siteContent.configurator.summaryTelegramImage = "";
-      if (!persistSiteContentAuto()) return;
-      renderSummaryTelegramImage("");
+      persistAdminContentNow("Image résumé supprimée.")
+        .catch(() => {})
+        .finally(() => {
+          renderSummaryTelegramImage("");
+        });
     }
   });
 
@@ -12677,13 +14531,26 @@ if (summaryTelegramImageEl) {
     if (!input || !isAdminLiveMode()) return;
     const file = input.files && input.files[0];
     if (!file) return;
-    resizeImageForConfigurator(file)
-      .then((data) => {
-        siteContent.configurator.summaryTelegramImage = data;
-        if (!persistSiteContentAuto()) return;
-        renderSummaryTelegramImage(data);
+    resolveAdminImageValue(file, "configurator", "summary-telegram.webp", resizeImageForConfigurator, {
+      strictDisk: true,
+    })
+      .then(async (storedImage) => {
+        const previousImage = String(siteContent?.configurator?.summaryTelegramImage || "");
+        siteContent.configurator.summaryTelegramImage = storedImage;
+        const saved = await persistAdminContentNow("Image résumé enregistrée.");
+        if (!saved) {
+          siteContent.configurator.summaryTelegramImage = previousImage;
+          renderSummaryTelegramImage(
+            previousImage,
+            String(siteContent.configurator.summaryTelegramTitle || "")
+          );
+          return;
+        }
+        renderSummaryTelegramImage(storedImage);
       })
-      .catch(() => {});
+      .catch((error) => {
+        setFeedback(`Image résumé non sauvegardée sur disque (${String(error?.message || getLastDiskSyncError())}).`, "error");
+      });
   });
 }
 
@@ -12719,11 +14586,40 @@ if (summaryExtraImagesEl) {
       return;
     }
 
+    if (button.dataset.action === "summary-extra-disk") {
+      const previousImages = Array.isArray(siteContent?.configurator?.summaryExtraImages)
+        ? [...siteContent.configurator.summaryExtraImages]
+        : ["", ""];
+      pickExistingUploadPath("configurator", `l'image résumé ${slotIndex + 1}`)
+        .then(async (selectedPath) => {
+          if (!selectedPath) return;
+          const nextImages = Array.isArray(siteContent.configurator.summaryExtraImages)
+            ? [...siteContent.configurator.summaryExtraImages]
+            : ["", ""];
+          nextImages[slotIndex] = selectedPath;
+          siteContent.configurator.summaryExtraImages = nextImages;
+          const saved = await persistAdminContentNow("Image résumé sélectionnée depuis disque.");
+          if (!saved) {
+            siteContent.configurator.summaryExtraImages = previousImages;
+            renderSummaryExtraImages(previousImages);
+            return;
+          }
+          renderSummaryExtraImages(nextImages);
+        })
+        .catch((error) => {
+          setFeedback(`Sélection disque impossible (${String(error?.message || "erreur inconnue")}).`, "error");
+        });
+      return;
+    }
+
     if (button.dataset.action === "summary-extra-remove") {
       extraImages[slotIndex] = "";
       siteContent.configurator.summaryExtraImages = extraImages;
-      if (!persistSiteContentAuto()) return;
-      renderSummaryExtraImages(extraImages);
+      persistAdminContentNow("Image résumé supprimée.")
+        .catch(() => {})
+        .finally(() => {
+          renderSummaryExtraImages(extraImages);
+        });
     }
   });
 
@@ -12733,17 +14629,33 @@ if (summaryExtraImagesEl) {
     const file = input.files && input.files[0];
     if (!file) return;
     const slotIndex = Math.max(0, Number(input.dataset.slot || "1") - 1);
-    resizeImageForConfigurator(file)
-      .then((data) => {
+    resolveAdminImageValue(
+      file,
+      "configurator",
+      `summary-extra-${slotIndex + 1}.webp`,
+      resizeImageForConfigurator,
+      { strictDisk: true }
+    )
+      .then(async (storedImage) => {
+        const previousImages = Array.isArray(siteContent?.configurator?.summaryExtraImages)
+          ? [...siteContent.configurator.summaryExtraImages]
+          : ["", ""];
         const extraImages = Array.isArray(siteContent.configurator.summaryExtraImages)
           ? [...siteContent.configurator.summaryExtraImages]
           : ["", ""];
-        extraImages[slotIndex] = data;
+        extraImages[slotIndex] = storedImage;
         siteContent.configurator.summaryExtraImages = extraImages;
-        if (!persistSiteContentAuto()) return;
+        const saved = await persistAdminContentNow("Image résumé enregistrée.");
+        if (!saved) {
+          siteContent.configurator.summaryExtraImages = previousImages;
+          renderSummaryExtraImages(previousImages);
+          return;
+        }
         renderSummaryExtraImages(extraImages);
       })
-      .catch(() => {});
+      .catch((error) => {
+        setFeedback(`Image résumé non sauvegardée sur disque (${String(error?.message || getLastDiskSyncError())}).`, "error");
+      });
   });
 }
 
@@ -12774,7 +14686,7 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-[openConfiguratorLinkEl, openConfiguratorCtaEl, mobileOpenConfiguratorEl].forEach((el) => {
+[openConfiguratorLinkEl, openConfiguratorCtaEl, finalizeBuildCtaEl, mobileOpenConfiguratorEl].forEach((el) => {
   if (!el) return;
   el.addEventListener("click", (event) => {
     event.preventDefault();
@@ -12834,31 +14746,36 @@ if (siteLoginFormEl) {
     const email = String(siteLoginEmailEl.value || "").trim().toLowerCase();
     const password = String(siteLoginPasswordEl.value || "");
 
-    if (!isAllowedOutlookEmail(email)) {
-      setAuthFeedback("Adresse non autorisée. Utilisez une adresse Outlook.", "error");
-      return;
-    }
-
     if (password.length < 6) {
       setAuthFeedback("Mot de passe trop court (6 caractères minimum).", "error");
       return;
     }
 
-    if (isAdminEmail(email)) {
+    let adminLoginError = "";
+    if (authMode !== "new") {
       try {
         await requestAdminSessionLogin(email, password);
-      } catch (error) {
-        setAuthFeedback(String(error.message || "Cet email est réservé à l'administrateur."), "error");
+        setPendingActivation("");
+        showActivationStep(false);
+        sessionStorage.setItem(AUTH_SESSION_KEY, email);
+        sessionStorage.setItem(SESSION_KEY, "1");
+        syncRememberPreference(email);
+        recordUserLogin(email);
+        unlockSite();
+        setAuthFeedback("");
         return;
+      } catch (error) {
+        adminLoginError = String(error?.message || "");
       }
-      setPendingActivation("");
-      showActivationStep(false);
-      sessionStorage.setItem(AUTH_SESSION_KEY, email);
-      sessionStorage.setItem(SESSION_KEY, "1");
-      syncRememberPreference(email);
-      recordUserLogin(email);
-      unlockSite();
-      setAuthFeedback("");
+    }
+
+    if (isAdminEmailAlias(email)) {
+      setAuthFeedback(adminLoginError || "Identifiants administrateur invalides.", "error");
+      return;
+    }
+
+    if (!isAllowedOutlookEmail(email)) {
+      setAuthFeedback("Adresse non autorisée. Utilisez une adresse Outlook.", "error");
       return;
     }
 
@@ -13028,14 +14945,34 @@ if (profileAvatarFileInput) {
       const photoData = await resizeImage(file);
       const saved = setUserProfilePhoto(email, photoData);
       if (!saved) {
-        setProfileAvatarFeedback("Impossible de sauvegarder la photo utilisateur.");
+        setProfileAvatarFeedback("Impossible de sauvegarder la photo utilisateur.", "error");
         return;
       }
       if (profileAvatarImgEl) profileAvatarImgEl.src = photoData;
-      setProfileAvatarFeedback("Photo utilisateur mise à jour.");
+      syncProfileAvatarPresetSelection("");
+      setProfileAvatarFeedback("Photo utilisateur mise à jour.", "success");
     } catch (error) {
-      setProfileAvatarFeedback("Image invalide.");
+      setProfileAvatarFeedback("Image invalide.", "error");
     }
+  });
+}
+
+if (profileAvatarPresetsEl) {
+  profileAvatarPresetsEl.addEventListener("click", (event) => {
+    const button = event.target.closest(".profile-avatar-preset-btn");
+    if (!button) return;
+    const email = getCurrentSessionEmail();
+    if (!email) return;
+    const presetSrc = String(button.getAttribute("data-avatar-src") || "").trim();
+    if (!presetSrc) return;
+    const saved = setUserProfilePhoto(email, presetSrc);
+    if (!saved) {
+      setProfileAvatarFeedback("Impossible de sauvegarder l'avatar sélectionné.", "error");
+      return;
+    }
+    if (profileAvatarImgEl) profileAvatarImgEl.src = presetSrc;
+    syncProfileAvatarPresetSelection(presetSrc);
+    setProfileAvatarFeedback("Avatar appliqué.", "success");
   });
 }
 
@@ -13439,6 +15376,7 @@ if (siteActivateBtnEl) {
     setPendingActivation("");
     showActivationStep(false);
     sessionStorage.setItem(AUTH_SESSION_KEY, email);
+    sessionStorage.removeItem(SESSION_KEY);
     syncRememberPreference(email);
     recordUserLogin(email);
     unlockSite();
@@ -13472,8 +15410,12 @@ adminLoginBtn.addEventListener("click", async () => {
   const email = String(adminEmailInput.value || "").trim().toLowerCase();
   const password = adminPasswordInput.value || "";
   try {
-    await requestAdminSessionLogin(email, password);
+    const adminSession = await requestAdminSessionLogin(email, password);
+    const adminEmail = String(adminSession?.email || email).trim().toLowerCase();
+    sessionStorage.setItem(AUTH_SESSION_KEY, adminEmail);
     sessionStorage.setItem(SESSION_KEY, "1");
+    syncRememberPreference(adminEmail);
+    recordUserLogin(adminEmail);
     setAdminState(true);
     refreshAdminLiveMode();
     setFeedback("Connexion administrateur réussie.");
@@ -13493,6 +15435,7 @@ adminLoginBtn.addEventListener("click", async () => {
 
 adminEditor.addEventListener("submit", async (event) => {
   event.preventDefault();
+  const adminValidationWarnings = [];
 
   const validMachines =
     Array.isArray(adminMachinesDraft) &&
@@ -13509,8 +15452,7 @@ adminEditor.addEventListener("submit", async (event) => {
     );
 
   if (!validMachines) {
-    setFeedback("Complétez correctement tous les build avant d'enregistrer.");
-    return;
+    adminValidationWarnings.push("Build incomplets détectés");
   }
 
   const validConfigurator =
@@ -13531,8 +15473,7 @@ adminEditor.addEventListener("submit", async (event) => {
     adminServicesDraft.every((service) => service.label?.trim() && Number.isFinite(Number(service.price)) && Number(service.price) >= 0);
 
   if (!validConfigurator) {
-    setFeedback("Vérifiez les références, produits et prix du configurateur.");
-    return;
+    adminValidationWarnings.push("Configurateur partiellement renseigné");
   }
 
   const validTechnicalSheets =
@@ -13540,8 +15481,7 @@ adminEditor.addEventListener("submit", async (event) => {
     adminTechnicalSheetsDraft.every((sheet) => sheet.title?.trim());
 
   if (!validTechnicalSheets) {
-    setFeedback("Chaque fiche technique doit avoir un titre.");
-    return;
+    adminValidationWarnings.push("Certaines fiches techniques n'ont pas de titre");
   }
 
   const validFaq =
@@ -13550,8 +15490,7 @@ adminEditor.addEventListener("submit", async (event) => {
     adminFaqItemsDraft.every((item) => item.question?.trim() && item.answer?.trim());
 
   if (!validFaq) {
-    setFeedback("Chaque élément FAQ doit contenir une question et une réponse.");
-    return;
+    adminValidationWarnings.push("FAQ incomplète");
   }
 
   const validGames =
@@ -13560,8 +15499,7 @@ adminEditor.addEventListener("submit", async (event) => {
     adminGamesDraft.every((item) => item.title?.trim() && String(item.image || "").trim());
 
   if (!validGames) {
-    setFeedback("Chaque jaquette de la page Jeux doit avoir un titre et une image.");
-    return;
+    adminValidationWarnings.push("Jaquettes Jeux incomplètes");
   }
 
   const validReviews =
@@ -13570,8 +15508,7 @@ adminEditor.addEventListener("submit", async (event) => {
     adminReviewsDraft.every((item) => item.author?.trim() && item.text?.trim());
 
   if (!validReviews) {
-    setFeedback("Chaque avis client doit contenir un nom et un texte.");
-    return;
+    adminValidationWarnings.push("Avis clients incomplets");
   }
 
   for (let index = 0; index < adminShowcaseImages.length; index += 1) {
@@ -13635,10 +15572,14 @@ adminEditor.addEventListener("submit", async (event) => {
 
   const showcase = [0, 1, 2].map((index) => ({
     title: adminShowcaseTitleInputs[index].value.trim() || DEFAULT_CONTENT.showcase[index].title,
+    icon: String(adminShowcaseIconInputs[index]?.value || "").trim().slice(0, 8) || DEFAULT_CONTENT.showcase[index].icon,
     slogan: adminShowcaseSloganInputs[index].value.trim() || DEFAULT_CONTENT.showcase[index].slogan,
     image: adminShowcaseImages[index] || "",
   }));
 
+  const diskContentSnapshot = await getDiskContentSnapshotSafe();
+  const diskTechnicalSheetsSafe = normalizeTechnicalSheets(diskContentSnapshot?.technicalSheets || []);
+  const existingTechnicalSheetsSafeForSubmit = normalizeTechnicalSheets(siteContent.technicalSheets || []);
   const previousTechFileKeys = new Set(
     (siteContent.technicalSheets || [])
       .map((sheet) => (typeof sheet?.fileKey === "string" ? sheet.fileKey : ""))
@@ -13709,7 +15650,13 @@ adminEditor.addEventListener("submit", async (event) => {
 
       technicalSheets.push({
         title: (draft.title || "").trim(),
-        image: draft.image || "",
+        image:
+          (typeof draft.image === "string" && draft.image.trim()) ||
+          (typeof diskTechnicalSheetsSafe[index]?.image === "string" ? diskTechnicalSheetsSafe[index].image : "") ||
+          (typeof existingTechnicalSheetsSafeForSubmit[index]?.image === "string"
+            ? existingTechnicalSheetsSafeForSubmit[index].image
+            : "") ||
+          "",
         fileName,
         fileData,
         fileMime,
@@ -14213,20 +16160,24 @@ adminEditor.addEventListener("submit", async (event) => {
   applyContent();
   renderAdminOverviewKpis();
   const activeAdminTab = getActiveAdminTabName();
+  const warningText = adminValidationWarnings.length
+    ? ` ⚠️ ${adminValidationWarnings.join(" • ")}.`
+    : "";
+
   if (activeAdminTab === "faq") {
     setFeedback(
       diskSaved
-        ? "FAQ sauvegardee avec succes. Modifications enregistrees dans le navigateur et sur disque."
-        : `⚠️ FAQ sauvegardée seulement dans le navigateur (${getLastDiskSyncError()}).`,
+        ? `FAQ sauvegardee avec succes. Modifications enregistrees dans le navigateur et sur disque.${warningText}`
+        : `⚠️ FAQ sauvegardée seulement dans le navigateur (${getLastDiskSyncError()}).${warningText}`,
       diskSaved ? "success" : "error"
     );
   } else if (strippedLegacyInlineMedia) {
-    setFeedback("✅ Modifications enregistrées. Certains anciens médias trop lourds ont été optimisés.", "success");
+    setFeedback(`✅ Modifications enregistrées. Certains anciens médias trop lourds ont été optimisés.${warningText}`, "success");
   } else if (diskSaved) {
-    setFeedback("✅ Sauvegarde réussie: modifications enregistrées dans le navigateur ET sur disque.", "success");
+    setFeedback(`✅ Sauvegarde réussie: modifications enregistrées dans le navigateur ET sur disque.${warningText}`, "success");
   } else {
     setFeedback(
-      `⚠️ Modifications enregistrées seulement dans le navigateur (${getLastDiskSyncError()}). Reconnectez-vous en mode admin puis cliquez à nouveau sur Enregistrer.`,
+      `⚠️ Modifications enregistrées seulement dans le navigateur (${getLastDiskSyncError()}). Reconnectez-vous en mode admin puis cliquez à nouveau sur Enregistrer.${warningText}`,
       "error"
     );
   }
@@ -14256,6 +16207,39 @@ adminReset.addEventListener("click", () => {
   fillAdminFields();
   setFeedback("Contenu réinitialisé sans suppression des utilisateurs inscrits.");
 });
+
+if (adminRepairCacheBtn) {
+  adminRepairCacheBtn.addEventListener("click", async () => {
+    const oldLabel = adminRepairCacheBtn.textContent;
+    adminRepairCacheBtn.disabled = true;
+    adminRepairCacheBtn.textContent = "Réparation...";
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(AUTHORITATIVE_CONTENT_KEY);
+      localStorage.removeItem(UNSYNCED_CONTENT_KEY);
+      localStorage.removeItem(TECH_IMAGE_FALLBACK_MAP_KEY);
+      localStorage.removeItem(ADMIN_PROFILE_REVIEW_PHOTO_KEY);
+      technicalImageFallbackMapCache = null;
+
+      const response = await fetch("/api/content", { cache: "no-store" });
+      if (!response.ok) throw new Error("sync");
+      const payload = await response.json();
+      if (!payload?.ok || !payload?.content || typeof payload.content !== "object") throw new Error("sync");
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.content));
+      saveAuthoritativeContentSnapshot(payload.content);
+      markContentPendingDiskSync(false);
+
+      setFeedback("✅ Cache local réparé. Rechargement en cours...", "success");
+      setTimeout(() => window.location.reload(), 450);
+      return;
+    } catch (error) {
+      setFeedback("⚠️ Réparation partielle appliquée. Rechargez la page (Cmd+Shift+R).", "error");
+    } finally {
+      adminRepairCacheBtn.disabled = false;
+      adminRepairCacheBtn.textContent = oldLabel || "Réparer cache local";
+    }
+  });
+}
 
 adminLogout.addEventListener("click", () => {
   requestAdminSessionLogout().finally(() => {
@@ -14358,7 +16342,7 @@ if (adminEditor) {
   const triggerAutosave = (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    if (target.closest("#admin-save") || target.closest("#admin-reset") || target.closest("#admin-logout")) return;
+    if (target.closest("#admin-save") || target.closest("#admin-reset") || target.closest("#admin-repair-cache") || target.closest("#admin-logout")) return;
     if (target.matches('input[type="file"]')) return;
     scheduleAdminAutosave();
   };
@@ -14524,27 +16508,51 @@ builderFieldsEl.addEventListener("change", (event) => {
     const file = fillInput.files && fillInput.files[0];
     if (!file) return;
     const slot = String(fillInput.dataset.slot || "1");
-    resizeImageForConfigurator(file)
-      .then((data) => {
+    const previousImage =
+      slot === "2"
+        ? String(siteContent?.configurator?.categoryFillImageSecondary || "")
+        : String(siteContent?.configurator?.categoryFillImage || "");
+    resolveAdminImageValue(
+      file,
+      "configurator",
+      slot === "2" ? "category-fill-2.webp" : "category-fill-1.webp",
+      resizeImageForConfigurator,
+      { strictDisk: true }
+    )
+      .then(async (storedImage) => {
         if (slot === "2") {
-          siteContent.configurator.categoryFillImageSecondary = data;
+          siteContent.configurator.categoryFillImageSecondary = storedImage;
         } else {
-          siteContent.configurator.categoryFillImage = data;
+          siteContent.configurator.categoryFillImage = storedImage;
         }
-        if (!persistSiteContentAuto()) return;
+        const saved = await persistAdminContentNow("Image configurateur enregistrée.");
+        if (!saved) {
+          if (slot === "2") {
+            siteContent.configurator.categoryFillImageSecondary = previousImage;
+          } else {
+            siteContent.configurator.categoryFillImage = previousImage;
+          }
+          renderConfigurator();
+          return;
+        }
         renderConfigurator();
       })
-      .catch(() => {});
+      .catch((error) => {
+        setFeedback(`Image configurateur non sauvegardée sur disque (${String(error?.message || getLastDiskSyncError())}).`, "error");
+      });
     return;
   }
 
   const select = event.target.closest("#config-category-select");
   if (!select) return;
   const tabIndex = Number(select.value);
-  if (Number.isNaN(tabIndex)) return;
-
-  builderFieldsEl.querySelectorAll(".config-panel[data-config-panel]").forEach((panel) => {
-    panel.classList.toggle("active", Number(panel.dataset.configPanel) === tabIndex);
+  const panels = Array.from(builderFieldsEl.querySelectorAll(".config-panel[data-config-panel]"));
+  if (!panels.length) return;
+  const hasMatch = !Number.isNaN(tabIndex) && panels.some((panel) => Number(panel.dataset.configPanel) === tabIndex);
+  const targetIndex = hasMatch ? tabIndex : Number(panels[0].dataset.configPanel || 0);
+  if (!hasMatch) select.value = String(targetIndex);
+  panels.forEach((panel) => {
+    panel.classList.toggle("active", Number(panel.dataset.configPanel) === targetIndex);
   });
 });
 
@@ -14614,6 +16622,38 @@ builderFieldsEl.addEventListener("click", (event) => {
     return;
   }
 
+  if (button.dataset.action === "config-fill-disk") {
+    const slot = String(button.dataset.slot || "1");
+    const previousImage =
+      slot === "2"
+        ? String(siteContent?.configurator?.categoryFillImageSecondary || "")
+        : String(siteContent?.configurator?.categoryFillImage || "");
+    pickExistingUploadPath("configurator", `l'image configurateur ${slot}`)
+      .then(async (selectedPath) => {
+        if (!selectedPath) return;
+        if (slot === "2") {
+          siteContent.configurator.categoryFillImageSecondary = selectedPath;
+        } else {
+          siteContent.configurator.categoryFillImage = selectedPath;
+        }
+        const saved = await persistAdminContentNow("Image configurateur sélectionnée depuis disque.");
+        if (!saved) {
+          if (slot === "2") {
+            siteContent.configurator.categoryFillImageSecondary = previousImage;
+          } else {
+            siteContent.configurator.categoryFillImage = previousImage;
+          }
+          renderConfigurator();
+          return;
+        }
+        renderConfigurator();
+      })
+      .catch((error) => {
+        setFeedback(`Sélection disque impossible (${String(error?.message || "erreur inconnue")}).`, "error");
+      });
+    return;
+  }
+
   if (button.dataset.action === "config-fill-remove") {
     const slot = String(button.dataset.slot || "1");
     if (slot === "2") {
@@ -14621,7 +16661,13 @@ builderFieldsEl.addEventListener("click", (event) => {
     } else {
       siteContent.configurator.categoryFillImage = "";
     }
-    if (!persistSiteContentAuto()) return;
+    persistAdminContentNow("Image configurateur supprimée.")
+      .then(async (saved) => {
+        if (saved) return;
+        const mediaSaved = await saveConfiguratorMediaToDisk(siteContent.configurator).catch(() => false);
+        if (mediaSaved) setFeedback("Suppression image configurateur sécurisée sur disque.", "success");
+      })
+      .catch(() => {});
     renderConfigurator();
   }
 });
@@ -14737,12 +16783,15 @@ function optimizeMediaLoadingHints() {
 }
 
 async function initializeApp() {
-  await hydrateContentFromDiskIfMissing();
+  bindVortexBotFallbackDelegation();
+  const hydratedContent = await hydrateContentFromDiskIfMissing();
   const hydratedUserState = await hydrateUserStateFromDisk();
   if (!hydratedUserState) {
     persistUserStateToDiskAuto();
   }
-  siteContent = loadContent();
+  siteContent = resolveMostRecentContentCandidate(
+    hydratedContent && typeof hydratedContent === "object" ? hydratedContent : loadContent()
+  );
   applyContent();
   initializeResponsiveNav();
   initializeNavSmartSearch();
@@ -14756,10 +16805,14 @@ async function initializeApp() {
   initializeUltraPremiumVisuals();
   optimizeMediaLoadingHints();
   startAdminControlCenterClock();
+  initializeAdminProcessConsoleCapture();
   window.addEventListener("online", updateAdminControlCenter);
   window.addEventListener("offline", updateAdminControlCenter);
   initializeSiteAuth();
   await validateAdminSessionWithServer();
+  if (hasContentPendingDiskSync() && isAdminSessionAuthorized()) {
+    await saveContentSnapshotToDisk(siteContent);
+  }
   refreshNavSessionButtons();
   window.addEventListener("pageshow", refreshNavSessionButtons);
   window.addEventListener("storage", (event) => {

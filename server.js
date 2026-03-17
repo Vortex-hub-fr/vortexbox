@@ -9,7 +9,9 @@ const { URL } = require("url");
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 8080);
-const ROOT_DIR = process.cwd();
+// Use the server file location as stable root (not process.cwd()),
+// so data/uploads always persist in the project folder regardless of launch directory.
+const ROOT_DIR = __dirname;
 const UPLOADS_DIR = path.join(ROOT_DIR, "uploads");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const CONTENT_FILE = path.join(DATA_DIR, "site-content.json");
@@ -94,6 +96,26 @@ const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "vortexcore@outlook.fr").t
 const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "Eolia460&Qp46uqv");
 const ADMIN_SESSION_COOKIE = "vb_admin_session";
 const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const ADMIN_SESSION_NO_EXPIRY = true;
+const ADMIN_SESSION_PERSIST_MAX_AGE_SECONDS = 60 * 60 * 24 * 365 * 10; // 10 ans
+
+function buildAdminEmailCandidates(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  const set = new Set();
+  if (!normalized) return set;
+  set.add(normalized);
+  const [local = "", domain = ""] = normalized.split("@");
+  if (local && domain === "outlook.fr") set.add(`${local}@outlook.com`);
+  if (local && domain === "outlook.com") set.add(`${local}@outlook.fr`);
+  if (local === "vortexcore") {
+    set.add("votexcore.fr");
+    set.add("votexcore@outlook.fr");
+    set.add("votexcore@outlook.com");
+  }
+  return set;
+}
+
+const ADMIN_EMAIL_CANDIDATES = buildAdminEmailCandidates(ADMIN_EMAIL);
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -129,7 +151,7 @@ const ADMIN_SESSION_STORE = new Map();
 
 function isAdminEmailCandidate(email) {
   const normalized = String(email || "").trim().toLowerCase();
-  return normalized === ADMIN_EMAIL || normalized === "votexcore.fr";
+  return ADMIN_EMAIL_CANDIDATES.has(normalized);
 }
 
 function getClientIp(req) {
@@ -199,7 +221,7 @@ function createAdminSession(email) {
   const token = crypto.randomBytes(24).toString("hex");
   ADMIN_SESSION_STORE.set(token, {
     email,
-    expiresAt: Date.now() + ADMIN_SESSION_TTL_MS,
+    expiresAt: ADMIN_SESSION_NO_EXPIRY ? Number.MAX_SAFE_INTEGER : Date.now() + ADMIN_SESSION_TTL_MS,
   });
   return token;
 }
@@ -210,7 +232,7 @@ function getAdminSession(req) {
   if (!token) return null;
   const session = ADMIN_SESSION_STORE.get(token);
   if (!session) return null;
-  if (Number(session.expiresAt || 0) <= Date.now()) {
+  if (!ADMIN_SESSION_NO_EXPIRY && Number(session.expiresAt || 0) <= Date.now()) {
     ADMIN_SESSION_STORE.delete(token);
     return null;
   }
@@ -224,7 +246,9 @@ function clearAdminSession(token) {
 
 function buildAdminSessionCookie(req, token) {
   return buildCookieHeader(ADMIN_SESSION_COOKIE, token, {
-    maxAge: Math.floor(ADMIN_SESSION_TTL_MS / 1000),
+    maxAge: ADMIN_SESSION_NO_EXPIRY
+      ? ADMIN_SESSION_PERSIST_MAX_AGE_SECONDS
+      : Math.floor(ADMIN_SESSION_TTL_MS / 1000),
     secure: shouldUseSecureCookies(req),
   });
 }
@@ -277,6 +301,7 @@ function cleanupUploadStatusStore() {
 }
 
 function cleanupAdminSessionStore() {
+  if (ADMIN_SESSION_NO_EXPIRY) return;
   const now = Date.now();
   for (const [token, session] of ADMIN_SESSION_STORE.entries()) {
     if (Number(session?.expiresAt || 0) <= now) {
@@ -894,6 +919,102 @@ function hasJsonContentType(req) {
   return contentType.includes("application/json");
 }
 
+function shouldPreserveUploadName(kind, originalName) {
+  const safeKind = String(kind || "").trim().toLowerCase();
+  const safeName = String(originalName || "").trim().toLowerCase();
+  if (safeKind !== "configurator") return false;
+  return /^configurator-(1|2|3)\.webp$/.test(safeName);
+}
+
+function buildPremiumPhotoSvg(dataUrl) {
+  const safeDataUrl = String(dataUrl || "").trim();
+  return [
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">',
+    `<image href="${safeDataUrl}" x="0" y="0" width="1600" height="900" preserveAspectRatio="xMidYMid slice" />`,
+    "</svg>",
+  ].join("");
+}
+
+function escapeXmlAttribute(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function normalizePremiumImageHref(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^data:image\//i.test(raw)) return raw;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const noLead = raw.replace(/^\/+/, "");
+  if (noLead.startsWith("uploads/")) return `/${noLead}`;
+  return raw;
+}
+
+async function resolvePremiumImageDataHref(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^data:image\//i.test(raw)) return raw;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const noLead = raw.replace(/^\/+/, "");
+  if (!noLead.startsWith("uploads/")) return raw;
+
+  const absolute = path.resolve(ROOT_DIR, noLead);
+  if (!absolute.startsWith(UPLOADS_DIR) || !absolute.startsWith(ROOT_DIR)) return raw;
+  try {
+    const buffer = await fsp.readFile(absolute);
+    const ext = String(path.extname(absolute) || "").toLowerCase();
+    const mime = MIME_TYPES[ext] || "application/octet-stream";
+    return `data:${mime};base64,${buffer.toString("base64")}`;
+  } catch (error) {
+    return raw;
+  }
+}
+
+async function syncPremiumConfiguratorVisualSources(configurator) {
+  if (!configurator || typeof configurator !== "object") return;
+  const incomingVisual = Array.isArray(configurator.visualImages) ? configurator.visualImages : [];
+  const nextVisual = [0, 1, 2].map((index) => String(incomingVisual[index] || "").trim());
+
+  for (let index = 0; index < 3; index += 1) {
+    const sourceValue = String(nextVisual[index] || "").trim();
+    if (!sourceValue) continue;
+    const premiumFileName = `vortex-premium-photo-${index + 1}.svg`;
+    const premiumFilePattern = new RegExp(`^${premiumFileName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+
+    // Guard: never rebuild a premium file from itself (self-reference loop).
+    // Keep original visual source unchanged for rendering.
+    if (premiumFilePattern.test(sourceValue)) {
+      const fallbackUpload = `uploads/configurator/configurator-${index + 1}.webp`;
+      const fallbackUploadAbs = path.resolve(ROOT_DIR, fallbackUpload);
+      if (fallbackUploadAbs.startsWith(UPLOADS_DIR) && fs.existsSync(fallbackUploadAbs)) {
+        nextVisual[index] = fallbackUpload;
+      } else {
+        const fallbackSvg = `vortex-showcase-${index + 1}.svg`;
+        if (fs.existsSync(path.join(ROOT_DIR, fallbackSvg))) {
+          nextVisual[index] = fallbackSvg;
+        }
+      }
+      continue;
+    }
+
+    const normalizedHref = normalizePremiumImageHref(sourceValue);
+    const href = await resolvePremiumImageDataHref(normalizedHref);
+    if (!href) continue;
+    const absolute = path.join(ROOT_DIR, premiumFileName);
+    const svg = [
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">',
+      `<image href="${escapeXmlAttribute(href)}" x="0" y="0" width="1600" height="900" preserveAspectRatio="xMidYMid slice" />`,
+      "</svg>",
+    ].join("");
+    await fsp.writeFile(absolute, svg, "utf8");
+  }
+
+  configurator.visualImages = nextVisual;
+}
+
 function resolveSafePath(urlPath) {
   const decoded = decodeURIComponent(urlPath.split("?")[0]);
   const clean = decoded === "/" ? "/index.html" : decoded;
@@ -929,8 +1050,11 @@ async function handleUpload(req, res) {
     sendJson(res, 413, { ok: false, error: "Fichier trop volumineux pour ce type." });
     return;
   }
+  const keepOriginalName = shouldPreserveUploadName(kind, originalName);
   const base = path.basename(originalName, path.extname(originalName)) || "file";
-  const finalName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${sanitizeName(base, "file")}${ext}`;
+  const finalName = keepOriginalName
+    ? sanitizeName(originalName, `configurator-1${ext}`)
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${sanitizeName(base, "file")}${ext}`;
   const folder = path.join(UPLOADS_DIR, kind);
   await fsp.mkdir(folder, { recursive: true });
   const absolute = path.join(folder, finalName);
@@ -997,8 +1121,11 @@ async function handleBinaryUpload(req, res) {
     sendJson(res, 400, { ok: false, error: "Extension non autorisée pour ce dossier." });
     return;
   }
+  const keepOriginalName = shouldPreserveUploadName(kind, originalName);
   const base = path.basename(originalName, path.extname(originalName)) || "file";
-  const finalName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${sanitizeName(base, "file")}${ext}`;
+  const finalName = keepOriginalName
+    ? sanitizeName(originalName, `configurator-1${ext}`)
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${sanitizeName(base, "file")}${ext}`;
   const folder = path.join(UPLOADS_DIR, kind);
   await fsp.mkdir(folder, { recursive: true });
   const absolute = path.join(folder, finalName);
@@ -1150,6 +1277,46 @@ async function handleGetUploadProgress(url, res) {
   sendJson(res, 200, { ok: true, status });
 }
 
+async function handleListUploads(url, res) {
+  const kind = sanitizeName(url.searchParams.get("kind") || "", "");
+  if (!isAllowedUploadKind(kind)) {
+    sendJson(res, 400, { ok: false, error: "Dossier upload non autorisé." });
+    return;
+  }
+  const type = String(url.searchParams.get("type") || "image").trim().toLowerCase();
+  const folder = path.join(UPLOADS_DIR, kind);
+  try {
+    await fsp.mkdir(folder, { recursive: true });
+    const entries = await fsp.readdir(folder, { withFileTypes: true });
+    const files = [];
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      const ext = path.extname(entry.name).toLowerCase();
+      if (type === "image" && !UPLOAD_KIND_EXTENSIONS.image.has(ext)) continue;
+      if (type === "video" && !UPLOAD_KIND_EXTENSIONS.video.has(ext)) continue;
+      if (type === "doc" && !UPLOAD_KIND_EXTENSIONS.doc.has(ext)) continue;
+      if (type === "archive" && !UPLOAD_KIND_EXTENSIONS.archive.has(ext)) continue;
+      const absolute = path.join(folder, entry.name);
+      let stat;
+      try {
+        stat = await fsp.stat(absolute);
+      } catch (error) {
+        continue;
+      }
+      files.push({
+        name: entry.name,
+        path: `uploads/${kind}/${entry.name}`.replace(/\\/g, "/"),
+        size: Number(stat.size || 0),
+        updatedAt: stat.mtimeMs || 0,
+      });
+    }
+    files.sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+    sendJson(res, 200, { ok: true, kind, files });
+  } catch (error) {
+    sendJson(res, 500, { ok: false, error: "Impossible de lire les fichiers du dossier." });
+  }
+}
+
 async function handleSaveContent(req, res) {
   const body = await readJsonBody(req);
   const content = body && typeof body.content === "object" ? body.content : null;
@@ -1157,6 +1324,23 @@ async function handleSaveContent(req, res) {
     sendJson(res, 400, { error: "Contenu manquant." });
     return;
   }
+  const incomingUpdatedAt = Math.max(0, Number(content?._updatedAt || 0));
+  const currentContent = await loadContentFileSafe();
+  const currentUpdatedAt = Math.max(0, Number(currentContent?._updatedAt || 0));
+
+  // Guard against out-of-order writes: an older client snapshot must never
+  // overwrite a newer disk snapshot if requests resolve in the wrong order.
+  if (incomingUpdatedAt > 0 && currentUpdatedAt > 0 && incomingUpdatedAt < currentUpdatedAt) {
+    sendJson(res, 200, {
+      ok: true,
+      ignoredStaleWrite: true,
+      currentUpdatedAt,
+      incomingUpdatedAt,
+      file: "data/site-content.json",
+    });
+    return;
+  }
+
   await fsp.mkdir(DATA_DIR, { recursive: true });
   try {
     await fsp.access(CONTENT_FILE, fs.constants.F_OK);
@@ -1167,8 +1351,392 @@ async function handleSaveContent(req, res) {
   } catch (error) {
     // No previous file yet or backup issue: continue save to avoid blocking edits.
   }
-  await writeJsonAtomic(CONTENT_FILE, content);
+  const isDefaultImageValue = (value) => {
+    const raw = String(value || "").trim().toLowerCase();
+    if (!raw) return true;
+    return (
+      /^vortex-premium-photo-[0-9]+\.svg$/i.test(raw) ||
+      /^vortex-showcase-[0-9]+\.svg$/i.test(raw) ||
+      /^vortex-tech-verso\.svg$/i.test(raw)
+    );
+  };
+  const isCustomImageValue = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return false;
+    if (isDefaultImageValue(raw)) return false;
+    return (
+      raw.startsWith("uploads/") ||
+      raw.startsWith("/uploads/") ||
+      /^https?:\/\//i.test(raw) ||
+      /^data:image\//i.test(raw)
+    );
+  };
+  const incomingContent = content && typeof content === "object" ? { ...content } : {};
+
+  if (Array.isArray(incomingContent.showcase) && Array.isArray(currentContent?.showcase)) {
+    incomingContent.showcase = incomingContent.showcase.map((item, index) => {
+      const nextItem = item && typeof item === "object" ? { ...item } : {};
+      const incomingImage = String(nextItem.image || "").trim();
+      const currentImage = String(currentContent.showcase?.[index]?.image || "").trim();
+      if ((isDefaultImageValue(incomingImage) || !incomingImage) && isCustomImageValue(currentImage)) {
+        nextItem.image = currentImage;
+      }
+      return nextItem;
+    });
+  }
+
+  if (Array.isArray(incomingContent.technicalSheets) && Array.isArray(currentContent?.technicalSheets)) {
+    incomingContent.technicalSheets = incomingContent.technicalSheets.map((item, index) => {
+      const nextItem = item && typeof item === "object" ? { ...item } : {};
+      const incomingImage = String(nextItem.image || "").trim();
+      const currentImage = String(currentContent.technicalSheets?.[index]?.image || "").trim();
+      if ((isDefaultImageValue(incomingImage) || !incomingImage) && isCustomImageValue(currentImage)) {
+        nextItem.image = currentImage;
+      }
+      return nextItem;
+    });
+  }
+
+  if (Array.isArray(incomingContent.gamesCatalog) && Array.isArray(currentContent?.gamesCatalog)) {
+    incomingContent.gamesCatalog = incomingContent.gamesCatalog.map((item, index) => {
+      const nextItem = item && typeof item === "object" ? { ...item } : {};
+      const incomingImage = String(nextItem.image || "").trim();
+      const currentImage = String(currentContent.gamesCatalog?.[index]?.image || "").trim();
+      if ((!incomingImage || isDefaultImageValue(incomingImage)) && isCustomImageValue(currentImage)) {
+        nextItem.image = currentImage;
+      }
+      return nextItem;
+    });
+  }
+
+  if (Array.isArray(incomingContent.aboutVideos) && Array.isArray(currentContent?.aboutVideos)) {
+    incomingContent.aboutVideos = incomingContent.aboutVideos.map((item, index) => {
+      const nextItem = item && typeof item === "object" ? { ...item } : {};
+      const incomingVideo = String(nextItem.videoData || "").trim();
+      const currentVideo = String(currentContent.aboutVideos?.[index]?.videoData || "").trim();
+      if (!incomingVideo && currentVideo) {
+        nextItem.videoData = currentVideo;
+      }
+      const incomingWebm = String(nextItem.videoWebm || "").trim();
+      const currentWebm = String(currentContent.aboutVideos?.[index]?.videoWebm || "").trim();
+      if (!incomingWebm && currentWebm) {
+        nextItem.videoWebm = currentWebm;
+      }
+      return nextItem;
+    });
+  }
+
+  if (incomingContent.configurator && typeof incomingContent.configurator === "object" && currentContent?.configurator) {
+    const nextConfig = { ...incomingContent.configurator };
+    const currentConfig = currentContent.configurator && typeof currentContent.configurator === "object"
+      ? currentContent.configurator
+      : {};
+
+    const preserveImageField = (field) => {
+      const incoming = String(nextConfig[field] || "").trim();
+      const current = String(currentConfig[field] || "").trim();
+      if ((isDefaultImageValue(incoming) || !incoming) && isCustomImageValue(current)) {
+        nextConfig[field] = current;
+      }
+    };
+
+    if (Array.isArray(nextConfig.visualImages) && Array.isArray(currentConfig.visualImages)) {
+      nextConfig.visualImages = [0, 1, 2].map((index) => {
+        const incoming = String(nextConfig.visualImages[index] || "").trim();
+        const current = String(currentConfig.visualImages[index] || "").trim();
+        if ((isDefaultImageValue(incoming) || !incoming) && isCustomImageValue(current)) return current;
+        return incoming;
+      });
+    } else if (Array.isArray(currentConfig.visualImages)) {
+      nextConfig.visualImages = currentConfig.visualImages.slice(0, 3);
+    }
+
+    preserveImageField("categoryFillImage");
+    preserveImageField("categoryFillImageSecondary");
+    preserveImageField("summaryTelegramImage");
+
+    if (!String(nextConfig.summaryTelegramTitle || "").trim() && String(currentConfig.summaryTelegramTitle || "").trim()) {
+      nextConfig.summaryTelegramTitle = String(currentConfig.summaryTelegramTitle || "");
+    }
+
+    if (Array.isArray(nextConfig.summaryExtraImages) && Array.isArray(currentConfig.summaryExtraImages)) {
+      nextConfig.summaryExtraImages = [0, 1].map((index) => {
+        const incoming = String(nextConfig.summaryExtraImages[index] || "").trim();
+        const current = String(currentConfig.summaryExtraImages[index] || "").trim();
+        if ((isDefaultImageValue(incoming) || !incoming) && isCustomImageValue(current)) return current;
+        return incoming;
+      });
+    } else if (Array.isArray(currentConfig.summaryExtraImages)) {
+      nextConfig.summaryExtraImages = currentConfig.summaryExtraImages.slice(0, 2);
+    }
+
+    if (Array.isArray(currentConfig.components)) {
+      if (!Array.isArray(nextConfig.components) || !nextConfig.components.length) {
+        nextConfig.components = currentConfig.components;
+      } else {
+        const findCurrentComponent = (incomingComponent, index) => {
+          const incomingId = String(incomingComponent?.id || "").trim();
+          const incomingLabel = String(incomingComponent?.label || "").trim().toLowerCase();
+          if (incomingId) {
+            const byId = currentConfig.components.find(
+              (item) => String(item?.id || "").trim() === incomingId
+            );
+            if (byId) return byId;
+          }
+          if (incomingLabel) {
+            const byLabel = currentConfig.components.find(
+              (item) => String(item?.label || "").trim().toLowerCase() === incomingLabel
+            );
+            if (byLabel) return byLabel;
+          }
+          return currentConfig.components[index] && typeof currentConfig.components[index] === "object"
+            ? currentConfig.components[index]
+            : {};
+        };
+
+        nextConfig.components = nextConfig.components.map((component, cIndex) => {
+          const nextComponent = component && typeof component === "object" ? { ...component } : {};
+          const currentComponent = findCurrentComponent(nextComponent, cIndex);
+
+          if (!String(nextComponent.label || "").trim() && String(currentComponent?.label || "").trim()) {
+            nextComponent.label = String(currentComponent.label || "");
+          }
+          if (!String(nextComponent.id || "").trim() && String(currentComponent?.id || "").trim()) {
+            nextComponent.id = String(currentComponent.id || "");
+          }
+
+          const currentOptions = Array.isArray(currentComponent?.options) ? currentComponent.options : [];
+          if (!Array.isArray(nextComponent.options) || !nextComponent.options.length) {
+            nextComponent.options = currentOptions;
+            return nextComponent;
+          }
+
+          nextComponent.options = nextComponent.options.map((option, oIndex) => {
+            const nextOption = option && typeof option === "object" ? { ...option } : {};
+            const incomingName = String(nextOption.name || "").trim().toLowerCase();
+            const currentOption =
+              currentOptions.find(
+                (item) =>
+                  incomingName &&
+                  String(item?.name || "").trim().toLowerCase() === incomingName
+              ) ||
+              (currentOptions[oIndex] && typeof currentOptions[oIndex] === "object" ? currentOptions[oIndex] : {});
+
+            if (!String(nextOption.name || "").trim() && String(currentOption?.name || "").trim()) {
+              nextOption.name = String(currentOption.name || "");
+            }
+            if (!String(nextOption.description || "").trim() && String(currentOption?.description || "").trim()) {
+              nextOption.description = String(currentOption.description || "");
+            }
+            if (!String(nextOption.badge || "").trim() && String(currentOption?.badge || "").trim()) {
+              nextOption.badge = String(currentOption.badge || "");
+            }
+            const incomingImage = String(nextOption.image || "").trim();
+            const currentImage = String(currentOption?.image || "").trim();
+            if ((isDefaultImageValue(incomingImage) || !incomingImage) && isCustomImageValue(currentImage)) {
+              nextOption.image = currentImage;
+            }
+            return nextOption;
+          });
+
+          return nextComponent;
+        });
+      }
+    }
+
+    if (Array.isArray(currentConfig.services)) {
+      if (!Array.isArray(nextConfig.services) || !nextConfig.services.length) {
+        nextConfig.services = currentConfig.services;
+      } else if (nextConfig.services.length === currentConfig.services.length) {
+        nextConfig.services = nextConfig.services.map((service, sIndex) => {
+          const nextService = service && typeof service === "object" ? { ...service } : {};
+          const currentService = currentConfig.services[sIndex] && typeof currentConfig.services[sIndex] === "object"
+            ? currentConfig.services[sIndex]
+            : {};
+          if (!String(nextService.label || "").trim() && String(currentService.label || "").trim()) {
+            nextService.label = String(currentService.label || "");
+          }
+          if (!String(nextService.description || "").trim() && String(currentService.description || "").trim()) {
+            nextService.description = String(currentService.description || "");
+          }
+          return nextService;
+        });
+      }
+    }
+
+    incomingContent.configurator = nextConfig;
+  }
+
+  const nextContent = {
+    ...incomingContent,
+    _updatedAt: incomingUpdatedAt > 0 ? incomingUpdatedAt : Date.now(),
+  };
+  if (nextContent.configurator && typeof nextContent.configurator === "object") {
+    await syncPremiumConfiguratorVisualSources(nextContent.configurator);
+  }
+  await writeJsonAtomic(CONTENT_FILE, nextContent);
   sendJson(res, 200, { ok: true, file: "data/site-content.json" });
+}
+
+async function handleSaveTechnicalSheetImage(req, res) {
+  const body = await readJsonBody(req);
+  const indexRaw = Number(body?.index);
+  const image = String(body?.image || "").trim().replace(/\\/g, "/");
+  if (!Number.isInteger(indexRaw) || indexRaw < 0 || indexRaw > 200) {
+    sendJson(res, 400, { ok: false, error: "Index de fiche invalide." });
+    return;
+  }
+  if (!image) {
+    sendJson(res, 400, { ok: false, error: "Image de fiche manquante." });
+    return;
+  }
+
+  const content = await loadContentFileSafe();
+  const nextContent = content && typeof content === "object" ? { ...content } : {};
+  const currentSheets = Array.isArray(nextContent.technicalSheets) ? nextContent.technicalSheets.slice() : [];
+
+  while (currentSheets.length <= indexRaw) {
+    currentSheets.push({
+      title: `Fiche Technique ${currentSheets.length + 1}`,
+      image: "",
+      fileName: "",
+      fileData: "",
+      fileMime: "application/pdf",
+      fileKey: "",
+    });
+  }
+
+  const current = currentSheets[indexRaw] && typeof currentSheets[indexRaw] === "object" ? currentSheets[indexRaw] : {};
+  currentSheets[indexRaw] = {
+    title: String(current.title || `Fiche Technique ${indexRaw + 1}`).trim() || `Fiche Technique ${indexRaw + 1}`,
+    image,
+    fileName: typeof current.fileName === "string" ? current.fileName : "",
+    fileData: typeof current.fileData === "string" ? current.fileData : "",
+    fileMime: typeof current.fileMime === "string" ? current.fileMime : "application/pdf",
+    fileKey: typeof current.fileKey === "string" ? current.fileKey : "",
+  };
+
+  nextContent.technicalSheets = currentSheets;
+  nextContent._updatedAt = Date.now();
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await writeJsonAtomic(CONTENT_FILE, nextContent);
+  sendJson(res, 200, { ok: true, index: indexRaw, image });
+}
+
+async function handleSaveConfiguratorMedia(req, res) {
+  const body = await readJsonBody(req);
+  const incoming = body && typeof body === "object" ? body : {};
+  const nextPayload = incoming.configurator && typeof incoming.configurator === "object"
+    ? incoming.configurator
+    : {};
+
+  const isSafeMediaPath = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return true;
+    if (raw.startsWith("uploads/")) return true;
+    if (raw.startsWith("/uploads/")) return true;
+    if (/^vortex-premium-photo-(1|2|3)\.svg$/i.test(raw)) return true;
+    if (/^vortex-showcase-[0-9]+\.svg$/i.test(raw)) return true;
+    if (/^vortex-tech-verso\.svg$/i.test(raw)) return true;
+    if (/^https?:\/\//i.test(raw)) return true;
+    return false;
+  };
+
+  const content = await loadContentFileSafe();
+  const nextContent = content && typeof content === "object" ? { ...content } : {};
+  const currentConfig =
+    nextContent.configurator && typeof nextContent.configurator === "object"
+      ? { ...nextContent.configurator }
+      : {};
+
+  const incomingVisual = Array.isArray(nextPayload.visualImages) ? nextPayload.visualImages : [];
+  currentConfig.visualImages = [0, 1, 2].map((index) => {
+    const value = String(incomingVisual[index] || "").trim();
+    return isSafeMediaPath(value) ? value : "";
+  });
+
+  const assignField = (key) => {
+    const value = String(nextPayload[key] || "").trim();
+    currentConfig[key] = isSafeMediaPath(value) ? value : "";
+  };
+  assignField("categoryFillImage");
+  assignField("categoryFillImageSecondary");
+  assignField("summaryTelegramImage");
+
+  const incomingExtra = Array.isArray(nextPayload.summaryExtraImages) ? nextPayload.summaryExtraImages : [];
+  currentConfig.summaryExtraImages = [0, 1].map((index) => {
+    const value = String(incomingExtra[index] || "").trim();
+    return isSafeMediaPath(value) ? value : "";
+  });
+
+  const incomingComponents = Array.isArray(nextPayload.components) ? nextPayload.components : [];
+  const currentComponents = Array.isArray(currentConfig.components) ? currentConfig.components : [];
+  if (incomingComponents.length) {
+    const sourceComponents = currentComponents.length ? currentComponents : incomingComponents;
+    currentConfig.components = sourceComponents.map((component, cIndex) => {
+      const incomingComponent =
+        incomingComponents.find(
+          (candidate) =>
+            String(candidate?.id || "").trim() &&
+            String(candidate?.id || "").trim() === String(component?.id || "").trim()
+        ) || incomingComponents[cIndex];
+      const baseComponent = component && typeof component === "object" ? component : {};
+      if (!incomingComponent || typeof incomingComponent !== "object") return baseComponent;
+      const incomingOptions = Array.isArray(incomingComponent.options) ? incomingComponent.options : [];
+      const currentOptions = Array.isArray(baseComponent?.options) ? baseComponent.options : [];
+      const sourceOptions = currentOptions.length ? currentOptions : incomingOptions;
+      const mergedOptions = sourceOptions.map((option, oIndex) => {
+        const baseOption = option && typeof option === "object" ? option : {};
+        const incomingOption =
+          incomingOptions.find(
+            (candidate) =>
+              String(candidate?.name || "").trim() &&
+              String(candidate?.name || "").trim() === String(baseOption?.name || "").trim()
+          ) || incomingOptions[oIndex];
+        if (!incomingOption || typeof incomingOption !== "object") return baseOption;
+        const incomingImage = String(incomingOption.image || "").trim();
+        if (!incomingImage || !isSafeMediaPath(incomingImage)) return baseOption;
+        return {
+          ...baseOption,
+          image: incomingImage,
+        };
+      });
+      return {
+        ...baseComponent,
+        options: mergedOptions,
+      };
+    });
+  }
+
+  nextContent.configurator = currentConfig;
+  nextContent._updatedAt = Date.now();
+  await syncPremiumConfiguratorVisualSources(nextContent.configurator);
+  await writeJsonAtomic(CONTENT_FILE, nextContent);
+  sendJson(res, 200, { ok: true, file: "data/site-content.json" });
+}
+
+async function handleSavePremiumPhotoSource(req, res) {
+  const body = await readJsonBody(req);
+  const slot = Number(body?.slot || 0);
+  if (!Number.isInteger(slot) || slot < 1 || slot > 3) {
+    sendJson(res, 400, { ok: false, error: "Slot premium invalide (1..3)." });
+    return;
+  }
+  const parsed = parseDataUrl(body?.dataUrl);
+  if (!parsed || !String(parsed.mime || "").toLowerCase().startsWith("image/")) {
+    sendJson(res, 400, { ok: false, error: "Image invalide." });
+    return;
+  }
+  if (parsed.buffer.length > 25 * 1024 * 1024) {
+    sendJson(res, 413, { ok: false, error: "Image trop lourde (max 25 MB)." });
+    return;
+  }
+
+  const fileName = `vortex-premium-photo-${slot}.svg`;
+  const absolute = path.join(ROOT_DIR, fileName);
+  const svg = buildPremiumPhotoSvg(String(body?.dataUrl || "").trim());
+  await fsp.writeFile(absolute, svg, "utf8");
+  sendJson(res, 200, { ok: true, path: fileName });
 }
 
 async function handleDeleteUpload(req, res) {
@@ -2252,6 +2820,19 @@ async function requestListener(req, res) {
       await handleGetUploadProgress(url, res);
       return;
     }
+    if (req.method === "GET" && url.pathname === "/api/uploads-list") {
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "uploads-list", 120, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de requêtes. Réessayez dans 1 minute." });
+        return;
+      }
+      if (!requireAdminSession(req, res)) return;
+      await handleListUploads(url, res);
+      return;
+    }
     if (req.method === "POST" && url.pathname === "/api/save-content") {
       if (!hasJsonContentType(req)) {
         sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
@@ -2267,6 +2848,57 @@ async function requestListener(req, res) {
       }
       if (!requireAdminSession(req, res)) return;
       await handleSaveContent(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/save-technical-sheet-image") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "save-technical-sheet-image", 240, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
+        return;
+      }
+      if (!requireAdminSession(req, res)) return;
+      await handleSaveTechnicalSheetImage(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/save-configurator-media") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "save-configurator-media", 240, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
+        return;
+      }
+      if (!requireAdminSession(req, res)) return;
+      await handleSaveConfiguratorMedia(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/save-premium-photo-source") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "save-premium-photo-source", 120, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
+        return;
+      }
+      if (!requireAdminSession(req, res)) return;
+      await handleSavePremiumPhotoSource(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/process-invoice-pdf") {
