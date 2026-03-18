@@ -14237,6 +14237,74 @@ video {
   object-position: center center !important;
 }
 
+/* Progressive media loading (perceived performance) */
+.progressive-media-host {
+  position: relative;
+  overflow: hidden;
+}
+
+.progressive-media-host::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      110deg,
+      rgba(17, 52, 84, 0.9) 0%,
+      rgba(44, 103, 146, 0.88) 45%,
+      rgba(17, 52, 84, 0.9) 100%
+    );
+  background-size: 240% 100%;
+  animation: progressive-media-shimmer 1.25s linear infinite;
+  opacity: 0.92;
+  transition: opacity 340ms ease;
+}
+
+.progressive-media-host.is-media-loaded::before {
+  opacity: 0;
+}
+
+.js-progressive-media {
+  opacity: 0.18;
+  filter: blur(11px);
+  transform: scale(1.04);
+  transition:
+    opacity 460ms ease,
+    filter 460ms ease,
+    transform 460ms ease;
+  will-change: opacity, filter, transform;
+}
+
+.progressive-media-host.is-media-loaded .js-progressive-media,
+.js-progressive-media.is-media-loaded {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+
+@keyframes progressive-media-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -40% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressive-media-host::before {
+    animation: none;
+  }
+
+  .js-progressive-media {
+    transition: opacity 120ms linear;
+    filter: none;
+    transform: none;
+  }
+}
+
 /* Profile admin photo slot: force stretched image to fill full frame. */
 #profile-admin-photo-preview {
   width: 100% !important;

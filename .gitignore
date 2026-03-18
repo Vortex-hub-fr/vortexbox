@@ -9,3 +9,5 @@ uploads/**/*.webm
 !uploads/about-videos/
 !uploads/about-videos/**/*.mp4
 !uploads/about-videos/**/*.webm
+cleanup-unused-files-*.txt
+backups/cleanup-reports/

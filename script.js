@@ -6190,12 +6190,14 @@ function renderShowcase() {
       const media = showcaseSrc
         ? `
             <img class="showcase-media-backfill" src="${showcaseSrc}" data-media-fallback="${escapeHtml(showcaseFallbackData)}" alt="" aria-hidden="true" />
-            <img class="showcase-media-main" src="${showcaseSrc}" data-media-fallback="${escapeHtml(showcaseFallbackData)}" alt="${escapeHtml(item.title)}" />
+            <img class="showcase-media-main js-progressive-media" src="${showcaseSrc}" data-media-fallback="${escapeHtml(showcaseFallbackData)}" alt="${escapeHtml(item.title)}" ${
+              index === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"'
+            } decoding="async" />
           `
         : '<div class="showcase-placeholder" aria-hidden="true"></div>';
 
       return `
-        <article class="showcase-card" data-showcase-index="${index}">
+        <article class="showcase-card progressive-media-host" data-showcase-index="${index}">
           ${media}
           <div class="showcase-admin-controls">
             <button class="showcase-admin-btn" type="button" data-action="showcase-left" data-index="${index}" aria-label="Déplacer à gauche">◀</button>
@@ -6210,6 +6212,7 @@ function renderShowcase() {
       `;
     })
     .join("");
+  bindProgressiveMedia(heroShowcaseEl);
 }
 
 function renderTechnicalSheets() {
@@ -6263,7 +6266,7 @@ function renderTechnicalSheets() {
             </div>
             <div class="technical-flip technical-flip-static">
               <div class="technical-face technical-face-front technical-face-single">
-                <img class="technical-media" src="${escapeHtml(imageMedia)}" data-media-fallback="${escapeHtml(imageFallbackData)}" alt="${escapeHtml(sheet.title)}" />
+                <img class="technical-media" src="${escapeHtml(imageMedia)}" data-media-fallback="${escapeHtml(imageFallbackData)}" alt="${escapeHtml(sheet.title)}" loading="eager" decoding="async" />
                 ${downloadIcon}
               </div>
             </div>
@@ -6287,6 +6290,41 @@ function resolveSiteMediaSrc(value) {
   } catch (error) {
     return normalized;
   }
+}
+
+function bindProgressiveMedia(root = document) {
+  if (!root || typeof root.querySelectorAll !== "function") return;
+  const hosts = root.querySelectorAll(".progressive-media-host");
+  hosts.forEach((host) => {
+    if (!(host instanceof HTMLElement)) return;
+    if (host.dataset.progressiveBound === "1") return;
+    host.dataset.progressiveBound = "1";
+    host.classList.add("is-media-loading");
+    const image = host.querySelector("img.js-progressive-media");
+    if (!(image instanceof HTMLImageElement)) {
+      host.classList.add("is-media-loaded");
+      return;
+    }
+    const markLoaded = () => {
+      host.classList.add("is-media-loaded");
+      image.classList.add("is-media-loaded");
+    };
+    if (image.complete && image.naturalWidth > 0) {
+      markLoaded();
+      return;
+    }
+    image.addEventListener("load", markLoaded, { once: true });
+    image.addEventListener(
+      "error",
+      () => {
+        // Some images get swapped to fallback src after first error.
+        window.setTimeout(() => {
+          if (image.complete && image.naturalWidth > 0) markLoaded();
+        }, 120);
+      },
+      { once: true }
+    );
+  });
 }
 
 function resolveTechnicalSheetHref(sheet, index) {
@@ -8629,13 +8667,9 @@ async function triggerAdminBackupZipDownload() {
       adminBackupFilenameInput?.value || `vortexbox-site-backup-${Date.now()}`,
       "SAV VortexBox"
     );
-    // Important UX: demander le dossier immédiatement au clic (si supporté),
-    // pour éviter l'impression de blocage pendant la génération ZIP.
-    const saveHandle = await openBackupSavePicker(preferredFileName);
-    if (saveHandle === null) return;
-
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 90000);
+    // La sauvegarde peut être volumineuse (uploads), on laisse plus de marge.
+    const timeout = window.setTimeout(() => controller.abort(), 20 * 60 * 1000);
     const response = await fetch("/api/backup-site-zip", {
       cache: "no-store",
       signal: controller.signal,
@@ -8662,6 +8696,9 @@ async function triggerAdminBackupZipDownload() {
     }
 
     const blob = await response.blob();
+    if (!blob || blob.size <= 0) {
+      throw new Error("Le serveur a renvoyé une sauvegarde vide (0 octet).");
+    }
     const disposition = response.headers.get("content-disposition") || "";
     const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
     const serverFileName = match?.[1] || `vortexbox-site-backup-${Date.now()}.zip`;
@@ -8669,6 +8706,10 @@ async function triggerAdminBackupZipDownload() {
       adminBackupFilenameInput?.value || serverFileName.replace(/\.zip$/i, ""),
       "SAV VortexBox"
     );
+    // Ouvrir le sélecteur après génération évite la création de fichiers 0 octet
+    // si la requête échoue ou expire.
+    const saveHandle = await openBackupSavePicker(finalFileName);
+    if (saveHandle === null) return;
     let pickerResult = false;
     if (saveHandle && typeof saveHandle.createWritable === "function") {
       await writeBackupToHandle(saveHandle, blob);

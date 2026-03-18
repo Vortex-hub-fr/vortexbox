@@ -121,6 +121,40 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function bindProgressiveMedia(root = document) {
+  if (!root || typeof root.querySelectorAll !== "function") return;
+  const hosts = root.querySelectorAll(".progressive-media-host");
+  hosts.forEach((host) => {
+    if (!(host instanceof HTMLElement)) return;
+    if (host.dataset.progressiveBound === "1") return;
+    host.dataset.progressiveBound = "1";
+    host.classList.add("is-media-loading");
+    const image = host.querySelector("img.js-progressive-media");
+    if (!(image instanceof HTMLImageElement)) {
+      host.classList.add("is-media-loaded");
+      return;
+    }
+    const markLoaded = () => {
+      host.classList.add("is-media-loaded");
+      image.classList.add("is-media-loaded");
+    };
+    if (image.complete && image.naturalWidth > 0) {
+      markLoaded();
+      return;
+    }
+    image.addEventListener("load", markLoaded, { once: true });
+    image.addEventListener(
+      "error",
+      () => {
+        window.setTimeout(() => {
+          if (image.complete && image.naturalWidth > 0) markLoaded();
+        }, 120);
+      },
+      { once: true }
+    );
+  });
+}
+
 const fallbackFaq = [
   {
     question: "Pourquoi choisir une VortexBox plutôt qu’un PC gaming classique ?",
@@ -2641,10 +2675,10 @@ async function renderGamesCatalog(options = {}) {
             <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
             <span>VortexBox Premium</span>
           </div>
-          <div class="game-cover-media-wrap" data-game-title="${escapeHtml(current.title || item.title)}" style="--cover-url:url('${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image))).replace(/'/g, "%27")}')">
+          <div class="game-cover-media-wrap progressive-media-host" data-game-title="${escapeHtml(current.title || item.title)}" style="--cover-url:url('${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image))).replace(/'/g, "%27")}')">
             <button class="game-cover-info-btn ${infoStateClass}" type="button" data-game-index="${index}" data-game-title="${escapeHtml(titleValue)}" data-game-info="${escapeHtml(infoEncoded)}" aria-label="Information jeu">i</button>
             <img
-              class="game-cover-media"
+              class="game-cover-media js-progressive-media"
               src="${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image)))}"
               alt="${escapeHtml(item.title)}"
               loading="${index < 3 ? "eager" : "lazy"}"
@@ -2670,10 +2704,12 @@ async function renderGamesCatalog(options = {}) {
     `
       : "";
     gamesGridEl.innerHTML = `${toolbarMarkup}${cardsMarkup}`;
+    bindProgressiveMedia(gamesGridEl);
   } catch (error) {
     // Keep the static HTML cards if dynamic rendering fails for any reason.
     if (previousMarkup.trim()) gamesGridEl.innerHTML = previousMarkup;
   }
+  bindProgressiveMedia(gamesGridEl);
   initializeGamesPremiumEffects();
   window.requestAnimationFrame(() => gamesGridEl.classList.add("is-ready"));
 }

@@ -7,6 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "cleanup:uploads:report": "node tools/cleanup-unused-uploads.js",
+    "cleanup:uploads:quarantine": "node tools/cleanup-unused-uploads.js --quarantine --yes",
+    "cleanup:uploads:delete": "node tools/cleanup-unused-uploads.js --delete --yes",
     "video:2k:about": "node tools/upscale-videos-local.js --active-about --target=2k",
     "video:2k:build": "node tools/upscale-videos-local.js --all-machine --target=2k",
     "video:2k:file": "node tools/upscale-videos-local.js --target=2k",

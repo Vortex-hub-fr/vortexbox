@@ -535,72 +535,72 @@
   "gamesCatalog": [
     {
       "title": "Ballistic Overkill",
-      "image": "uploads/games-covers/1773718883141-0nx1u0-1773030677069-fokfqr-capture-d-e-cran-2026-03-09-044419.png",
+      "image": "uploads/games-covers/1773718883141-0nx1u0-1773030677069-fokfqr-capture-d-e-cran-2026-03-09-044419.webp",
       "info": ""
     },
     {
       "title": "1917",
-      "image": "uploads/games-covers/1773719057502-9jzokc-1773030209697-smk926-capture-d-e-cran-2026-03-09-044115.png",
+      "image": "uploads/games-covers/1773719057502-9jzokc-1773030209697-smk926-capture-d-e-cran-2026-03-09-044115.webp",
       "info": ""
     },
     {
       "title": "Achilles Survivor",
-      "image": "uploads/games-covers/1773719057503-xmkndx-1773030209699-ggxtrg-capture-d-e-cran-2026-03-09-044133.png",
+      "image": "uploads/games-covers/1773719057503-xmkndx-1773030209699-ggxtrg-capture-d-e-cran-2026-03-09-044133.webp",
       "info": ""
     },
     {
       "title": "Aeffem Fall",
-      "image": "uploads/games-covers/1773719057503-4lka49-1773030209700-eczmv8-capture-d-e-cran-2026-03-09-044155.png",
+      "image": "uploads/games-covers/1773719057503-4lka49-1773030209700-eczmv8-capture-d-e-cran-2026-03-09-044155.webp",
       "info": ""
     },
     {
       "title": "Afterfall",
-      "image": "uploads/games-covers/1773719057504-xmhxg0-1773030209701-3rpxe6-capture-d-e-cran-2026-03-09-044207.png",
+      "image": "uploads/games-covers/1773719057504-xmhxg0-1773030209701-3rpxe6-capture-d-e-cran-2026-03-09-044207.webp",
       "info": ""
     },
     {
       "title": "Fight Forever",
-      "image": "uploads/games-covers/1773719057504-ij46eh-1773030209701-cxa4jm-capture-d-e-cran-2026-03-09-044223.png",
+      "image": "uploads/games-covers/1773719057504-ij46eh-1773030209701-cxa4jm-capture-d-e-cran-2026-03-09-044223.webp",
       "info": ""
     },
     {
       "title": "Alien 2",
-      "image": "uploads/games-covers/1773719057505-7sffzd-1773030209702-0w2qca-capture-d-e-cran-2026-03-09-044310.png",
+      "image": "uploads/games-covers/1773719057505-7sffzd-1773030209702-0w2qca-capture-d-e-cran-2026-03-09-044310.webp",
       "info": ""
     },
     {
       "title": "Aliens Fireteam Elite",
-      "image": "uploads/games-covers/1773719057505-o6ptkr-1773030209702-3upkfd-capture-d-e-cran-2026-03-09-044248.png",
+      "image": "uploads/games-covers/1773719057505-o6ptkr-1773030209702-3upkfd-capture-d-e-cran-2026-03-09-044248.webp",
       "info": ""
     },
     {
       "title": "Ambush",
-      "image": "uploads/games-covers/1773719057506-kl3bvy-1773030209703-cewvpx-capture-d-e-cran-2026-03-09-044322.png",
+      "image": "uploads/games-covers/1773719057506-kl3bvy-1773030209703-cewvpx-capture-d-e-cran-2026-03-09-044322.webp",
       "info": ""
     },
     {
       "title": "Ancerstors Lecacy",
-      "image": "uploads/games-covers/1773719057506-sf97if-1773030209704-epcz82-capture-d-e-cran-2026-03-09-044334.png",
+      "image": "uploads/games-covers/1773719057506-sf97if-1773030209704-epcz82-capture-d-e-cran-2026-03-09-044334.webp",
       "info": ""
     },
     {
       "title": "Fires of Rubicom",
-      "image": "uploads/games-covers/1773719057507-u6v4eu-1773030209705-gqo3e7-capture-d-e-cran-2026-03-09-044355.png",
+      "image": "uploads/games-covers/1773719057507-u6v4eu-1773030209705-gqo3e7-capture-d-e-cran-2026-03-09-044355.webp",
       "info": ""
     },
     {
       "title": "Automobilista",
-      "image": "uploads/games-covers/1773719057507-zg8qp1-1773030209705-wf7y5k-capture-d-e-cran-2026-03-09-044407.png",
+      "image": "uploads/games-covers/1773719057507-zg8qp1-1773030209705-wf7y5k-capture-d-e-cran-2026-03-09-044407.webp",
       "info": ""
     },
     {
       "title": "Bang Bang Racing",
-      "image": "uploads/games-covers/1773719057508-m09g9v-1773030209706-w0hdbh-capture-d-e-cran-2026-03-09-044431.png",
+      "image": "uploads/games-covers/1773719057508-m09g9v-1773030209706-w0hdbh-capture-d-e-cran-2026-03-09-044431.webp",
       "info": ""
     },
     {
       "title": "Planet Zoo",
-      "image": "uploads/games-covers/1773719057509-i0p3pu-1773030209707-0baqlg-capture-d-e-cran-2026-03-09-044517.png",
+      "image": "uploads/games-covers/1773719057509-i0p3pu-1773030209707-0baqlg-capture-d-e-cran-2026-03-09-044517.webp",
       "info": "Accédez à votre patch exclusif via notre canal privé Telegram"
     }
   ],
@@ -927,8 +927,15 @@
         "price": 180,
         "checked": false,
         "description": "Avec le Pack DLC VortexBox, profitez pleinement de vos jeux en accédant à leurs contenus additionnels pour enrichir votre expérience. Extensions, nouvelles missions, personnages, cartes ou améliorations graphiques viennent compléter vos titres favoris pour une immersion totale.\n\nCe pack vous permet d’exploiter tout le potentiel de vos jeux en intégrant facilement les contenus supplémentaires compatibles, afin de prolonger la durée de vie et la richesse de chaque expérience. Vous bénéficiez ainsi d’un univers de jeu plus complet, plus varié et toujours renouvelé.\n\nL’environnement VortexBox est optimisé pour faciliter l’utilisation et la gestion des contenus additionnels. Les jeux et leurs extensions sont organisés de manière claire, permettant un accès rapide et une utilisation fluide.\n\nGrâce à cette solution, vous profitez d’une expérience gaming enrichie, sans contraintes techniques, avec la possibilité de personnaliser et d’améliorer vos jeux selon vos envies.\n\nLe Pack DLC VortexBox transforme votre manière de jouer en vous offrant une expérience plus immersive, évolutive et complète, adaptée aux attentes des joueurs exigeants."
+      },
+      {
+        "id": "service-6",
+        "label": "Suites logiciels gaming",
+        "price": 0,
+        "checked": true,
+        "description": "Description du service (bouton i)."
       }
     ]
   },
-  "_updatedAt": 1773839014094
+  "_updatedAt": 1773868789359
 }
