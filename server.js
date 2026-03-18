@@ -655,8 +655,9 @@ function shellQuote(value) {
 
 function buildRailwayUpdateShellCommand() {
   return [
-    `cd ${shellQuote(ROOT_DIR)}`,
+    `cd ${shellQuote(ROOT_DIR)} || { echo "Dossier introuvable."; exit 1; }`,
     "git add .",
+    "node tools/stage-about-videos-from-content.js",
     '(git commit -m "MAJ VortexBox" || echo "Aucun changement a commit")',
     "git push origin main",
   ].join(" && ");
