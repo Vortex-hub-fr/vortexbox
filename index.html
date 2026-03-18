@@ -757,9 +757,6 @@
             <button class="admin-tab" id="admin-tab-processus" type="button" data-tab="processus" data-icon="🔒">
               Processus
             </button>
-            <button class="admin-tab" id="admin-tab-backup" type="button" data-tab="backup" data-icon="💾">
-              Sauvegarde
-            </button>
           </div>
 
           <section class="admin-content-panel" id="admin-content-general" data-tab-content="general">
@@ -1452,6 +1449,7 @@
                 <button class="admin-tab active" id="admin-process-subtab-crm" type="button" data-process-subtab="crm" draggable="true">CRM</button>
                 <button class="admin-tab" id="admin-process-subtab-facturation" type="button" data-process-subtab="facturation" draggable="true">Facturation</button>
                 <button class="admin-tab" id="admin-process-subtab-games" type="button" data-process-subtab="games" draggable="true">Games</button>
+                <button class="admin-tab" id="admin-process-subtab-backup" type="button" data-process-subtab="backup" draggable="true">Sauvegarde</button>
                 <button class="admin-tab" id="admin-process-subtab-console" type="button" data-process-subtab="console" draggable="true">Console</button>
               </div>
               <div id="admin-process-docs-panel" class="hidden" data-process-section-panel="docs">
@@ -1596,6 +1594,24 @@
                 <p id="admin-process-console-meta" class="admin-file-name">Aucun événement enregistré.</p>
                 <div id="admin-process-console-list" class="admin-machines-list"></div>
               </div>
+              <div id="admin-process-backup-panel" class="hidden" data-process-section-panel="backup">
+                <div class="admin-tech-card">
+                  <h5 class="admin-subtitle">Sauvegarde complète du site</h5>
+                  <p>
+                    Téléchargez une archive ZIP complète du site (pages, scripts, styles, données, uploads et ressources).
+                  </p>
+                  <div class="admin-backup-options">
+                    <label>
+                      Nom du fichier ZIP
+                      <input id="admin-backup-filename" type="text" value="SAV VortexBox" maxlength="80" placeholder="SAV VortexBox" />
+                    </label>
+                  </div>
+                  <button class="cta" id="admin-backup-zip-btn" type="button">Télécharger la sauvegarde ZIP</button>
+                  <p class="admin-file-name">Au clic, choisissez le lecteur et le répertoire via “Enregistrer sous”.</p>
+                  <p id="admin-backup-last-state" class="admin-file-name">Dernière sauvegarde: aucune</p>
+                  <p id="admin-backup-feedback" class="admin-feedback"></p>
+                </div>
+              </div>
 
               <section id="admin-process-link-modal" class="admin-process-link-modal hidden" aria-label="Ajouter un lien fournisseur">
                 <article class="admin-process-link-modal-card">
@@ -1664,25 +1680,6 @@
                   </div>
                 </article>
               </section>
-            </div>
-          </section>
-
-          <section class="admin-content-panel hidden" id="admin-content-backup" data-tab-content="backup">
-            <h4>Sauvegarde complète du site</h4>
-            <div class="admin-tech-card">
-              <p>
-                Téléchargez une archive ZIP complète du site (pages, scripts, styles, données, uploads et ressources).
-              </p>
-              <div class="admin-backup-options">
-                <label>
-                  Nom du fichier ZIP
-                  <input id="admin-backup-filename" type="text" value="SAV VortexBox" maxlength="80" placeholder="SAV VortexBox" />
-                </label>
-              </div>
-              <button class="cta" id="admin-backup-zip-btn" type="button">Télécharger la sauvegarde ZIP</button>
-              <p class="admin-file-name">Au clic, choisissez le lecteur et le répertoire via “Enregistrer sous”.</p>
-              <p id="admin-backup-last-state" class="admin-file-name">Dernière sauvegarde: aucune</p>
-              <p id="admin-backup-feedback" class="admin-feedback"></p>
             </div>
           </section>
 

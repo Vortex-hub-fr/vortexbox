@@ -8509,10 +8509,10 @@ function saveAdminBackupFilenamePreference() {
   } catch (error) {}
 }
 
-async function trySaveBackupWithPicker(blob, fileName) {
+async function openBackupSavePicker(fileName) {
   if (typeof window.showSaveFilePicker !== "function") return false;
   try {
-    const handle = await window.showSaveFilePicker({
+    return await window.showSaveFilePicker({
       suggestedName: fileName,
       types: [
         {
@@ -8522,17 +8522,21 @@ async function trySaveBackupWithPicker(blob, fileName) {
       ],
       excludeAcceptAllOption: false,
     });
-    const writable = await handle.createWritable();
-    await writable.write(blob);
-    await writable.close();
-    return true;
   } catch (error) {
     if (error?.name === "AbortError") {
       setAdminBackupFeedback("Sauvegarde annulée.", "info");
       return null;
     }
-    throw error;
+    return false;
   }
+}
+
+async function writeBackupToHandle(handle, blob) {
+  if (!handle) return false;
+  const writable = await handle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+  return true;
 }
 
 function setAdminBackupFeedback(message, tone = "") {
@@ -8620,7 +8624,23 @@ function startAdminControlCenterClock() {
 async function triggerAdminBackupZipDownload() {
   setAdminBackupFeedback("Préparation de la sauvegarde ZIP en cours...", "info");
   try {
-    const response = await fetch("/api/backup-site-zip", { cache: "no-store" });
+    const preferredFileName = normalizeAdminBackupFileName(
+      adminBackupFilenameInput?.value || `vortexbox-site-backup-${Date.now()}`,
+      "SAV VortexBox"
+    );
+    // Important UX: demander le dossier immédiatement au clic (si supporté),
+    // pour éviter l'impression de blocage pendant la génération ZIP.
+    const saveHandle = await openBackupSavePicker(preferredFileName);
+    if (saveHandle === null) return;
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 90000);
+    const response = await fetch("/api/backup-site-zip", {
+      cache: "no-store",
+      signal: controller.signal,
+    }).finally(() => {
+      window.clearTimeout(timeout);
+    });
     if (!response.ok) {
       let message =
         response.status === 404
@@ -8644,17 +8664,19 @@ async function triggerAdminBackupZipDownload() {
     const disposition = response.headers.get("content-disposition") || "";
     const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
     const serverFileName = match?.[1] || `vortexbox-site-backup-${Date.now()}.zip`;
-    const preferredFileName = normalizeAdminBackupFileName(
+    const finalFileName = normalizeAdminBackupFileName(
       adminBackupFilenameInput?.value || serverFileName.replace(/\.zip$/i, ""),
       "SAV VortexBox"
     );
-    const pickerResult = await trySaveBackupWithPicker(blob, preferredFileName);
-    if (pickerResult === null) return;
-    if (pickerResult === false) {
+    let pickerResult = false;
+    if (saveHandle && typeof saveHandle.createWritable === "function") {
+      await writeBackupToHandle(saveHandle, blob);
+      pickerResult = true;
+    } else {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = preferredFileName;
+      link.download = finalFileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -8663,15 +8685,22 @@ async function triggerAdminBackupZipDownload() {
     saveAdminBackupFilenamePreference();
     saveLastBackupState({
       at: new Date().toISOString(),
-      fileName: preferredFileName,
+      fileName: finalFileName,
       sizeBytes: blob.size || 0,
     });
     renderLastBackupState();
     setAdminBackupFeedback(
-      pickerResult ? `Sauvegarde ZIP enregistrée: ${preferredFileName}` : `Sauvegarde ZIP téléchargée: ${preferredFileName}`,
+      pickerResult ? `Sauvegarde ZIP enregistrée: ${finalFileName}` : `Sauvegarde ZIP téléchargée: ${finalFileName}`,
       "success"
     );
   } catch (error) {
+    if (error?.name === "AbortError") {
+      setAdminBackupFeedback(
+        "La génération ZIP prend trop de temps. Réessayez, ou redémarrez le serveur (node server.js).",
+        "error"
+      );
+      return;
+    }
     const fallback =
       "Impossible de télécharger la sauvegarde ZIP. Vérifiez que le serveur est lancé avec: node server.js";
     setAdminBackupFeedback(error.message || fallback, "error");

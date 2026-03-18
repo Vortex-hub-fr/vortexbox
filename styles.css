@@ -12996,6 +12996,8 @@ video {
   grid-area: media;
   width: 64px;
   height: 64px;
+  object-fit: cover;
+  object-position: center center;
   border-radius: 0.82rem;
   background:
     radial-gradient(circle at 50% 0%, rgba(170, 242, 255, 0.12), transparent 34%),

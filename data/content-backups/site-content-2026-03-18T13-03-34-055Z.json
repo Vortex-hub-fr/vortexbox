@@ -180,16 +180,16 @@
       "image": "uploads/showcase/1773685512495-zy68lr-vb1.png"
     },
     {
-      "title": "Jouez plus vite. Plus fort. Plus loin.",
-      "icon": "🛡️",
-      "slogan": "Sobriété, airflow, précision.",
-      "image": "uploads/showcase/1773686848097-uvka9m-1772675550839-lmxpsy-configurator-3.webp"
-    },
-    {
       "title": "La performance au cœur du gaming.",
       "icon": "🚀",
       "slogan": "Pensé pour durer.",
       "image": "uploads/showcase/1773685549775-bp6dws-1772674981845-vjouht-showcase-2.webp"
+    },
+    {
+      "title": "Jouez plus vite. Plus fort. Plus loin.",
+      "icon": "🛡️",
+      "slogan": "Sobriété, airflow, précision.",
+      "image": "uploads/showcase/1773686848097-uvka9m-1772675550839-lmxpsy-configurator-3.webp"
     }
   ],
   "technicalSheets": [
@@ -930,5 +930,5 @@
       }
     ]
   },
-  "_updatedAt": 1773839014094
+  "_updatedAt": 1773839012033
 }
