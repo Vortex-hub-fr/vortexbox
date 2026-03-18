@@ -994,11 +994,11 @@
             </div>
 
             <div class="admin-tech-card">
-              <h5 class="admin-subtitle">Images du configurateur (3)</h5>
+              <h5 class="admin-subtitle">Images du configurateur (4)</h5>
               <div class="admin-config-images-grid">
                 <div class="admin-config-image-item">
                   <label>
-                    Image configurateur 1
+                    Image configurateur 1 (fond écran)
                     <div class="admin-file-field">
                       <input id="admin-config-image-file-0" class="admin-file-input" type="file" accept="image/*" />
                       <div class="admin-file-picker">
@@ -1081,6 +1081,35 @@
                   </label>
                   <img id="admin-config-image-preview-2" class="admin-preview" alt="Aperçu configurateur 3" />
                   <button class="admin-secondary" id="admin-config-image-remove-2" type="button">Supprimer</button>
+                </div>
+
+                <div class="admin-config-image-item">
+                  <label>
+                    Image configurateur 4
+                    <div class="admin-file-field">
+                      <input id="admin-config-image-file-3" class="admin-file-input" type="file" accept="image/*" />
+                      <div class="admin-file-picker">
+                        <button class="admin-file-button admin-file-button-icon" type="button" data-file-target="admin-config-image-file-3" aria-label="Uploader image configurateur 4" title="Uploader image configurateur 4">
+                          <span class="admin-icon-glyph admin-icon-glyph-upload" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                              <path d="M12 3.5l4.2 4.2-1.4 1.4-1.8-1.8V14h-2V7.3L9.2 9.1 7.8 7.7 12 3.5z"></path>
+                              <path d="M5 14.5h2V18h10v-3.5h2V20H5z"></path>
+                            </svg>
+                          </span>
+                        </button>
+                        <button class="admin-file-button admin-file-button-disk admin-file-button-icon" type="button" data-action="pick-config-image-disk" data-index="3" aria-label="Choisir image configurateur 4 depuis le disque" title="Choisir image configurateur 4 depuis le disque">
+                          <span class="admin-icon-glyph admin-icon-glyph-disk" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                              <path d="M4 5h7l2 2h7v12H4V5zm2 4v8h12V9H6z"></path>
+                            </svg>
+                          </span>
+                        </button>
+                      </div>
+                      <span id="admin-config-image-name-3" class="admin-file-name">Aucune image</span>
+                    </div>
+                  </label>
+                  <img id="admin-config-image-preview-3" class="admin-preview" alt="Aperçu configurateur 4" />
+                  <button class="admin-secondary" id="admin-config-image-remove-3" type="button">Supprimer</button>
                 </div>
               </div>
               <label>
@@ -1644,7 +1673,14 @@
               <p>
                 Téléchargez une archive ZIP complète du site (pages, scripts, styles, données, uploads et ressources).
               </p>
+              <div class="admin-backup-options">
+                <label>
+                  Nom du fichier ZIP
+                  <input id="admin-backup-filename" type="text" value="SAV VortexBox" maxlength="80" placeholder="SAV VortexBox" />
+                </label>
+              </div>
               <button class="cta" id="admin-backup-zip-btn" type="button">Télécharger la sauvegarde ZIP</button>
+              <p class="admin-file-name">Au clic, choisissez le lecteur et le répertoire via “Enregistrer sous”.</p>
               <p id="admin-backup-last-state" class="admin-file-name">Dernière sauvegarde: aucune</p>
               <p id="admin-backup-feedback" class="admin-feedback"></p>
             </div>

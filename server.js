@@ -98,6 +98,11 @@ const ADMIN_SESSION_COOKIE = "vb_admin_session";
 const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const ADMIN_SESSION_NO_EXPIRY = true;
 const ADMIN_SESSION_PERSIST_MAX_AGE_SECONDS = 60 * 60 * 24 * 365 * 10; // 10 ans
+const CONFIG_VISUAL_SLOT_COUNT = 4;
+
+function getConfigVisualSlotIndexes() {
+  return Array.from({ length: CONFIG_VISUAL_SLOT_COUNT }, (_, index) => index);
+}
 
 function buildAdminEmailCandidates(email) {
   const normalized = String(email || "").trim().toLowerCase();
@@ -923,7 +928,7 @@ function shouldPreserveUploadName(kind, originalName) {
   const safeKind = String(kind || "").trim().toLowerCase();
   const safeName = String(originalName || "").trim().toLowerCase();
   if (safeKind !== "configurator") return false;
-  return /^configurator-(1|2|3)\.webp$/.test(safeName);
+  return /^configurator-(1|2|3|4)\.webp$/.test(safeName);
 }
 
 function buildPremiumPhotoSvg(dataUrl) {
@@ -976,9 +981,9 @@ async function resolvePremiumImageDataHref(value) {
 async function syncPremiumConfiguratorVisualSources(configurator) {
   if (!configurator || typeof configurator !== "object") return;
   const incomingVisual = Array.isArray(configurator.visualImages) ? configurator.visualImages : [];
-  const nextVisual = [0, 1, 2].map((index) => String(incomingVisual[index] || "").trim());
+  const nextVisual = getConfigVisualSlotIndexes().map((index) => String(incomingVisual[index] || "").trim());
 
-  for (let index = 0; index < 3; index += 1) {
+  for (let index = 0; index < CONFIG_VISUAL_SLOT_COUNT; index += 1) {
     const sourceValue = String(nextVisual[index] || "").trim();
     if (!sourceValue) continue;
     const premiumFileName = `vortex-premium-photo-${index + 1}.svg`;
@@ -1441,14 +1446,14 @@ async function handleSaveContent(req, res) {
     };
 
     if (Array.isArray(nextConfig.visualImages) && Array.isArray(currentConfig.visualImages)) {
-      nextConfig.visualImages = [0, 1, 2].map((index) => {
+      nextConfig.visualImages = getConfigVisualSlotIndexes().map((index) => {
         const incoming = String(nextConfig.visualImages[index] || "").trim();
         const current = String(currentConfig.visualImages[index] || "").trim();
         if ((isDefaultImageValue(incoming) || !incoming) && isCustomImageValue(current)) return current;
         return incoming;
       });
     } else if (Array.isArray(currentConfig.visualImages)) {
-      nextConfig.visualImages = currentConfig.visualImages.slice(0, 3);
+      nextConfig.visualImages = currentConfig.visualImages.slice(0, CONFIG_VISUAL_SLOT_COUNT);
     }
 
     preserveImageField("categoryFillImage");
@@ -1635,7 +1640,7 @@ async function handleSaveConfiguratorMedia(req, res) {
     if (!raw) return true;
     if (raw.startsWith("uploads/")) return true;
     if (raw.startsWith("/uploads/")) return true;
-    if (/^vortex-premium-photo-(1|2|3)\.svg$/i.test(raw)) return true;
+    if (/^vortex-premium-photo-(1|2|3|4)\.svg$/i.test(raw)) return true;
     if (/^vortex-showcase-[0-9]+\.svg$/i.test(raw)) return true;
     if (/^vortex-tech-verso\.svg$/i.test(raw)) return true;
     if (/^https?:\/\//i.test(raw)) return true;
@@ -1650,7 +1655,7 @@ async function handleSaveConfiguratorMedia(req, res) {
       : {};
 
   const incomingVisual = Array.isArray(nextPayload.visualImages) ? nextPayload.visualImages : [];
-  currentConfig.visualImages = [0, 1, 2].map((index) => {
+  currentConfig.visualImages = getConfigVisualSlotIndexes().map((index) => {
     const value = String(incomingVisual[index] || "").trim();
     return isSafeMediaPath(value) ? value : "";
   });
@@ -1718,8 +1723,8 @@ async function handleSaveConfiguratorMedia(req, res) {
 async function handleSavePremiumPhotoSource(req, res) {
   const body = await readJsonBody(req);
   const slot = Number(body?.slot || 0);
-  if (!Number.isInteger(slot) || slot < 1 || slot > 3) {
-    sendJson(res, 400, { ok: false, error: "Slot premium invalide (1..3)." });
+  if (!Number.isInteger(slot) || slot < 1 || slot > CONFIG_VISUAL_SLOT_COUNT) {
+    sendJson(res, 400, { ok: false, error: `Slot premium invalide (1..${CONFIG_VISUAL_SLOT_COUNT}).` });
     return;
   }
   const parsed = parseDataUrl(body?.dataUrl);
@@ -2311,14 +2316,17 @@ function serveStatic(req, res) {
   const etag = `W/"${totalSize}-${Math.floor(Number(stat.mtimeMs || 0))}"`;
   const ifNoneMatch = String(req.headers["if-none-match"] || "");
   const rangeHeader = String(req.headers.range || "").trim();
+  const isUploadAsset = finalPath.includes(`${path.sep}uploads${path.sep}`);
   const isImmutableAsset =
-    finalPath.includes(`${path.sep}uploads${path.sep}`) ||
+    !isUploadAsset &&
     [".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif", ".mp4", ".webm", ".mov", ".m4v", ".mp3", ".pdf"].includes(ext);
   const isDynamicFrontendAsset = ext === ".js" || ext === ".css";
   const cacheControl =
     ext === ".html" || isDynamicFrontendAsset
       ? "no-store"
-      : isImmutableAsset
+      : isUploadAsset
+        ? "public, max-age=0, must-revalidate"
+        : isImmutableAsset
         ? "public, max-age=31536000, immutable"
         : "public, max-age=300";
 
@@ -2371,6 +2379,7 @@ function serveStatic(req, res) {
       "Accept-Ranges": "bytes",
       "Cache-Control": cacheControl,
       ETag: etag,
+      ...(isUploadAsset ? { "X-Vortex-Storage": "disk" } : {}),
       ...buildSecurityHeaders(),
     });
     const rangedStream = fs.createReadStream(finalPath, { start, end });
@@ -2393,6 +2402,7 @@ function serveStatic(req, res) {
     "Accept-Ranges": "bytes",
     "Cache-Control": cacheControl,
     ETag: etag,
+    ...(isUploadAsset ? { "X-Vortex-Storage": "disk" } : {}),
     ...buildSecurityHeaders(),
   });
   const fileStream = fs.createReadStream(finalPath);

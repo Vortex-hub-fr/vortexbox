@@ -301,13 +301,26 @@ const adminRailwayUpdateRunTerminalBtn = document.getElementById("admin-railway-
 const adminBackupZipBtn = document.getElementById("admin-backup-zip-btn");
 const adminBackupFeedbackEl = document.getElementById("admin-backup-feedback");
 const adminBackupLastStateEl = document.getElementById("admin-backup-last-state");
+const adminBackupFilenameInput = document.getElementById("admin-backup-filename");
 const adminCcServerEl = document.getElementById("admin-cc-server");
 const adminCcTimeEl = document.getElementById("admin-cc-time");
 const adminCcBackupEl = document.getElementById("admin-cc-backup");
-const adminConfigImageFileInputs = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-file-${i}`));
-const adminConfigImageNameEls = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-name-${i}`));
-const adminConfigImagePreviewEls = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-preview-${i}`));
-const adminConfigImageRemoveBtns = [0, 1, 2].map((i) => document.getElementById(`admin-config-image-remove-${i}`));
+const CONFIG_VISUAL_SLOT_COUNT = 4;
+const CONFIG_VISUAL_PUBLIC_START_INDEX = 1;
+const getConfigVisualSlotIndexes = () => Array.from({ length: CONFIG_VISUAL_SLOT_COUNT }, (_, i) => i);
+
+const adminConfigImageFileInputs = getConfigVisualSlotIndexes().map((i) =>
+  document.getElementById(`admin-config-image-file-${i}`)
+);
+const adminConfigImageNameEls = getConfigVisualSlotIndexes().map((i) =>
+  document.getElementById(`admin-config-image-name-${i}`)
+);
+const adminConfigImagePreviewEls = getConfigVisualSlotIndexes().map((i) =>
+  document.getElementById(`admin-config-image-preview-${i}`)
+);
+const adminConfigImageRemoveBtns = getConfigVisualSlotIndexes().map((i) =>
+  document.getElementById(`admin-config-image-remove-${i}`)
+);
 const adminConfigSummaryTitleInput = document.getElementById("admin-config-summary-title");
 const adminConfigImageFitModeSelect = document.getElementById("admin-config-image-fit-mode");
 const adminAboutVideoTitleInputs = [0, 1, 2, 3, 4, 5].map((i) => document.getElementById(`admin-about-video-title-${i}`));
@@ -422,6 +435,7 @@ const USER_FAVORITES_KEY = "vortexbox-user-favorites";
 const ADMIN_KPI_DONE_RECOMMENDATIONS_KEY = "vortexbox-admin-kpi-done-recommendations";
 const ADMIN_KPI_ACTIONED_RECOMMENDATIONS_KEY = "vortexbox-admin-kpi-actioned-recommendations";
 const ADMIN_LAST_BACKUP_KEY = "vortexbox-admin-last-backup";
+const ADMIN_BACKUP_FILENAME_KEY = "vortexbox-admin-backup-filename";
 const VORTEXBOT_HISTORY_KEY = "vortexbox-vortexbot-history";
 const VORTEXBOT_MEMORY_KEY = "vortexbox-vortexbot-memory";
 const AI_ADVISOR_DEEP_LINK_KEY = "vortexbox-ai-advisor-start";
@@ -970,8 +984,8 @@ function buildAuthoritativeMediaSnapshot(content) {
                 ? "cover"
                 : "contain",
             visualImages: Array.isArray(source.configurator.visualImages)
-              ? [0, 1, 2].map((i) => pickPath(source.configurator.visualImages[i]))
-              : ["", "", ""],
+              ? getConfigVisualSlotIndexes().map((i) => pickPath(source.configurator.visualImages[i]))
+              : getConfigVisualSlotIndexes().map(() => ""),
             categoryFillImage: pickPath(source.configurator.categoryFillImage),
             categoryFillImageSecondary: pickPath(source.configurator.categoryFillImageSecondary),
             summaryTelegramImage: pickPath(source.configurator.summaryTelegramImage),
@@ -1137,7 +1151,9 @@ function resolveMostRecentContentCandidate(baseContent) {
         ...baseConfig,
         imageFitMode: authConfig.imageFitMode === "cover" ? "cover" : "contain",
         visualImages: Array.isArray(authConfig.visualImages)
-          ? [0, 1, 2].map((i) => pickMedia(authConfig.visualImages[i], baseConfig.visualImages[i] || ""))
+          ? getConfigVisualSlotIndexes().map((i) =>
+              pickMedia(authConfig.visualImages[i], baseConfig.visualImages[i] || "")
+            )
           : baseConfig.visualImages,
         categoryFillImage: pickMedia(authConfig.categoryFillImage, baseConfig.categoryFillImage || ""),
         categoryFillImageSecondary: pickMedia(authConfig.categoryFillImageSecondary, baseConfig.categoryFillImageSecondary || ""),
@@ -4768,10 +4784,34 @@ function normalizeTechnicalSheets(sheets) {
 function normalizeMachines(machines) {
   if (!Array.isArray(machines)) return cloneDefaultContent().machines;
   const fallback = cloneDefaultContent().machines;
+  const machineTopChipsFallbackByIndex = [
+    ["FPS élevé", "QHD Ready", "Streaming fluide"],
+    ["4K Ready", "Création + Gaming", "Puissance max"],
+    ["Full HD+", "Faible latence", "Upgrade facile"],
+  ];
+  const machineFitTagsFallbackByIndex = [
+    ["Competitif 240Hz", "AAA QHD Ultra", "Streaming + capture"],
+    ["AAA QHD Ultra", "Creation + gaming", "4K ready"],
+    ["1080p ultra stable", "Faible latence", "Upgrade evolutif"],
+  ];
+  const normalizeMachineTagList = (value, fallbackTags) => {
+    if (Array.isArray(value)) {
+      const list = value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 3);
+      if (list.length) return list;
+    }
+    return fallbackTags.slice(0, 3);
+  };
+  const normalizeMachinePercent = (value) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return null;
+    return Math.max(0, Math.min(100, Math.round(num)));
+  };
   return machines
     .map((machine, index) => {
       const source = machine && typeof machine === "object" ? machine : {};
       const fallbackMachine = fallback[index % fallback.length];
+      const chipsFallback = machineTopChipsFallbackByIndex[index] || machineTopChipsFallbackByIndex[2];
+      const fitFallback = machineFitTagsFallbackByIndex[index] || machineFitTagsFallbackByIndex[2];
       const specsSource = Array.isArray(source.specs) ? source.specs : fallbackMachine.specs;
       const specs = specsSource
         .map((spec) => String(spec || "").trim())
@@ -4798,6 +4838,11 @@ function normalizeMachines(machines) {
         specs: specs.length ? specs : [...fallbackMachine.specs],
         price: frontPrice,
         badge: String(source.badge || badgeFallback).trim() || badgeFallback,
+        topChips: normalizeMachineTagList(source.topChips, chipsFallback),
+        fitTags: normalizeMachineTagList(source.fitTags, fitFallback),
+        signalFps: normalizeMachinePercent(source.signalFps),
+        signalSilence: normalizeMachinePercent(source.signalSilence),
+        signalUpgrade: normalizeMachinePercent(source.signalUpgrade),
         backName:
           String(source.backName || source.modalName || frontName).trim() || frontName,
         backDescription:
@@ -5383,18 +5428,16 @@ function normalizeConfigurator(configurator) {
     .filter((service) => service.label);
 
   const visualImages = Array.isArray(configurator.visualImages)
-    ? [0, 1, 2].map((i) =>
+    ? getConfigVisualSlotIndexes().map((i) =>
         typeof configurator.visualImages[i] === "string" && configurator.visualImages[i].trim()
           ? configurator.visualImages[i]
-          : PREMIUM_GALLERY_IMAGES[i]
+          : PREMIUM_GALLERY_IMAGES[i % PREMIUM_GALLERY_IMAGES.length]
       )
-    : [
+    : getConfigVisualSlotIndexes().map((i) =>
         typeof configurator.visualImage === "string" && configurator.visualImage.trim()
           ? configurator.visualImage
-          : PREMIUM_GALLERY_IMAGES[0],
-        PREMIUM_GALLERY_IMAGES[1],
-        PREMIUM_GALLERY_IMAGES[2],
-      ];
+          : PREMIUM_GALLERY_IMAGES[i % PREMIUM_GALLERY_IMAGES.length]
+      );
 
   const categoryFillImage =
     typeof configurator.categoryFillImage === "string" && configurator.categoryFillImage.trim()
@@ -5443,6 +5486,11 @@ function createEmptyMachine() {
     name: "Nouveau build",
     description: "Description à compléter.",
     badge: "Best-seller",
+    topChips: ["FPS élevé", "QHD Ready", "Streaming fluide"],
+    fitTags: ["Competitif 240Hz", "AAA QHD Ultra", "Streaming + capture"],
+    signalFps: 85,
+    signalSilence: 82,
+    signalUpgrade: 84,
     specs: ["CPU: "],
     price: "0 €",
     backName: "Verso build",
@@ -6007,21 +6055,32 @@ function renderMachines() {
       const badgeFallback = index === 0 ? "Best-seller" : index === 1 ? "Ultra premium" : "Meilleur rapport perf/prix";
       const badge = String(machine.badge || "").trim() || badgeFallback;
       const tone = tierTone(badge, machine.price);
-      const signals = buildSignals(machine, index);
+      const signalsAuto = buildSignals(machine, index);
       const image = (getMachineImages(machine)[0] || siteContent?.showcase?.[index]?.image || PREMIUM_GALLERY_IMAGES[index % 3] || "").trim();
       const imageSrc = resolveSiteMediaSrc(image);
       const isCompared = machineCompareSelection.includes(index);
       const priceLabel = formatBuildPriceDisplay(machine.price);
-      const chips = index === 0
+      const chipsFallback = index === 0
         ? ["FPS élevé", "QHD Ready", "Streaming fluide"]
         : index === 1
           ? ["4K Ready", "Création + Gaming", "Puissance max"]
           : ["Full HD+", "Faible latence", "Upgrade facile"];
+      const chips = Array.isArray(machine?.topChips) && machine.topChips.length
+        ? machine.topChips.map((chip) => String(chip || "").trim()).filter(Boolean).slice(0, 3)
+        : chipsFallback;
+      const signals = {
+        fps: Number.isFinite(Number(machine?.signalFps)) ? clampPercent(machine.signalFps) : signalsAuto.fps,
+        silence: Number.isFinite(Number(machine?.signalSilence)) ? clampPercent(machine.signalSilence) : signalsAuto.silence,
+        upgrade: Number.isFinite(Number(machine?.signalUpgrade)) ? clampPercent(machine.signalUpgrade) : signalsAuto.upgrade,
+      };
       const useCases = index === 0
         ? ["Ideal pour le 1440p", "Jeux competitifs", "Streaming confortable"]
         : index === 1
           ? ["Ideal pour la 4K", "Creation avancee", "Multitache lourd"]
           : ["Machine vitrine", "Usage intensif", "Profil ultra exigeant"];
+      const fitTags = Array.isArray(machine?.fitTags) && machine.fitTags.length
+        ? machine.fitTags.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 3)
+        : signalsAuto.fit;
       return `
       <article class="card machine-card" data-machine-index="${index}" role="button" tabindex="0" aria-label="Voir le détail du build ${escapeHtml(machine.name)}">
         <div class="machine-card-top">
@@ -6054,7 +6113,7 @@ function renderMachines() {
           <div class="machine-bar"><span>Upgrade</span><strong>${signals.upgrade}%</strong><i><b style="width:${signals.upgrade}%"></b></i></div>
         </div>
         <div class="machine-fit-tags">
-          ${signals.fit.map((item) => `<span>${item}</span>`).join("")}
+          ${fitTags.map((item) => `<span>${item}</span>`).join("")}
         </div>
         <ul class="machine-specs">${machine.specs.map((spec) => `<li>${spec}</li>`).join("")}</ul>
         <p class="machine-reassurance">Montage atelier • validation intensive • support prioritaire.</p>
@@ -6085,6 +6144,23 @@ function renderMachinesComparePanel() {
   }
   const rows = ["Prix", "Badge", "Positionnement"];
   const fit = (idx) => (idx === 0 ? "Competitif / QHD" : idx === 1 ? "QHD / 4K / Creation" : "Gaming evolutif");
+  const renderCompareCol = (entry, fallbackTitle) => {
+    const machine = entry?.machine || {};
+    const rawPrice = String(machine.price || "").trim();
+    const normalizedPrice = rawPrice ? `${formatBuildPriceDisplay(rawPrice)} TTC` : "-";
+    const badge = String(machine.badge || "").trim() || "Premium";
+    const position = String(fit(entry?.index || 0)).trim();
+    return `
+      <div class="machines-compare-col">
+        <h4>${escapeHtml(machine.name || fallbackTitle)}</h4>
+        <ul>
+          <li><span class="machines-compare-label">${rows[0]} :</span><strong class="machines-compare-value">${escapeHtml(normalizedPrice)}</strong></li>
+          <li><span class="machines-compare-label">${rows[1]} :</span><strong class="machines-compare-value">${escapeHtml(badge)}</strong></li>
+          <li><span class="machines-compare-label">${rows[2]} :</span><strong class="machines-compare-value">${escapeHtml(position)}</strong></li>
+        </ul>
+      </div>
+    `;
+  };
   machinesComparePanelEl.classList.remove("hidden");
   machinesComparePanelEl.innerHTML = `
     <div class="machines-compare-head">
@@ -6092,24 +6168,10 @@ function renderMachinesComparePanel() {
       <button type="button" class="machine-compare-clear" data-action="clear-machine-compare">Effacer</button>
     </div>
     <div class="machines-compare-grid">
-      <div class="machines-compare-col">
-        <h4>${escapeHtml(selected[0].machine.name || "Build 1")}</h4>
-        <ul>
-          <li><span>${rows[0]}</span><strong>${escapeHtml(selected[0].machine.price || "-")}</strong></li>
-          <li><span>${rows[1]}</span><strong>${escapeHtml(selected[0].machine.badge || "Premium")}</strong></li>
-          <li><span>${rows[2]}</span><strong>${escapeHtml(fit(selected[0].index))}</strong></li>
-        </ul>
-      </div>
+      ${renderCompareCol(selected[0], "Build 1")}
       ${
         selected[1]
-          ? `<div class="machines-compare-col">
-              <h4>${escapeHtml(selected[1].machine.name || "Build 2")}</h4>
-              <ul>
-                <li><span>${rows[0]}</span><strong>${escapeHtml(selected[1].machine.price || "-")}</strong></li>
-                <li><span>${rows[1]}</span><strong>${escapeHtml(selected[1].machine.badge || "Premium")}</strong></li>
-                <li><span>${rows[2]}</span><strong>${escapeHtml(fit(selected[1].index))}</strong></li>
-              </ul>
-            </div>`
+          ? `${renderCompareCol(selected[1], "Build 2")}`
           : `<div class="machines-compare-col machines-compare-col-empty">
               <h4>Ajoutez un 2e build</h4>
               <p>Cliquez sur “Comparer” sur une autre carte pour afficher la comparaison complète.</p>
@@ -7005,7 +7067,14 @@ function renderConfigurator() {
   const step3Active = step1Active || step2Active;
   const compRatio = componentCount > 0 ? Math.min(1, selectedComponentCount / componentCount) : 0;
   const progressPercent = Math.max(8, Math.min(100, Math.round(compRatio * 70 + (step2Active ? 20 : 0) + (step3Active ? 10 : 0))));
-  const configImages = Array.isArray(config.visualImages) ? config.visualImages.filter(Boolean) : [];
+  const configImages = Array.isArray(config.visualImages)
+    ? config.visualImages.slice(CONFIG_VISUAL_PUBLIC_START_INDEX).filter(Boolean)
+    : [];
+  const visualSlotIndexes = configImages.map((_, idx) => idx + CONFIG_VISUAL_PUBLIC_START_INDEX);
+  const firstVisualSlotIndex = visualSlotIndexes.length ? visualSlotIndexes[0] : CONFIG_VISUAL_PUBLIC_START_INDEX;
+  const lastVisualSlotIndex = visualSlotIndexes.length
+    ? visualSlotIndexes[visualSlotIndexes.length - 1]
+    : CONFIG_VISUAL_SLOT_COUNT - 1;
   const categoryFillImage = typeof config.categoryFillImage === "string" ? config.categoryFillImage : "";
   const categoryFillImageSecondary =
     typeof config.categoryFillImageSecondary === "string" ? config.categoryFillImageSecondary : "";
@@ -7022,18 +7091,39 @@ function renderConfigurator() {
         ${configImages
           .map(
             (image, index) => {
+              const visualIndex = index + CONFIG_VISUAL_PUBLIC_START_INDEX;
+              const displayNumber = visualIndex + 1;
               const fallback = PREMIUM_GALLERY_IMAGES[index % PREMIUM_GALLERY_IMAGES.length] || PREMIUM_GALLERY_IMAGES[0] || "";
+              const canMoveLeft = visualIndex > firstVisualSlotIndex;
+              const canMoveRight = visualIndex < lastVisualSlotIndex;
               return `
-          <article class="config-visual-card" data-config-visual-index="${index}">
-            <img src="${escapeHtml(resolveSiteMediaSrc(image))}" data-media-fallback="${escapeHtml(resolveSiteMediaSrc(fallback))}" alt="Visuel configurateur ${index + 1}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'} />
+          <article class="config-visual-card" data-config-visual-index="${visualIndex}">
+            <img src="${escapeHtml(resolveSiteMediaSrc(image))}" data-media-fallback="${escapeHtml(resolveSiteMediaSrc(fallback))}" alt="Visuel configurateur ${visualIndex + 1}" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'} />
             <div class="showcase-admin-controls">
-              <button class="showcase-admin-btn" type="button" data-action="config-visual-left" data-index="${index}" aria-label="Déplacer à gauche">◀</button>
-              <button class="showcase-admin-btn" type="button" data-action="config-visual-right" data-index="${index}" aria-label="Déplacer à droite">▶</button>
+              <button class="showcase-admin-btn" type="button" data-action="config-visual-left" data-index="${visualIndex}" aria-label="Déplacer à gauche" ${canMoveLeft ? "" : "disabled"}>◀</button>
+              <button class="showcase-admin-btn" type="button" data-action="config-visual-right" data-index="${visualIndex}" aria-label="Déplacer à droite" ${canMoveRight ? "" : "disabled"}>▶</button>
             </div>
+            <div class="config-visual-admin-tag">Image ${displayNumber}</div>
           </article>
         `
             }
           )
+          .join("")}
+      </div>
+      <div class="config-visual-order-admin" aria-label="Ordre des images configurateur">
+        ${visualSlotIndexes
+          .map((slotIndex) => {
+            const displayNumber = slotIndex + 1;
+            const canMoveLeft = slotIndex > firstVisualSlotIndex;
+            const canMoveRight = slotIndex < lastVisualSlotIndex;
+            return `
+              <div class="config-visual-order-item">
+                <span>Image ${displayNumber}</span>
+                <button class="showcase-admin-btn" type="button" data-action="config-visual-left" data-index="${slotIndex}" aria-label="Image ${displayNumber} vers la gauche" ${canMoveLeft ? "" : "disabled"}>◀</button>
+                <button class="showcase-admin-btn" type="button" data-action="config-visual-right" data-index="${slotIndex}" aria-label="Image ${displayNumber} vers la droite" ${canMoveRight ? "" : "disabled"}>▶</button>
+              </div>
+            `;
+          })
           .join("")}
       </div>
     `
@@ -7764,8 +7854,14 @@ function closeMachineModal() {
 function renderAdminMachinesEditor() {
   adminMachinesDraft = adminMachinesDraft.map((machine) => ensureMachineBackFields(machine));
   adminMachinesList.innerHTML = adminMachinesDraft
-    .map(
-      (machine, machineIndex) => `
+    .map((machine, machineIndex) => {
+      const topChipsValue = Array.isArray(machine.topChips)
+        ? machine.topChips.map((item) => String(item || "").trim()).filter(Boolean).join(" ; ")
+        : "";
+      const fitTagsValue = Array.isArray(machine.fitTags)
+        ? machine.fitTags.map((item) => String(item || "").trim()).filter(Boolean).join(" ; ")
+        : "";
+      return `
       <article class="admin-machine-card">
         <div class="admin-machine-header">
           <h5>Build ${machineIndex + 1}</h5>
@@ -7775,6 +7871,13 @@ function renderAdminMachinesEditor() {
         <label>Description<input type="text" data-action="machine-field" data-field="description" data-machine-index="${machineIndex}" value="${escapeHtml(machine.description)}" /></label>
         <label>Badge (carte accueil)<input type="text" data-action="machine-field" data-field="badge" data-machine-index="${machineIndex}" value="${escapeHtml(machine.badge || "")}" /></label>
         <label>Prix affiché<input type="text" data-action="machine-field" data-field="price" data-machine-index="${machineIndex}" value="${escapeHtml(machine.price)}" /></label>
+        <label>Pills haut de carte (3 max, séparer par ; )<input type="text" data-action="machine-tag-list" data-tag-field="topChips" data-machine-index="${machineIndex}" value="${escapeHtml(topChipsValue)}" /></label>
+        <label>Tags bas de carte (3 max, séparer par ; )<input type="text" data-action="machine-tag-list" data-tag-field="fitTags" data-machine-index="${machineIndex}" value="${escapeHtml(fitTagsValue)}" /></label>
+        <div class="admin-option-row">
+          <label>FPS %<input type="number" min="0" max="100" step="1" data-action="machine-signal-field" data-signal-field="signalFps" data-machine-index="${machineIndex}" value="${Number.isFinite(Number(machine.signalFps)) ? clampPercent(machine.signalFps) : ""}" /></label>
+          <label>Silence %<input type="number" min="0" max="100" step="1" data-action="machine-signal-field" data-signal-field="signalSilence" data-machine-index="${machineIndex}" value="${Number.isFinite(Number(machine.signalSilence)) ? clampPercent(machine.signalSilence) : ""}" /></label>
+          <label>Upgrade %<input type="number" min="0" max="100" step="1" data-action="machine-signal-field" data-signal-field="signalUpgrade" data-machine-index="${machineIndex}" value="${Number.isFinite(Number(machine.signalUpgrade)) ? clampPercent(machine.signalUpgrade) : ""}" /></label>
+        </div>
         <label>Titre verso<input type="text" data-action="machine-field" data-field="backName" data-machine-index="${machineIndex}" value="${escapeHtml(machine.backName || machine.name || "")}" /></label>
         <label>Description verso<input type="text" data-action="machine-field" data-field="backDescription" data-machine-index="${machineIndex}" value="${escapeHtml(machine.backDescription || machine.description || "")}" /></label>
         <label>Slogan sous image<input type="text" data-action="machine-field" data-field="imageSlogan" data-machine-index="${machineIndex}" value="${escapeHtml(machine.imageSlogan || "")}" /></label>
@@ -7825,11 +7928,12 @@ function renderAdminMachinesEditor() {
             .join("")}
         </div>
         <div class="admin-spec-actions">
+          <button class="admin-secondary" type="button" data-action="machine-reset-signals-auto" data-machine-index="${machineIndex}">Réinitialiser valeurs auto</button>
           <button class="admin-secondary" type="button" data-action="add-spec" data-spec-target="front" data-machine-index="${machineIndex}">Ajouter caractéristique recto</button>
         </div>
       </article>
-    `
-    )
+    `;
+    })
     .join("");
 }
 
@@ -8377,6 +8481,60 @@ function closeAdminRailwayUpdateModal() {
   adminRailwayUpdateModalEl.classList.add("hidden");
 }
 
+function normalizeAdminBackupFileName(value, fallback = "SAV VortexBox") {
+  const raw = String(value || "").trim().replace(/\.zip$/i, "");
+  const safeBase = sanitizeFileName(raw || fallback, sanitizeFileName(fallback, "SAV-VortexBox"));
+  return `${safeBase}.zip`;
+}
+
+function loadAdminBackupFilenamePreference() {
+  if (!adminBackupFilenameInput) return;
+  try {
+    const raw = localStorage.getItem(ADMIN_BACKUP_FILENAME_KEY);
+    if (!raw) return;
+    const clean = String(raw).trim().replace(/\.zip$/i, "");
+    if (clean) adminBackupFilenameInput.value = clean;
+  } catch (error) {}
+}
+
+function saveAdminBackupFilenamePreference() {
+  if (!adminBackupFilenameInput) return;
+  try {
+    const clean = String(adminBackupFilenameInput.value || "").trim().replace(/\.zip$/i, "");
+    if (clean) {
+      localStorage.setItem(ADMIN_BACKUP_FILENAME_KEY, clean);
+    } else {
+      localStorage.removeItem(ADMIN_BACKUP_FILENAME_KEY);
+    }
+  } catch (error) {}
+}
+
+async function trySaveBackupWithPicker(blob, fileName) {
+  if (typeof window.showSaveFilePicker !== "function") return false;
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: fileName,
+      types: [
+        {
+          description: "Archive ZIP",
+          accept: { "application/zip": [".zip"] },
+        },
+      ],
+      excludeAcceptAllOption: false,
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return true;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      setAdminBackupFeedback("Sauvegarde annulée.", "info");
+      return null;
+    }
+    throw error;
+  }
+}
+
 function setAdminBackupFeedback(message, tone = "") {
   if (!adminBackupFeedbackEl) return;
   const text = String(message || "");
@@ -8485,22 +8643,34 @@ async function triggerAdminBackupZipDownload() {
     const blob = await response.blob();
     const disposition = response.headers.get("content-disposition") || "";
     const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
-    const fileName = match?.[1] || `vortexbox-site-backup-${Date.now()}.zip`;
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    const serverFileName = match?.[1] || `vortexbox-site-backup-${Date.now()}.zip`;
+    const preferredFileName = normalizeAdminBackupFileName(
+      adminBackupFilenameInput?.value || serverFileName.replace(/\.zip$/i, ""),
+      "SAV VortexBox"
+    );
+    const pickerResult = await trySaveBackupWithPicker(blob, preferredFileName);
+    if (pickerResult === null) return;
+    if (pickerResult === false) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = preferredFileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+    saveAdminBackupFilenamePreference();
     saveLastBackupState({
       at: new Date().toISOString(),
-      fileName,
+      fileName: preferredFileName,
       sizeBytes: blob.size || 0,
     });
     renderLastBackupState();
-    setAdminBackupFeedback("Sauvegarde ZIP téléchargée avec succès.", "success");
+    setAdminBackupFeedback(
+      pickerResult ? `Sauvegarde ZIP enregistrée: ${preferredFileName}` : `Sauvegarde ZIP téléchargée: ${preferredFileName}`,
+      "success"
+    );
   } catch (error) {
     const fallback =
       "Impossible de télécharger la sauvegarde ZIP. Vérifiez que le serveur est lancé avec: node server.js";
@@ -10100,6 +10270,7 @@ function fillAdminFields() {
   if (adminGeneratedPromoCodeEl) adminGeneratedPromoCodeEl.textContent = "";
   setAdminPromoFeedback("");
   setAdminBackupFeedback("");
+  loadAdminBackupFilenamePreference();
   renderLastBackupState();
   renderAdminHistoryOptions();
   if (adminAutosaveLastAt) {
@@ -10173,8 +10344,8 @@ function fillAdminFields() {
   activeAdminComponentIndex = 0;
   adminServicesDraft = JSON.parse(JSON.stringify(siteContent.configurator.services));
   adminConfiguratorImagesDraft = Array.isArray(siteContent.configurator.visualImages)
-    ? [0, 1, 2].map((i) => siteContent.configurator.visualImages[i] || "")
-    : ["", "", ""];
+    ? getConfigVisualSlotIndexes().map((i) => siteContent.configurator.visualImages[i] || "")
+    : getConfigVisualSlotIndexes().map(() => "");
   if (adminConfigImageFitModeSelect) {
     adminConfigImageFitModeSelect.value =
       String(siteContent?.configurator?.imageFitMode || "contain").trim().toLowerCase() === "cover"
@@ -11164,7 +11335,9 @@ async function saveContentSnapshotToDisk(content) {
         return raw || String(fallback || "").trim();
       };
 
-      tgtCfg.visualImages = [0, 1, 2].map((i) => pickNonEmpty(srcCfg.visualImages?.[i], tgtCfg.visualImages?.[i]));
+      tgtCfg.visualImages = getConfigVisualSlotIndexes().map((i) =>
+        pickNonEmpty(srcCfg.visualImages?.[i], tgtCfg.visualImages?.[i])
+      );
       tgtCfg.categoryFillImage = pickNonEmpty(srcCfg.categoryFillImage, tgtCfg.categoryFillImage);
       tgtCfg.categoryFillImageSecondary = pickNonEmpty(
         srcCfg.categoryFillImageSecondary,
@@ -11391,10 +11564,10 @@ function syncConfiguratorDraftToSiteContent() {
 
   if (Array.isArray(adminConfiguratorImagesDraft) && adminConfiguratorImagesDraft.length) {
     const currentVisualImages = Array.isArray(nextConfigurator.visualImages)
-      ? [0, 1, 2].map((i) => String(nextConfigurator.visualImages[i] || "").trim())
-      : ["", "", ""];
+      ? getConfigVisualSlotIndexes().map((i) => String(nextConfigurator.visualImages[i] || "").trim())
+      : getConfigVisualSlotIndexes().map(() => "");
     // Important: never overwrite persisted images with empty admin draft slots.
-    nextConfigurator.visualImages = [0, 1, 2].map((i) => {
+    nextConfigurator.visualImages = getConfigVisualSlotIndexes().map((i) => {
       const draftValue = String(adminConfiguratorImagesDraft[i] || "").trim();
       const currentValue = String(currentVisualImages[i] || "").trim();
       return draftValue || currentValue;
@@ -11534,9 +11707,9 @@ function persistAdminMediaDraftSnapshot() {
   }
   if (Array.isArray(adminConfiguratorImagesDraft)) {
     const currentVisualImages = Array.isArray(siteContent.configurator.visualImages)
-      ? [0, 1, 2].map((i) => String(siteContent.configurator.visualImages[i] || "").trim())
-      : ["", "", ""];
-    siteContent.configurator.visualImages = [0, 1, 2].map((i) => {
+      ? getConfigVisualSlotIndexes().map((i) => String(siteContent.configurator.visualImages[i] || "").trim())
+      : getConfigVisualSlotIndexes().map(() => "");
+    siteContent.configurator.visualImages = getConfigVisualSlotIndexes().map((i) => {
       const draftValue = String(adminConfiguratorImagesDraft[i] || "").trim();
       const currentValue = String(currentVisualImages[i] || "").trim();
       return draftValue || currentValue;
@@ -11684,8 +11857,8 @@ async function saveConfiguratorMediaToDisk(configurator) {
   const source = configurator && typeof configurator === "object" ? configurator : {};
   const payload = {
     visualImages: Array.isArray(source.visualImages)
-      ? [0, 1, 2].map((i) => String(source.visualImages[i] || "").trim())
-      : ["", "", ""],
+      ? getConfigVisualSlotIndexes().map((i) => String(source.visualImages[i] || "").trim())
+      : getConfigVisualSlotIndexes().map(() => ""),
     categoryFillImage: String(source.categoryFillImage || "").trim(),
     categoryFillImageSecondary: String(source.categoryFillImageSecondary || "").trim(),
     summaryTelegramImage: String(source.summaryTelegramImage || "").trim(),
@@ -12007,11 +12180,11 @@ document.addEventListener("click", async (event) => {
   event.preventDefault();
   event.stopPropagation();
   const index = Number(button.dataset.index);
-  if (Number.isNaN(index) || index < 0 || index > 2) return;
+  if (Number.isNaN(index) || index < 0 || index >= CONFIG_VISUAL_SLOT_COUNT) return;
   try {
     const previous = Array.isArray(siteContent?.configurator?.visualImages)
-      ? siteContent.configurator.visualImages.slice(0, 3)
-      : ["", "", ""];
+      ? siteContent.configurator.visualImages.slice(0, CONFIG_VISUAL_SLOT_COUNT)
+      : getConfigVisualSlotIndexes().map(() => "");
     const selectedPath = await pickExistingUploadPath("configurator", `l'image configurateur ${index + 1}`);
     if (!selectedPath) return;
     adminConfiguratorImagesDraft[index] = selectedPath;
@@ -12026,14 +12199,14 @@ document.addEventListener("click", async (event) => {
       siteContent.configurator = {};
     }
     const current = Array.isArray(siteContent.configurator.visualImages)
-      ? siteContent.configurator.visualImages.slice(0, 3)
-      : ["", "", ""];
+      ? siteContent.configurator.visualImages.slice(0, CONFIG_VISUAL_SLOT_COUNT)
+      : getConfigVisualSlotIndexes().map(() => "");
     current[index] = selectedPath;
-    siteContent.configurator.visualImages = [0, 1, 2].map((i) => current[i] || "");
+    siteContent.configurator.visualImages = getConfigVisualSlotIndexes().map((i) => current[i] || "");
     const saved = await persistAdminContentNow(`Image configurateur ${index + 1} sélectionnée depuis disque.`);
     if (!saved) {
       adminConfiguratorImagesDraft[index] = previous[index] || "";
-      siteContent.configurator.visualImages = [0, 1, 2].map((i) => previous[i] || "");
+      siteContent.configurator.visualImages = getConfigVisualSlotIndexes().map((i) => previous[i] || "");
       if (adminConfigImagePreviewEls[index]) {
         if (previous[index]) {
           adminConfigImagePreviewEls[index].src = previous[index];
@@ -12067,8 +12240,8 @@ adminConfigImageFileInputs.forEach((input, index) => {
 
     try {
       const previous = Array.isArray(siteContent?.configurator?.visualImages)
-        ? siteContent.configurator.visualImages.slice(0, 3)
-        : ["", "", ""];
+        ? siteContent.configurator.visualImages.slice(0, CONFIG_VISUAL_SLOT_COUNT)
+        : getConfigVisualSlotIndexes().map(() => "");
       const nextVisualPath = await resolveAdminImageValue(
         file,
         "configurator",
@@ -12083,14 +12256,14 @@ adminConfigImageFileInputs.forEach((input, index) => {
         siteContent.configurator = {};
       }
       const current = Array.isArray(siteContent.configurator.visualImages)
-        ? siteContent.configurator.visualImages.slice(0, 3)
-        : ["", "", ""];
+        ? siteContent.configurator.visualImages.slice(0, CONFIG_VISUAL_SLOT_COUNT)
+        : getConfigVisualSlotIndexes().map(() => "");
       current[index] = adminConfiguratorImagesDraft[index];
-      siteContent.configurator.visualImages = [0, 1, 2].map((i) => current[i] || "");
+      siteContent.configurator.visualImages = getConfigVisualSlotIndexes().map((i) => current[i] || "");
       const saved = await persistAdminContentNow(`Image configurateur ${index + 1} enregistrée.`);
       if (!saved) {
         adminConfiguratorImagesDraft[index] = previous[index] || "";
-        siteContent.configurator.visualImages = [0, 1, 2].map((i) => previous[i] || "");
+        siteContent.configurator.visualImages = getConfigVisualSlotIndexes().map((i) => previous[i] || "");
         if (previous[index]) {
           adminConfigImagePreviewEls[index].src = previous[index];
           adminConfigImagePreviewEls[index].style.display = "block";
@@ -13579,6 +13752,31 @@ adminMachinesList.addEventListener("input", (event) => {
     }
   }
 
+  if (action === "machine-tag-list") {
+    const tagField = String(target.dataset.tagField || "");
+    if (!["topChips", "fitTags"].includes(tagField)) return;
+    const parsed = String(target.value || "")
+      .split(/[;\n,|]+/g)
+      .map((item) => String(item || "").trim())
+      .filter(Boolean)
+      .slice(0, 3);
+    adminMachinesDraft[machineIndex][tagField] = parsed;
+  }
+
+  if (action === "machine-signal-field") {
+    const signalField = String(target.dataset.signalField || "");
+    if (!["signalFps", "signalSilence", "signalUpgrade"].includes(signalField)) return;
+    const raw = String(target.value || "").trim();
+    if (!raw) {
+      adminMachinesDraft[machineIndex][signalField] = null;
+      return;
+    }
+    const num = Number(raw);
+    adminMachinesDraft[machineIndex][signalField] = Number.isFinite(num)
+      ? Math.max(0, Math.min(100, Math.round(num)))
+      : null;
+  }
+
   if (action === "back-comment-field") {
     const commentIndex = Number(target.dataset.commentIndex);
     if (Number.isNaN(commentIndex) || commentIndex < 0 || commentIndex > 7) return;
@@ -13615,6 +13813,15 @@ adminMachinesList.addEventListener("click", (event) => {
     }
     adminMachinesDraft.splice(machineIndex, 1);
     renderAdminMachinesEditor();
+  }
+
+  if (action === "machine-reset-signals-auto") {
+    adminMachinesDraft[machineIndex].signalFps = null;
+    adminMachinesDraft[machineIndex].signalSilence = null;
+    adminMachinesDraft[machineIndex].signalUpgrade = null;
+    renderAdminMachinesEditor();
+    setFeedback("Barres FPS / Silence / Upgrade remises en mode automatique.");
+    return;
   }
 
   if (action === "pick-machine-image") {
@@ -14459,13 +14666,17 @@ configuratorVisualEl.addEventListener("click", (event) => {
   const index = Number(adminButton.dataset.index);
   if (Number.isNaN(index)) return;
   const visualImages = Array.isArray(siteContent.configurator?.visualImages)
-    ? [...siteContent.configurator.visualImages]
-    : [];
+    ? getConfigVisualSlotIndexes().map((i) => String(siteContent.configurator.visualImages[i] || ""))
+    : getConfigVisualSlotIndexes().map(() => "");
   if (!visualImages.length) return;
+  const minPublicIndex = CONFIG_VISUAL_PUBLIC_START_INDEX;
+  const maxPublicIndex = CONFIG_VISUAL_SLOT_COUNT - 1;
 
-  if (adminButton.dataset.action === "config-visual-left" && index > 0) {
+  if (index < minPublicIndex || index > maxPublicIndex) return;
+
+  if (adminButton.dataset.action === "config-visual-left" && index > minPublicIndex) {
     [visualImages[index - 1], visualImages[index]] = [visualImages[index], visualImages[index - 1]];
-  } else if (adminButton.dataset.action === "config-visual-right" && index < visualImages.length - 1) {
+  } else if (adminButton.dataset.action === "config-visual-right" && index < maxPublicIndex) {
     [visualImages[index + 1], visualImages[index]] = [visualImages[index], visualImages[index + 1]];
   } else {
     return;
@@ -15899,6 +16110,17 @@ adminEditor.addEventListener("submit", async (event) => {
     machines: adminMachinesDraft.map((machine) => ({
       ...machine,
       badge: String(machine.badge || "").trim(),
+      topChips: (Array.isArray(machine.topChips) ? machine.topChips : [])
+        .map((item) => String(item || "").trim())
+        .filter(Boolean)
+        .slice(0, 3),
+      fitTags: (Array.isArray(machine.fitTags) ? machine.fitTags : [])
+        .map((item) => String(item || "").trim())
+        .filter(Boolean)
+        .slice(0, 3),
+      signalFps: Number.isFinite(Number(machine.signalFps)) ? clampPercent(machine.signalFps) : null,
+      signalSilence: Number.isFinite(Number(machine.signalSilence)) ? clampPercent(machine.signalSilence) : null,
+      signalUpgrade: Number.isFinite(Number(machine.signalUpgrade)) ? clampPercent(machine.signalUpgrade) : null,
       price: normalizePriceLabel(machine.price),
       specs: machine.specs.map((spec) => spec.trim()),
       backName: String(machine.backName || machine.name || "").trim(),
@@ -16120,7 +16342,7 @@ adminEditor.addEventListener("submit", async (event) => {
         .filter((item) => item.question && item.answer),
     },
     configurator: {
-      visualImages: [0, 1, 2].map((i) => adminConfiguratorImagesDraft[i] || ""),
+      visualImages: getConfigVisualSlotIndexes().map((i) => adminConfiguratorImagesDraft[i] || ""),
       imageFitMode:
         String(adminConfigImageFitModeSelect?.value || siteContent?.configurator?.imageFitMode || "contain")
           .trim()

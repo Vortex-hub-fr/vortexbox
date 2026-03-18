@@ -1,14 +1,57 @@
 {
-  "updatedAt": "2026-03-17T14:34:23.019Z",
-  "users": [],
+  "updatedAt": "2026-03-18T11:57:24.674Z",
+  "users": [
+    {
+      "email": "brunsoler@outlook.fr",
+      "displayName": "",
+      "profilePhoto": "",
+      "password": "Audric460&Qp46uqv",
+      "totalConnectionSeconds": 8,
+      "lastSeenAt": "2026-03-18T11:57:17.705Z",
+      "isActive": true,
+      "activationCode": "",
+      "activationSentAt": "",
+      "revoked": false,
+      "blacklisted": false
+    }
+  ],
   "userLog": [
     {
       "email": "vortexcore@outlook.fr",
-      "date": "2026-03-17T14:34:22.838Z"
+      "date": "2026-03-18T11:57:24.492Z"
+    },
+    {
+      "email": "brunsoler@outlook.fr",
+      "date": "2026-03-18T11:57:09.310Z"
+    },
+    {
+      "email": "vortexcore@outlook.fr",
+      "date": "2026-03-18T08:44:33.366Z"
+    },
+    {
+      "email": "vortexcore@outlook.fr",
+      "date": "2026-03-18T08:21:33.214Z"
     }
   ],
   "userConfigs": {},
-  "promoCodes": [],
+  "promoCodes": [
+    {
+      "code": "VB-DLC-08SLBC",
+      "email": "vortexcore@outlook.fr",
+      "createdAt": "2026-03-18T11:55:39.832Z",
+      "active": false,
+      "redeemedBy": "vortexcore@outlook.fr",
+      "redeemedAt": "2026-03-18T11:55:57.873Z"
+    },
+    {
+      "code": "VB-DLC-TSE9LD",
+      "email": "brunosoler@outlook.fr",
+      "createdAt": "2026-03-18T11:54:55.157Z",
+      "active": true,
+      "redeemedBy": "",
+      "redeemedAt": ""
+    }
+  ],
   "doneKpiRecommendations": [],
   "actionedKpiRecommendations": [],
   "adminProfilePhoto": ""

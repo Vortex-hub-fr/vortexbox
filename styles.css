@@ -2801,6 +2801,11 @@ body.config-only .hero-video-wrap {
   display: none !important;
 }
 
+/* Page configurateur: cacher "Recherche menu" dans la barre principale */
+body.config-only .nav-smart-wrap {
+  display: none !important;
+}
+
 body.config-only .configurator {
   display: grid !important;
   min-height: 100vh;
@@ -2862,6 +2867,66 @@ body.config-only .configurator {
 .config-visual-card .showcase-admin-controls {
   top: 0.45rem;
   right: 0.45rem;
+}
+
+.config-visual-admin-tag {
+  position: absolute;
+  left: 0.45rem;
+  bottom: 0.45rem;
+  z-index: 3;
+  display: none;
+  min-height: 24px;
+  padding: 0.14rem 0.52rem;
+  border-radius: 999px;
+  border: 1px solid rgba(127, 231, 255, 0.62);
+  background: linear-gradient(165deg, rgba(7, 31, 55, 0.9), rgba(5, 21, 39, 0.9));
+  color: #ddf3ff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.admin-live-edit .config-visual-admin-tag {
+  display: inline-flex;
+  align-items: center;
+}
+
+.config-visual-order-admin {
+  display: none;
+  margin: 0 0.7rem 0.7rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(127, 231, 255, 0.35);
+  border-radius: 0.78rem;
+  background: linear-gradient(165deg, rgba(8, 31, 54, 0.8), rgba(5, 19, 35, 0.84));
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-live-edit .config-visual-order-admin {
+  display: flex;
+}
+
+.config-visual-order-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.28rem 0.42rem;
+  border-radius: 0.62rem;
+  border: 1px solid rgba(127, 231, 255, 0.26);
+  background: rgba(8, 31, 54, 0.6);
+}
+
+.config-visual-order-item span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #d9f1ff;
+}
+
+.showcase-admin-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .configurator-visual-fallback {
@@ -5466,6 +5531,16 @@ textarea {
 
 .admin-tech-card .admin-preview {
   margin-top: 0.5rem;
+}
+
+.admin-backup-options {
+  margin: 0.45rem 0 0.55rem;
+}
+
+.admin-backup-options label {
+  display: grid;
+  gap: 0.38rem;
+  max-width: 420px;
 }
 
 .admin-stock-summary {
@@ -14050,8 +14125,22 @@ video {
 }
 
 #machines .machines-compare-col li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.24rem;
   font-size: 0.76rem;
   color: #cceeff;
+}
+
+#machines .machines-compare-label {
+  color: #c7e8ff;
+  font-weight: 600;
+}
+
+#machines .machines-compare-value {
+  color: #f0fbff;
+  font-weight: 800;
 }
 
 #machines .machines-compare-col-empty {
@@ -14306,4 +14395,44 @@ textarea {
     min-height: 42px;
     padding-inline: 14px;
   }
+}
+
+/* Uniformisation globale: panneau "Recherche rapide" non coupe hors accueil */
+.nav-smart-wrap {
+  isolation: isolate;
+}
+
+.nav-smart-results,
+.nav-smart-keywords {
+  z-index: 220;
+}
+
+.nav-smart-keywords {
+  left: auto !important;
+  right: 0 !important;
+  width: min(560px, calc(100vw - 2rem)) !important;
+  max-width: calc(100vw - 2rem) !important;
+}
+
+.nav-smart-wrap::after {
+  left: auto;
+  right: 0;
+  max-width: min(340px, calc(100vw - 2rem));
+}
+
+/* Fix final: panneau Recherche menu toujours au-dessus (accueil/configurateur inclus) */
+.nav {
+  z-index: 520 !important;
+  isolation: isolate;
+}
+
+.nav-actions {
+  overflow: visible;
+}
+
+.nav-smart-wrap::after,
+.nav-mega,
+.nav-smart-results,
+.nav-smart-keywords {
+  z-index: 560 !important;
 }

@@ -2617,9 +2617,9 @@ async function renderGamesCatalog(options = {}) {
       .map(({ item, index }) => {
         const current = gamesCatalogDraft[index] || item;
         const infoText = String(current.info || "").trim();
-        const hasInfo = Boolean(infoText);
-        const isReadyInfo = isGameInfoGreen(infoText);
-        const infoStateClass = isReadyInfo ? "is-ready" : hasInfo ? "is-custom" : "is-empty";
+        const effectiveInfoText = infoText || DEFAULT_GAME_INFO_TEXT;
+        const isReadyInfo = isGameInfoGreen(effectiveInfoText);
+        const infoStateClass = isReadyInfo ? "is-ready" : "is-custom";
         const infoEncoded = encodeURIComponent(String(current.info || ""));
         const titleValue = String(current.title || item.title || "Info jeu");
         return `
