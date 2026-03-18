@@ -12928,6 +12928,12 @@ if (adminBackupZipBtn) {
   });
 }
 
+if (adminBackupFilenameInput) {
+  adminBackupFilenameInput.addEventListener("change", () => {
+    saveAdminBackupFilenamePreference();
+  });
+}
+
 if (adminProcessList) {
   adminProcessList.addEventListener("click", async (event) => {
     const button = event.target.closest("button[data-action]");
