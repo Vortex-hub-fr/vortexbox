@@ -8953,6 +8953,24 @@ function setAdminRailwayUpdateFeedback(message, tone = "") {
   adminRailwayUpdateFeedbackEl.classList.add(safeTone);
 }
 
+function mountAdminModalsToBody() {
+  if (!(document.body instanceof HTMLElement)) return;
+  [adminProcessLinkModalEl, adminProcessFileModalEl, adminRailwayUpdateModalEl].forEach((modalEl) => {
+    if (!(modalEl instanceof HTMLElement)) return;
+    if (modalEl.parentElement !== document.body) {
+      document.body.appendChild(modalEl);
+    }
+  });
+}
+
+function syncAdminModalLayerState() {
+  if (!adminPanel) return;
+  const isProcessLinkOpen = Boolean(adminProcessLinkModalEl && !adminProcessLinkModalEl.classList.contains("hidden"));
+  const isProcessFileOpen = Boolean(adminProcessFileModalEl && !adminProcessFileModalEl.classList.contains("hidden"));
+  const isRailwayUpdateOpen = Boolean(adminRailwayUpdateModalEl && !adminRailwayUpdateModalEl.classList.contains("hidden"));
+  adminPanel.classList.toggle("admin-modal-open", isProcessLinkOpen || isProcessFileOpen || isRailwayUpdateOpen);
+}
+
 function getRailwayUpdateCommand() {
   return [
     'cd "/Users/brunosoler/Documents/Playground" || { echo "Dossier introuvable."; exit 1; }',
@@ -8972,6 +8990,7 @@ function isLocalRuntimeForTerminalLaunch() {
 
 function openAdminRailwayUpdateModal() {
   if (!adminRailwayUpdateModalEl) return;
+  mountAdminModalsToBody();
   if (adminRailwayUpdateCommandEl) adminRailwayUpdateCommandEl.value = getRailwayUpdateCommand();
   if (adminRailwayUpdateRunTerminalBtn) {
     const canLaunch = isLocalRuntimeForTerminalLaunch();
@@ -8989,11 +9008,13 @@ function openAdminRailwayUpdateModal() {
     );
   }
   adminRailwayUpdateModalEl.classList.remove("hidden");
+  syncAdminModalLayerState();
 }
 
 function closeAdminRailwayUpdateModal() {
   if (!adminRailwayUpdateModalEl) return;
   adminRailwayUpdateModalEl.classList.add("hidden");
+  syncAdminModalLayerState();
 }
 
 function normalizeAdminBackupFileName(value, fallback = "SAV VortexBox") {
@@ -9655,6 +9676,7 @@ function enableAdminProcessQuicklinksDrag() {
 
 function openAdminProcessLinkModal(sectionKey = "achats", index = -1, focusField = "title") {
   if (!adminProcessLinkModalEl || !adminProcessLinkTitleInput || !adminProcessLinkUrlInput) return;
+  mountAdminModalsToBody();
   activeAdminProcessLinkSection = PROCESS_LINK_SECTIONS.some((item) => item.key === sectionKey) ? sectionKey : "achats";
   activeAdminProcessLinkEditIndex = Number.isInteger(index) ? index : -1;
   const currentDraft = getProcessSectionDraft(activeAdminProcessLinkSection);
@@ -9669,6 +9691,7 @@ function openAdminProcessLinkModal(sectionKey = "achats", index = -1, focusField
   const sectionLabel = getProcessSectionLabel(activeAdminProcessLinkSection);
   if (modalTitle) modalTitle.textContent = editing ? `Modifier - ${sectionLabel}` : `Nouveau - ${sectionLabel}`;
   adminProcessLinkModalEl.classList.remove("hidden");
+  syncAdminModalLayerState();
   window.setTimeout(() => {
     if (focusField === "url") {
       adminProcessLinkUrlInput.focus();
@@ -9685,6 +9708,7 @@ function closeAdminProcessLinkModal() {
   adminProcessLinkModalEl.classList.add("hidden");
   activeAdminProcessLinkEditIndex = -1;
   activeAdminProcessLinkSection = "achats";
+  syncAdminModalLayerState();
 }
 
 async function saveAdminProcessLinkFromModal() {
@@ -9732,6 +9756,7 @@ function launchAdminProcessUrlFromModal() {
 
 function openAdminProcessFileModal(index = -1) {
   if (!adminProcessFileModalEl || !adminProcessFileTitleInput || !adminProcessFileInputModal) return;
+  mountAdminModalsToBody();
   activeAdminProcessFileEditIndex = Number.isInteger(index) ? index : -1;
   const editing = activeAdminProcessFileEditIndex >= 0 && adminProcessFilesDraft[activeAdminProcessFileEditIndex];
   const current = editing ? adminProcessFilesDraft[activeAdminProcessFileEditIndex] : createEmptyProcessFileItem(adminProcessFilesDraft.length);
@@ -9746,6 +9771,7 @@ function openAdminProcessFileModal(index = -1) {
   const modalTitle = adminProcessFileModalEl.querySelector(".admin-subtitle");
   if (modalTitle) modalTitle.textContent = editing ? "Modifier Installation VB - PDF" : "Installation VB - PDF";
   adminProcessFileModalEl.classList.remove("hidden");
+  syncAdminModalLayerState();
   window.setTimeout(() => {
     adminProcessFileTitleInput.focus();
   }, 0);
@@ -9755,6 +9781,7 @@ function closeAdminProcessFileModal() {
   if (!adminProcessFileModalEl) return;
   adminProcessFileModalEl.classList.add("hidden");
   activeAdminProcessFileEditIndex = -1;
+  syncAdminModalLayerState();
 }
 
 async function saveAdminProcessFileFromModal() {

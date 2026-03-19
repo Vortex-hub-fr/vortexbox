@@ -5215,12 +5215,25 @@ textarea {
 .admin-process-link-modal {
   position: fixed;
   inset: 0;
-  z-index: 155;
+  z-index: 2600 !important;
+  isolation: isolate;
   display: grid;
   place-items: center;
   background: rgba(2, 10, 24, 0.82);
   backdrop-filter: blur(6px);
   padding: 1rem;
+}
+
+.admin-panel.admin-modal-open .admin-box {
+  overflow: visible;
+}
+
+.admin-panel.admin-modal-open .admin-tabs {
+  z-index: 1 !important;
+}
+
+.admin-panel.admin-modal-open .admin-process-link-modal {
+  z-index: 3200 !important;
 }
 
 .admin-process-link-modal-card {
