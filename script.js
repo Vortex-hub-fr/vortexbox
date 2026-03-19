@@ -11103,7 +11103,7 @@ function buildUltraCompatibleQuotePdfBlob(quote) {
   const addText = (text, x, y, options = {}) => {
     const font = options.bold ? "F2" : "F1";
     const size = options.size || 11;
-    stream.push(`BT /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${escapeProcessInvoicePdfString(text)}) Tj ET\n`);
+    stream.push(`0 0 0 rg BT /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${escapeProcessInvoicePdfString(text)}) Tj ET\n`);
   };
 
   stream.push("1 1 1 rg 0 0 595 842 re f\n");
