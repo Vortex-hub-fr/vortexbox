@@ -544,6 +544,148 @@ function buildProcessInvoicePdfBuffer(invoice) {
   return { buffer: Buffer.concat(buffers), totalTtc };
 }
 
+function buildProfileQuotePdfBuffer(quote) {
+  const safeQuote = quote && typeof quote === "object" ? quote : {};
+  const lines = Array.isArray(safeQuote.lines) ? safeQuote.lines : [];
+  const normalizedLines = lines
+    .map((line, index) => {
+      const quantity = Math.max(1, Number(line?.quantity) || 1);
+      const unitPriceTtc = Math.max(0, Number(line?.unitPriceTtc) || 0);
+      return {
+        label: normalizePdfText(line?.label || `Ligne ${index + 1}`) || `Ligne ${index + 1}`,
+        quantity,
+        unitPriceTtc,
+        totalTtc: quantity * unitPriceTtc,
+      };
+    })
+    .filter((line) => line.label || line.totalTtc > 0);
+
+  const totalTtc = normalizedLines.reduce((sum, line) => sum + line.totalTtc, 0);
+  const vatRate = Math.max(0, Number(safeQuote.vatRate) || 20);
+  const divisor = 1 + vatRate / 100;
+  const totalHt = divisor > 0 ? totalTtc / divisor : totalTtc;
+  const totalVat = Math.max(0, totalTtc - totalHt);
+  const euro = (value) =>
+    new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+      Math.max(0, Number(value) || 0)
+    );
+
+  const stream = [];
+  const addText = (text, x, y, options = {}) => {
+    const font = options.bold ? "F2" : "F1";
+    const size = options.size || 11;
+    const color = options.color || "1 1 1";
+    stream.push(`BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${escapePdfString(text)}) Tj ET\n`);
+  };
+
+  stream.push("0.02 0.08 0.18 rg 0 0 595 842 re f\n");
+  stream.push("0.06 0.23 0.39 rg 28 754 539 70 re f\n");
+  stream.push("0.40 0.90 1.00 RG 28 754 539 70 re S\n");
+  stream.push("0.05 0.42 0.74 rg 44 770 28 28 re f\n");
+  stream.push("0.70 0.96 1.00 RG 44 770 28 28 re S\n");
+  addText("VB", 50, 778, { bold: true, size: 12, color: "0.95 1 1" });
+  addText("VORTEXBOX", 44, 792, { bold: true, size: 30, color: "0.90 0.98 1" });
+  addText("DEVIS ULTRA PREMIUM PRO", 286, 795, { bold: true, size: 14, color: "0.90 0.98 1" });
+  addText(`Devis N° ${safeQuote.number || "DV-VORTEXBOX"}`, 286, 776, { bold: true, size: 12, color: "0.78 0.95 1" });
+  addText(`Date: ${safeQuote.issueDateLabel || new Date().toLocaleDateString("fr-FR")}`, 286, 760, {
+    size: 10,
+    color: "0.86 0.96 1",
+  });
+  addText(`Validite: ${safeQuote.validUntilLabel || ""}`, 432, 760, { size: 10, color: "0.86 0.96 1" });
+
+  stream.push("0.18 0.52 0.76 RG 28 638 539 96 re S\n");
+  addText("EMETTEUR (PRO)", 44, 714, { bold: true, size: 11, color: "0.62 0.94 1" });
+  addText("VortexBox", 44, 696, { bold: true, size: 16, color: "1 1 1" });
+  addText("Email: vortexcore@outlook.fr", 44, 678, { size: 10, color: "0.88 0.97 1" });
+  addText("SIRET: A COMPLETER - TVA intracom: A COMPLETER", 44, 662, { size: 10, color: "0.88 0.97 1" });
+
+  addText("CLIENT (PRO)", 312, 714, { bold: true, size: 11, color: "0.62 0.94 1" });
+  addText(`${safeQuote.clientName || "Client professionnel"}`, 312, 696, { bold: true, size: 16, color: "1 1 1" });
+  addText(`${safeQuote.clientEmail || "Email non renseigne"}`, 312, 678, { size: 10, color: "0.88 0.97 1" });
+  addText(`${safeQuote.clientCompany || "Societe non renseignee"}`, 312, 662, { size: 10, color: "0.88 0.97 1" });
+  addText(`${safeQuote.clientSiret || "SIRET client non renseigne"}`, 312, 646, { size: 10, color: "0.88 0.97 1" });
+  addText(`${safeQuote.clientVatNumber || "TVA client non renseignee"}`, 312, 632, {
+    size: 10,
+    color: "0.88 0.97 1",
+  });
+
+  let y = 606;
+  addText("DETAIL CONFIGURATION", 44, y, { bold: true, size: 12, color: "0.62 0.94 1" });
+  y -= 20;
+  normalizedLines.forEach((line, index) => {
+    const wrapped = wrapPdfLine(line.label, 64);
+    addText(`${index + 1}. ${wrapped[0]}`, 44, y, { bold: true, size: 10, color: "0.94 0.99 1" });
+    addText(`${line.quantity} x ${euro(line.unitPriceTtc)} EUR TTC`, 382, y, { size: 9, color: "0.82 0.97 1" });
+    y -= 15;
+    wrapped.slice(1).forEach((part) => {
+      addText(part, 56, y, { size: 9, color: "0.84 0.95 1" });
+      y -= 14;
+    });
+    addText(`Total ligne: ${euro(line.totalTtc)} EUR TTC`, 382, y + 14, { bold: true, size: 9, color: "0.62 0.94 1" });
+    y -= 6;
+    stream.push(`0.16 0.34 0.52 RG 44 ${y} 501 0.6 re S\n`);
+    y -= 14;
+  });
+
+  const summaryTop = Math.max(146, y - 10);
+  stream.push(`0.08 0.30 0.48 rg 292 ${summaryTop} 275 94 re f\n`);
+  stream.push(`0.45 0.93 0.99 RG 292 ${summaryTop} 275 94 re S\n`);
+  addText("SYNTHESE TVA", 308, summaryTop + 72, { bold: true, size: 13, color: "0.74 0.96 1" });
+  addText(`Total HT : ${euro(totalHt)} EUR`, 308, summaryTop + 52, { size: 11, color: "0.92 0.99 1" });
+  addText(`TVA ${vatRate}% : ${euro(totalVat)} EUR`, 308, summaryTop + 34, { size: 11, color: "0.92 0.99 1" });
+  addText(`Total TTC : ${euro(totalTtc)} EUR`, 308, summaryTop + 14, { bold: true, size: 15, color: "1 1 1" });
+
+  addText(
+    "Devis normalise pour clients professionnels - Prix exprimes TTC - TVA detaillee.",
+    44,
+    118,
+    { size: 9, color: "0.76 0.93 1" }
+  );
+  addText(
+    "Conditions pro: validite 30 jours, acompte 40% a la commande, solde a la livraison.",
+    44,
+    102,
+    { size: 9, color: "0.76 0.93 1" }
+  );
+  addText("TVA detaillee conformement au format devis professionnel FR.", 44, 86, {
+    size: 9,
+    color: "0.76 0.93 1",
+  });
+  addText("Logo VORTEXBOX present en en-tete du devis.", 44, 70, { size: 9, color: "0.76 0.93 1" });
+
+  const contentBuffer = Buffer.from(stream.join(""), "latin1");
+  const objects = [];
+  objects.push("1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n");
+  objects.push("2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n");
+  objects.push(
+    "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >> endobj\n"
+  );
+  objects.push(`4 0 obj << /Length ${contentBuffer.length} >> stream\n`);
+  objects.push(contentBuffer);
+  objects.push("\nendstream endobj\n");
+  objects.push("5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n");
+  objects.push("6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> endobj\n");
+
+  const header = Buffer.from("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n", "binary");
+  let offset = header.length;
+  const offsets = [0];
+  const buffers = [header];
+  objects.forEach((object) => {
+    const buffer = Buffer.isBuffer(object) ? object : Buffer.from(object, "latin1");
+    offsets.push(offset);
+    buffers.push(buffer);
+    offset += buffer.length;
+  });
+  const xrefStart = offset;
+  let xref = `xref\n0 ${offsets.length}\n0000000000 65535 f \n`;
+  for (let index = 1; index < offsets.length; index += 1) {
+    xref += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
+  }
+  const trailer = `trailer << /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+  buffers.push(Buffer.from(xref + trailer, "latin1"));
+  return { buffer: Buffer.concat(buffers), totalTtc, totalHt, totalVat, vatRate };
+}
+
 function isAllowedUploadExtension(ext) {
   return ALLOWED_UPLOAD_EXTENSIONS.has(String(ext || "").toLowerCase());
 }
@@ -2411,6 +2553,78 @@ async function handleProcessInvoicePdf(req, res) {
   });
 }
 
+async function handleProfileConfigQuotePdf(req, res) {
+  const body = await readJsonBody(req);
+  const config = body?.config && typeof body.config === "object" ? body.config : null;
+  const customer = body?.customer && typeof body.customer === "object" ? body.customer : {};
+  if (!config) {
+    sendJson(res, 400, { ok: false, error: "Configuration invalide." });
+    return;
+  }
+
+  const components = Array.isArray(config.components) ? config.components : [];
+  const services = Array.isArray(config.services) ? config.services : [];
+  const lines = [
+    ...components.map((item, index) => ({
+      label: `${String(item?.label || `Composant ${index + 1}`).trim()}: ${String(item?.optionName || "").trim()}`.trim(),
+      quantity: 1,
+      unitPriceTtc: Math.max(0, Number(item?.price) || 0),
+    })),
+    ...services.map((item, index) => ({
+      label: String(item?.label || `Service ${index + 1}`).trim(),
+      quantity: 1,
+      unitPriceTtc: Math.max(0, Number(item?.price) || 0),
+    })),
+  ].filter((line) => line.label || line.unitPriceTtc > 0);
+
+  if (!lines.length) {
+    sendJson(res, 400, { ok: false, error: "Aucune ligne valide dans la configuration." });
+    return;
+  }
+
+  const now = new Date();
+  const validUntil = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const quoteNumber = `DV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}${String(
+    now.getDate()
+  ).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+  const clientName = String(customer?.name || "").trim().slice(0, 80) || "Client professionnel";
+  const clientEmail = String(customer?.email || "").trim().slice(0, 120);
+  const clientCompany = String(customer?.company || "").trim().slice(0, 120);
+  const clientSiret = String(customer?.siret || "").trim().slice(0, 60);
+  const clientVatNumber = String(customer?.vatNumber || "").trim().slice(0, 60);
+
+  const { buffer, totalTtc, totalHt, totalVat, vatRate } = buildProfileQuotePdfBuffer({
+    number: quoteNumber,
+    issueDateLabel: now.toLocaleDateString("fr-FR"),
+    validUntilLabel: validUntil.toLocaleDateString("fr-FR"),
+    clientName,
+    clientEmail,
+    clientCompany,
+    clientSiret,
+    clientVatNumber,
+    vatRate: 20,
+    lines,
+  });
+
+  const safeBase = sanitizeName(
+    `devis-pro-${quoteNumber}-${clientName || "client-vortexbox"}`,
+    `devis-pro-${Date.now()}`
+  );
+  const fileName = `${safeBase}.pdf`;
+  res.writeHead(200, {
+    "Content-Type": "application/pdf",
+    "Content-Length": buffer.length,
+    "Content-Disposition": `attachment; filename=\"${fileName}\"`,
+    "Cache-Control": "no-store",
+    "X-Quote-Total-Ttc": String(totalTtc.toFixed(2)),
+    "X-Quote-Total-Ht": String(totalHt.toFixed(2)),
+    "X-Quote-Total-Vat": String(totalVat.toFixed(2)),
+    "X-Quote-Vat-Rate": String(vatRate),
+    ...buildSecurityHeaders(),
+  });
+  res.end(buffer);
+}
+
 function serveStatic(req, res) {
   const safePath = resolveSafePath(new URL(req.url, `http://${req.headers.host}`).pathname);
   if (!safePath) {
@@ -3061,6 +3275,22 @@ async function requestListener(req, res) {
       }
       if (!requireAdminSession(req, res)) return;
       await handleListUploads(url, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/profile-config-quote-pdf") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "profile-config-quote-pdf", 24, 10 * 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de devis générés. Réessayez dans quelques minutes." });
+        return;
+      }
+      await handleProfileConfigQuotePdf(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/submit-review") {

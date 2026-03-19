@@ -7051,6 +7051,9 @@ function renderUserProfileConfigs(email) {
             <button class="admin-secondary" type="button" data-action="profile-resume-config" data-config-id="${escapeHtml(config.id || "")}">
               Reprendre
             </button>
+            <button class="cta" type="button" data-action="profile-export-quote-pdf" data-config-id="${escapeHtml(config.id || "")}">
+              Devis PDF Pro
+            </button>
             <button class="admin-danger" type="button" data-action="profile-delete-config" data-config-id="${escapeHtml(config.id || "")}">
               Supprimer
             </button>
@@ -11013,6 +11016,54 @@ function triggerDownloadFromPath(href, fileName = "") {
   if (safeHref.startsWith("blob:")) {
     window.setTimeout(() => URL.revokeObjectURL(safeHref), 1500);
   }
+}
+
+function extractFileNameFromContentDisposition(headerValue, fallback = "devis-vortexbox.pdf") {
+  const raw = String(headerValue || "");
+  if (!raw) return fallback;
+  const utf8Match = raw.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match && utf8Match[1]) {
+    try {
+      return sanitizeFileName(decodeURIComponent(utf8Match[1]), fallback);
+    } catch (error) {}
+  }
+  const classicMatch = raw.match(/filename=\"?([^\";]+)\"?/i);
+  if (classicMatch && classicMatch[1]) {
+    return sanitizeFileName(classicMatch[1], fallback);
+  }
+  return fallback;
+}
+
+async function exportProfileConfigQuotePdf(config, email) {
+  const safeConfig = config && typeof config === "object" ? config : null;
+  if (!safeConfig) {
+    throw new Error("Configuration introuvable.");
+  }
+  const customerName = String(profileDisplayNameInput?.value || getUserDisplayName(email) || "Client professionnel").trim();
+  const response = await fetch("/api/profile-config-quote-pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify({
+      config: safeConfig,
+      customer: {
+        name: customerName,
+        email: String(email || "").trim().toLowerCase(),
+        company: customerName,
+      },
+    }),
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(String(payload?.error || `HTTP ${response.status}`));
+  }
+  const blob = await response.blob();
+  const fileName = extractFileNameFromContentDisposition(
+    response.headers.get("content-disposition"),
+    sanitizeFileName(`devis-pro-${safeConfig?.title || "vortexbox"}.pdf`, "devis-pro-vortexbox.pdf")
+  );
+  const objectUrl = URL.createObjectURL(blob);
+  return { fileName, objectUrl };
 }
 
 function renderAdminProcessusEditor() {
@@ -16520,7 +16571,7 @@ if (promoCodeInputEl) {
 }
 
 if (profileConfigsListEl) {
-  profileConfigsListEl.addEventListener("click", (event) => {
+  profileConfigsListEl.addEventListener("click", async (event) => {
     const button = event.target.closest("button[data-action][data-config-id]");
     if (!button) return;
     const action = button.dataset.action;
@@ -16578,6 +16629,26 @@ if (profileConfigsListEl) {
       setProfileFeedback("Configuration reprise dans le configurateur.");
       closeUserProfilePanel();
       enterConfiguratorOnlyMode();
+      return;
+    }
+
+    if (action === "profile-export-quote-pdf") {
+      const config = current[index];
+      const previousLabel = button.textContent;
+      button.disabled = true;
+      button.textContent = "Generation...";
+      try {
+        const payload = await exportProfileConfigQuotePdf(config, email);
+        triggerDownloadFromPath(payload.objectUrl, payload.fileName);
+        recordUserActivity(email, "Devis PDF généré", String(config?.title || ""));
+        renderUserProfileActivity(email);
+        setProfileFeedback("Devis PDF pro généré avec TVA détaillée.");
+      } catch (error) {
+        setProfileFeedback(`Impossible de générer le devis (${String(error?.message || "erreur inconnue")}).`);
+      } finally {
+        button.disabled = false;
+        button.textContent = previousLabel;
+      }
     }
   });
 }
