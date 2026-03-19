@@ -7486,6 +7486,18 @@ video.admin-preview {
   flex-wrap: wrap;
 }
 
+.profile-config-actions button {
+  min-height: 64px;
+  min-width: 180px;
+  padding: 0.8rem 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
 .profile-review-item {
   border: 1px solid rgba(127, 231, 255, 0.24);
   border-radius: 0.7rem;

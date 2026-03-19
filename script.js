@@ -11007,6 +11007,13 @@ async function generateProcessInvoicePdf(invoice, persistRecord = false) {
 function triggerDownloadFromPath(href, fileName = "") {
   const safeHref = String(href || "").trim();
   if (!safeHref) return;
+  const ua = String(navigator.userAgent || "").toLowerCase();
+  const isSafariLike = ua.includes("safari") && !ua.includes("chrome") && !ua.includes("chromium") && !ua.includes("android");
+  if (safeHref.startsWith("blob:") && isSafariLike) {
+    window.open(safeHref, "_blank", "noopener");
+    window.setTimeout(() => URL.revokeObjectURL(safeHref), 1500);
+    return;
+  }
   const link = document.createElement("a");
   link.href = safeHref;
   if (fileName) link.download = fileName;
@@ -11034,36 +11041,85 @@ function extractFileNameFromContentDisposition(headerValue, fallback = "devis-vo
   return fallback;
 }
 
+function buildProfileQuoteFallbackPdf(config, email) {
+  const safeConfig = config && typeof config === "object" ? config : {};
+  const customerName = String(profileDisplayNameInput?.value || getUserDisplayName(email) || "Client professionnel").trim();
+  const lines = [
+    ...(Array.isArray(safeConfig.components)
+      ? safeConfig.components.map((item, index) => ({
+          label: `${String(item?.label || `Composant ${index + 1}`).trim()}: ${String(item?.optionName || "").trim()}`.trim(),
+          quantity: 1,
+          unitPrice: Math.max(0, Number(item?.price) || 0),
+        }))
+      : []),
+    ...(Array.isArray(safeConfig.services)
+      ? safeConfig.services.map((item, index) => ({
+          label: String(item?.label || `Service ${index + 1}`).trim(),
+          quantity: 1,
+          unitPrice: Math.max(0, Number(item?.price) || 0),
+        }))
+      : []),
+  ].filter((line) => line.label || line.unitPrice > 0);
+
+  if (!lines.length) {
+    throw new Error("Aucune ligne valide dans la configuration.");
+  }
+
+  const now = new Date();
+  const invoiceLikeQuote = {
+    number: `DEVIS-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(
+      now.getHours()
+    ).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`,
+    clientName: customerName || "Client professionnel",
+    clientEmail: String(email || "").trim().toLowerCase(),
+    dueDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("fr-FR"),
+    lines,
+    notes:
+      "Devis genere en mode local. Prix TTC. TVA 20% incluse et detaillee dans le total. Conditions pro: validite 30 jours.",
+  };
+  const { blob } = buildProcessInvoicePdfBlob(invoiceLikeQuote);
+  const fileName = sanitizeFileName(
+    `devis-pro-${safeConfig?.title || customerName || "vortexbox"}-${Date.now()}.pdf`,
+    `devis-pro-vortexbox-${Date.now()}.pdf`
+  );
+  return { fileName, objectUrl: URL.createObjectURL(blob) };
+}
+
 async function exportProfileConfigQuotePdf(config, email) {
   const safeConfig = config && typeof config === "object" ? config : null;
   if (!safeConfig) {
     throw new Error("Configuration introuvable.");
   }
   const customerName = String(profileDisplayNameInput?.value || getUserDisplayName(email) || "Client professionnel").trim();
-  const response = await fetch("/api/profile-config-quote-pdf", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "same-origin",
-    body: JSON.stringify({
-      config: safeConfig,
-      customer: {
-        name: customerName,
-        email: String(email || "").trim().toLowerCase(),
-        company: customerName,
-      },
-    }),
-  });
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    throw new Error(String(payload?.error || `HTTP ${response.status}`));
+  try {
+    const response = await fetch("/api/profile-config-quote-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        config: safeConfig,
+        customer: {
+          name: customerName,
+          email: String(email || "").trim().toLowerCase(),
+          company: customerName,
+        },
+      }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(String(payload?.error || `HTTP ${response.status}`));
+    }
+    const blob = await response.blob();
+    const fileName = extractFileNameFromContentDisposition(
+      response.headers.get("content-disposition"),
+      sanitizeFileName(`devis-pro-${safeConfig?.title || "vortexbox"}.pdf`, "devis-pro-vortexbox.pdf")
+    );
+    const objectUrl = URL.createObjectURL(blob);
+    return { fileName, objectUrl, fallback: false };
+  } catch (error) {
+    const payload = buildProfileQuoteFallbackPdf(safeConfig, email);
+    return { ...payload, fallback: true, warning: String(error?.message || "API indisponible") };
   }
-  const blob = await response.blob();
-  const fileName = extractFileNameFromContentDisposition(
-    response.headers.get("content-disposition"),
-    sanitizeFileName(`devis-pro-${safeConfig?.title || "vortexbox"}.pdf`, "devis-pro-vortexbox.pdf")
-  );
-  const objectUrl = URL.createObjectURL(blob);
-  return { fileName, objectUrl };
 }
 
 function renderAdminProcessusEditor() {
@@ -16642,7 +16698,11 @@ if (profileConfigsListEl) {
         triggerDownloadFromPath(payload.objectUrl, payload.fileName);
         recordUserActivity(email, "Devis PDF généré", String(config?.title || ""));
         renderUserProfileActivity(email);
-        setProfileFeedback("Devis PDF pro généré avec TVA détaillée.");
+        if (payload.fallback) {
+          setProfileFeedback("Devis PDF genere en mode local (serveur indisponible).");
+        } else {
+          setProfileFeedback("Devis PDF pro genere avec TVA detaillee.");
+        }
       } catch (error) {
         setProfileFeedback(`Impossible de générer le devis (${String(error?.message || "erreur inconnue")}).`);
       } finally {
