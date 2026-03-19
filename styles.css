@@ -7504,6 +7504,14 @@ video.admin-preview {
   border-radius: 0.8rem;
 }
 
+.profile-config-actions .cta,
+.profile-config-actions .admin-secondary,
+.profile-config-actions .admin-danger {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  align-self: stretch;
+}
+
 @media (max-width: 900px) {
   .profile-config-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
