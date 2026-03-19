@@ -429,6 +429,7 @@ const PROMO_SESSION_KEY = "vortexbox-active-promo-code";
 const FAQ_SEED_VERSION = 2;
 const PENDING_ACTIVATION_KEY = "vortexbox-pending-activation";
 const AUTH_REMEMBER_KEY = "vortexbox-auth-remember";
+const AUTH_REMEMBER_CHOICE_KEY = "vortexbox-auth-remember-choice";
 const AUTH_RESET_CODES_KEY = "vortexbox-reset-codes";
 const ADMIN_EMAIL = "vortexcore@outlook.fr";
 const STORAGE_KEY = "vortexbox-content";
@@ -4451,8 +4452,21 @@ function getRememberedAuthEmail() {
   return String(localStorage.getItem(AUTH_REMEMBER_KEY) || "").trim().toLowerCase();
 }
 
+function setRememberChoice(value) {
+  localStorage.setItem(AUTH_REMEMBER_CHOICE_KEY, value ? "1" : "0");
+}
+
+function getRememberChoice() {
+  const raw = localStorage.getItem(AUTH_REMEMBER_CHOICE_KEY);
+  if (raw === "1") return true;
+  if (raw === "0") return false;
+  return null;
+}
+
 function syncRememberPreference(email) {
-  if (authRememberEl?.checked) {
+  const keepConnected = authRememberEl ? Boolean(authRememberEl.checked) : true;
+  setRememberChoice(keepConnected);
+  if (keepConnected) {
     setRememberedAuthEmail(email);
     return;
   }
@@ -4681,10 +4695,12 @@ function lockSite() {
 
 function initializeSiteAuth() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
+  const rememberChoice = getRememberChoice();
+  const rememberEnabled = rememberChoice === null ? true : rememberChoice;
   const rememberedEmail = getRememberedAuthEmail();
   const existingEmail = isAllowedOutlookEmail(sessionEmail) ? sessionEmail : rememberedEmail;
 
-  if (authRememberEl) authRememberEl.checked = Boolean(rememberedEmail);
+  if (authRememberEl) authRememberEl.checked = rememberEnabled;
   if (siteLoginEmailEl && isAllowedOutlookEmail(rememberedEmail) && !siteLoginEmailEl.value) {
     siteLoginEmailEl.value = rememberedEmail;
   }
@@ -8742,13 +8758,46 @@ function renderAdminSupportSavEditor() {
 
 function renderAdminReviewsEditor() {
   if (!adminReviewsList) return;
-  adminReviewsList.innerHTML = adminReviewsDraft
+  const entries = adminReviewsDraft
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const aTs = Date.parse(String(a.item?.createdAt || ""));
+      const bTs = Date.parse(String(b.item?.createdAt || ""));
+      if (Number.isFinite(aTs) && Number.isFinite(bTs) && aTs !== bTs) return bTs - aTs;
+      if (Number.isFinite(aTs) && !Number.isFinite(bTs)) return -1;
+      if (!Number.isFinite(aTs) && Number.isFinite(bTs)) return 1;
+      return b.index - a.index;
+    });
+
+  adminReviewsList.innerHTML = entries
     .map(
-      (item, index) => `
+      ({ item, index }, viewIndex) => {
+        const rating = Math.max(1, Math.min(5, Number(item.rating) || 5));
+        const stars = "★".repeat(rating);
+        const reviewStatus = item.approved ? "Publié" : "En attente";
+        const reviewStatusClass = item.approved ? "approved" : "pending";
+        const author = String(item.author || "").trim() || "Anonyme";
+        const preview = String(item.text || "").trim() || "Aucun commentaire.";
+        const previewShort = preview.length > 120 ? `${preview.slice(0, 120)}…` : preview;
+        return `
       <article class="admin-review-card">
         <div class="admin-machine-header">
-          <h5>Avis ${index + 1}</h5>
-          <button class="admin-danger" type="button" data-action="remove-review-item" data-review-index="${index}">Supprimer</button>
+          <h5>
+            <span class="admin-review-title-main">Avis ${viewIndex + 1} • ${escapeHtml(author)} • ${rating}/5</span>
+            <span class="admin-review-title-preview">"${escapeHtml(previewShort)}"</span>
+          </h5>
+          <div class="admin-review-header-actions">
+            <span class="admin-review-status-pill ${reviewStatusClass}">${reviewStatus}</span>
+            <button class="admin-secondary" type="button" data-action="toggle-review-approved" data-review-index="${index}">
+              ${item.approved ? "Retirer validation" : "Valider"}
+            </button>
+            <button class="admin-danger" type="button" data-action="remove-review-item" data-review-index="${index}">Supprimer</button>
+          </div>
+        </div>
+        <div class="admin-review-summary">
+          <p><strong>Client :</strong> ${escapeHtml(author)}</p>
+          <p><strong>Note :</strong> ${stars} (${rating}/5)</p>
+          <p><strong>Avis :</strong> ${escapeHtml(preview)}</p>
         </div>
         <div class="admin-review-top">
           <label>
@@ -8775,9 +8824,16 @@ function renderAdminReviewsEditor() {
           </label>
         </div>
       </article>
-    `
+    `;
+      }
     )
     .join("");
+}
+
+function syncAdminReviewsDraftWithContent() {
+  adminReviewsDraft = JSON.parse(JSON.stringify(siteContent.reviews || cloneDefaultContent().reviews));
+  renderAdminReviewsEditor();
+  renderAdminOverviewKpis();
 }
 
 function loadAdminProcessConsole() {
@@ -8979,7 +9035,7 @@ function getRailwayUpdateCommand() {
     "node tools/stage-about-videos-from-content.js",
     'git commit -m "MAJ VortexBox" || echo "Aucun changement a commit"',
     "git pull --rebase origin main",
-    "git push origin HEAD:main",
+    "git push origin HEAD:main || (git pull --rebase origin main && git push origin HEAD:main)",
   ].join("\n");
 }
 
@@ -14688,9 +14744,19 @@ if (adminReviewsList) {
     const index = Number(target.dataset.reviewIndex);
     if (Number.isNaN(index) || !adminReviewsDraft[index]) return;
     adminReviewsDraft[index].approved = Boolean(target.checked);
+    renderAdminReviewsEditor();
   });
 
   adminReviewsList.addEventListener("click", (event) => {
+    const toggleButton = event.target.closest("button[data-action='toggle-review-approved']");
+    if (toggleButton) {
+      const index = Number(toggleButton.dataset.reviewIndex);
+      if (Number.isNaN(index) || !adminReviewsDraft[index]) return;
+      adminReviewsDraft[index].approved = !Boolean(adminReviewsDraft[index].approved);
+      renderAdminReviewsEditor();
+      return;
+    }
+
     const button = event.target.closest("button[data-action='remove-review-item']");
     if (!button) return;
     const index = Number(button.dataset.reviewIndex);
@@ -16251,7 +16317,7 @@ if (profileChangePasswordBtn) {
 }
 
 if (profileSubmitReviewBtn) {
-  profileSubmitReviewBtn.addEventListener("click", () => {
+  profileSubmitReviewBtn.addEventListener("click", async () => {
     const email = getCurrentSessionEmail();
     if (!email) return;
 
@@ -16265,21 +16331,40 @@ if (profileSubmitReviewBtn) {
     const profileName = String(profileDisplayNameInput?.value || "").trim();
     const author = profileName || getUserDisplayName(email);
 
-    const nextReviews = Array.isArray(siteContent.reviews) ? [...siteContent.reviews] : [];
-    nextReviews.push({
-      author,
-      rating,
-      text,
-      approved: false,
-      userEmail: email,
-      createdAt: new Date().toISOString(),
-    });
-    siteContent.reviews = nextReviews;
+    let savedReview = null;
+    let submitError = "";
+    try {
+      const response = await fetch("/api/submit-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          author,
+          rating,
+          text,
+          userEmail: email,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.ok && payload?.ok && payload?.review && typeof payload.review === "object") {
+        savedReview = payload.review;
+      } else {
+        submitError = String(payload?.error || `HTTP ${response.status}`);
+      }
+    } catch (error) {
+      submitError = String(error?.message || "Erreur réseau");
+    }
 
-    if (!persistSiteContent()) {
-      setProfileFeedback("Impossible d'envoyer l'avis (stockage saturé).");
+    if (!savedReview) {
+      setProfileFeedback(`Impossible d'envoyer l'avis (${submitError || "erreur inconnue"}).`);
       return;
     }
+
+    const nextReviews = Array.isArray(siteContent.reviews) ? [...siteContent.reviews] : [];
+    nextReviews.push(savedReview);
+    siteContent.reviews = nextReviews;
+    syncAdminReviewsDraftWithContent();
+    persistSiteContent();
 
     renderReviews();
     renderUserProfileReviews(email);

@@ -423,6 +423,14 @@
       "approved": true,
       "userEmail": "",
       "createdAt": ""
+    },
+    {
+      "author": "Avis récupéré",
+      "rating": 5,
+      "text": "[RESTAURATION LOCALE] Avis perdu après synchronisation. Merci de remplacer ce texte par votre avis original.",
+      "approved": false,
+      "userEmail": "",
+      "createdAt": "2026-03-19T10:45:24.754Z"
     }
   ],
   "processus": {
@@ -937,5 +945,5 @@
       }
     ]
   },
-  "_updatedAt": 1773883769831
+  "_updatedAt": 1773918646295
 }

@@ -664,7 +664,7 @@ function buildRailwayUpdateShellCommand() {
     "node tools/stage-about-videos-from-content.js",
     '(git commit -m "MAJ VortexBox" || echo "Aucun changement a commit")',
     "git pull --rebase origin main",
-    "git push origin HEAD:main",
+    "git push origin HEAD:main || (git pull --rebase origin main && git push origin HEAD:main)",
   ].join(" && ");
 }
 
@@ -717,6 +717,42 @@ async function loadContentFileSafe() {
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch (error) {
     return {};
+  }
+}
+
+function sanitizeReviewSubmission(body) {
+  const payload = body && typeof body === "object" ? body : {};
+  const authorRaw = String(payload.author || "").trim();
+  const textRaw = String(payload.text || "").trim();
+  const emailRaw = String(payload.userEmail || "").trim().toLowerCase();
+  const ratingRaw = Number(payload.rating);
+
+  const author = authorRaw
+    .replace(/\s+/g, " ")
+    .slice(0, 80);
+  const text = textRaw
+    .replace(/\s+/g, " ")
+    .slice(0, 2000);
+  const rating = Number.isFinite(ratingRaw) ? Math.max(1, Math.min(5, Math.round(ratingRaw))) : 5;
+  const userEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw) ? emailRaw : "";
+
+  return {
+    author: author || "Client vérifié",
+    text,
+    rating,
+    userEmail,
+  };
+}
+
+async function createContentBackupIfExists() {
+  try {
+    await fsp.access(CONTENT_FILE, fs.constants.F_OK);
+    await fsp.mkdir(CONTENT_BACKUPS_DIR, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const backupFile = path.join(CONTENT_BACKUPS_DIR, `site-content-${stamp}.json`);
+    await fsp.copyFile(CONTENT_FILE, backupFile);
+  } catch (error) {
+    // Ignore backup errors to avoid blocking main save flow.
   }
 }
 
@@ -1353,15 +1389,7 @@ async function handleSaveContent(req, res) {
   }
 
   await fsp.mkdir(DATA_DIR, { recursive: true });
-  try {
-    await fsp.access(CONTENT_FILE, fs.constants.F_OK);
-    await fsp.mkdir(CONTENT_BACKUPS_DIR, { recursive: true });
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const backupFile = path.join(CONTENT_BACKUPS_DIR, `site-content-${stamp}.json`);
-    await fsp.copyFile(CONTENT_FILE, backupFile);
-  } catch (error) {
-    // No previous file yet or backup issue: continue save to avoid blocking edits.
-  }
+  await createContentBackupIfExists();
   const isDefaultImageValue = (value) => {
     const raw = String(value || "").trim().toLowerCase();
     if (!raw) return true;
@@ -1587,6 +1615,36 @@ async function handleSaveContent(req, res) {
   }
   await writeJsonAtomic(CONTENT_FILE, nextContent);
   sendJson(res, 200, { ok: true, file: "data/site-content.json" });
+}
+
+async function handleSubmitReview(req, res) {
+  const body = await readJsonBody(req);
+  const incoming = sanitizeReviewSubmission(body);
+  if (incoming.text.length < 8) {
+    sendJson(res, 400, { ok: false, error: "Votre avis doit contenir au moins 8 caractères." });
+    return;
+  }
+
+  const content = await loadContentFileSafe();
+  const nextContent = content && typeof content === "object" ? { ...content } : {};
+  const reviews = Array.isArray(nextContent.reviews) ? nextContent.reviews.slice() : [];
+  const review = {
+    author: incoming.author,
+    rating: incoming.rating,
+    text: incoming.text,
+    approved: false,
+    userEmail: incoming.userEmail,
+    createdAt: new Date().toISOString(),
+  };
+
+  reviews.push(review);
+  nextContent.reviews = reviews.slice(-1000);
+  nextContent._updatedAt = Date.now();
+
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await createContentBackupIfExists();
+  await writeJsonAtomic(CONTENT_FILE, nextContent);
+  sendJson(res, 200, { ok: true, review, count: nextContent.reviews.length, file: "data/site-content.json" });
 }
 
 async function handleSaveTechnicalSheetImage(req, res) {
@@ -3003,6 +3061,22 @@ async function requestListener(req, res) {
       }
       if (!requireAdminSession(req, res)) return;
       await handleListUploads(url, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/submit-review") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "submit-review", 24, 10 * 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop d'avis envoyés. Réessayez dans quelques minutes." });
+        return;
+      }
+      await handleSubmitReview(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/save-content") {
