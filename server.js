@@ -92,6 +92,9 @@ const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+const HF_API_KEY = process.env.HF_API_KEY || "";
+const HF_MODEL = process.env.HF_MODEL || "mistralai/Mistral-7B-Instruct-v0.3";
+const AI_FREE_FIRST = String(process.env.AI_FREE_FIRST || "1") === "1";
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "vortexcore@outlook.fr").trim().toLowerCase();
 const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "Eolia460&Qp46uqv");
 const ADMIN_SESSION_COOKIE = "vb_admin_session";
@@ -2066,6 +2069,54 @@ async function handleGetUserState(res) {
   }
 }
 
+function buildAdminRailwayStatusPayload() {
+  const memory = process.memoryUsage();
+  const rssMb = Math.round((Number(memory?.rss || 0) / (1024 * 1024)) * 10) / 10;
+  const heapUsedMb = Math.round((Number(memory?.heapUsed || 0) / (1024 * 1024)) * 10) / 10;
+  const heapTotalMb = Math.round((Number(memory?.heapTotal || 0) / (1024 * 1024)) * 10) / 10;
+  const heapUsageRatio = heapTotalMb > 0 ? heapUsedMb / heapTotalMb : 0;
+  const memoryPressure = rssMb >= 1024 || heapUsageRatio >= 0.88;
+
+  return {
+    ok: true,
+    railway: {
+      runtime: isRailwayRuntime(),
+      environment: String(process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT || ""),
+      projectId: String(process.env.RAILWAY_PROJECT_ID || ""),
+      serviceId: String(process.env.RAILWAY_SERVICE_ID || ""),
+      deploymentId: String(process.env.RAILWAY_DEPLOYMENT_ID || ""),
+      region: String(process.env.RAILWAY_REGION || ""),
+    },
+    app: {
+      uptimeSec: Math.max(0, Math.floor(process.uptime())),
+      node: String(process.version || ""),
+      pid: process.pid,
+      memory: {
+        rssMb,
+        heapUsedMb,
+        heapTotalMb,
+      },
+    },
+    health: {
+      memoryPressure,
+    },
+    version: {
+      commit: String(
+        process.env.RAILWAY_GIT_COMMIT_SHA ||
+          process.env.GIT_COMMIT_SHA ||
+          process.env.SOURCE_COMMIT ||
+          ""
+      ),
+      branch: String(process.env.RAILWAY_GIT_BRANCH || process.env.GIT_BRANCH || ""),
+    },
+    checkedAt: new Date().toISOString(),
+  };
+}
+
+async function handleAdminRailwayStatus(res) {
+  sendJson(res, 200, buildAdminRailwayStatusPayload());
+}
+
 function buildBackupFileName() {
   const now = new Date();
   const yyyy = now.getFullYear();
@@ -2083,8 +2134,23 @@ async function createSiteBackupZip() {
   await new Promise((resolve, reject) => {
     const child = spawn(
       "zip",
-      ["-r", zipPath, ".", "-x", ".git/*", ".env", "*.DS_Store", "__MACOSX/*"],
-      { cwd: ROOT_DIR }
+      [
+        "-rq0",
+        zipPath,
+        ".",
+        "-x",
+        ".git/*",
+        ".env",
+        "*.DS_Store",
+        "__MACOSX/*",
+        "backups/*",
+        "data/content-backups/*",
+      ],
+      {
+        cwd: ROOT_DIR,
+        // Evite un blocage si zip produit beaucoup de logs (stdout rempli).
+        stdio: ["ignore", "ignore", "pipe"],
+      }
     );
     let stderr = "";
     child.stderr.on("data", (chunk) => {
@@ -2645,14 +2711,131 @@ function extractResponseText(payload) {
   return chunks.join("\n").trim();
 }
 
+function extractFirstJsonObject(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (error) {}
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  const candidate = raw.slice(start, end + 1);
+  try {
+    return JSON.parse(candidate);
+  } catch (error) {
+    return null;
+  }
+}
+
+function normalizeAiRecommendation(parsed, fallback) {
+  if (!parsed || typeof parsed !== "object") return fallback;
+  return {
+    title: String(parsed.title || fallback.title),
+    reason: String(parsed.reason || fallback.reason),
+    selections: parsed.selections && typeof parsed.selections === "object" ? parsed.selections : fallback.selections,
+    services: Array.isArray(parsed.services) ? parsed.services.map((item) => String(item || "")).filter(Boolean) : fallback.services,
+    fps_estimate:
+      parsed.fps_estimate && typeof parsed.fps_estimate === "object"
+        ? parsed.fps_estimate
+        : fallback.fps_estimate,
+  };
+}
+
+function buildAiRecommendationPrompt(answers, catalog) {
+  return {
+    answers: {
+      budget: String(answers?.budget || "mid"),
+      game: String(answers?.game || "mix"),
+      resolution: String(answers?.resolution || "1440"),
+    },
+    catalog,
+  };
+}
+
+async function requestHuggingFaceRecommendation(userPayload, fallback) {
+  if (!HF_API_KEY) return null;
+  const systemPrompt =
+    "Tu es un expert hardware gaming VortexBox. " +
+    "Réponds en JSON strict sans markdown: {title, reason, selections, services, fps_estimate}. " +
+    "Conserve les labels exacts présents dans le catalogue.";
+  const promptForInference = `${systemPrompt}\n\n${JSON.stringify(userPayload)}`;
+  const tryInferenceFallback = async () => {
+    try {
+      const response = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${HF_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: promptForInference,
+          parameters: {
+            max_new_tokens: 450,
+            temperature: 0.2,
+            return_full_text: false,
+          },
+        }),
+      });
+      if (!response.ok) return null;
+      const payload = await response.json();
+      const generatedText = Array.isArray(payload)
+        ? String(payload?.[0]?.generated_text || "")
+        : String(payload?.generated_text || "");
+      const parsed = extractFirstJsonObject(generatedText);
+      if (!parsed || typeof parsed !== "object") return null;
+      return normalizeAiRecommendation(parsed, fallback);
+    } catch (fallbackError) {
+      return null;
+    }
+  };
+  try {
+    const response = await fetch("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${HF_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: HF_MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: JSON.stringify(userPayload) },
+        ],
+        temperature: 0.2,
+        max_tokens: 450,
+      }),
+    });
+    if (!response.ok) {
+      return await tryInferenceFallback();
+    }
+    const payload = await response.json();
+    const rawContent = String(payload?.choices?.[0]?.message?.content || "").trim();
+    const parsed = extractFirstJsonObject(rawContent);
+    if (!parsed || typeof parsed !== "object") return null;
+    return normalizeAiRecommendation(parsed, fallback);
+  } catch (error) {
+    return await tryInferenceFallback();
+  }
+}
+
 async function handleAiRecommendation(req, res) {
   const body = await readJsonBody(req);
   const answers = body?.answers && typeof body.answers === "object" ? body.answers : {};
   const catalog = body?.catalog && typeof body.catalog === "object" ? body.catalog : {};
   const fallback = buildFallbackAiRecommendation(answers, catalog);
+  const userPayload = buildAiRecommendationPrompt(answers, catalog);
+
+  if (AI_FREE_FIRST) {
+    const hfRecommendation = await requestHuggingFaceRecommendation(userPayload, fallback);
+    if (hfRecommendation) {
+      sendJson(res, 200, { ok: true, source: "hf-free", recommendation: hfRecommendation });
+      return;
+    }
+  }
 
   if (!OPENAI_API_KEY) {
-    sendJson(res, 200, { ok: true, source: "fallback", recommendation: fallback });
+    sendJson(res, 200, { ok: true, source: "local-free", recommendation: fallback });
     return;
   }
 
@@ -2662,15 +2845,6 @@ async function handleAiRecommendation(req, res) {
     "Format attendu: {title, reason, selections, services, fps_estimate}. " +
     "selections: map label_categorie -> nom_option_exact. " +
     "services: tableau de labels exacts.";
-
-  const userPayload = {
-    answers: {
-      budget: String(answers.budget || "mid"),
-      game: String(answers.game || "mix"),
-      resolution: String(answers.resolution || "1440"),
-    },
-    catalog,
-  };
 
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -2694,7 +2868,7 @@ async function handleAiRecommendation(req, res) {
       const raw = await response.text();
       sendJson(res, 200, {
         ok: true,
-        source: "fallback",
+        source: "local-free",
         warning: raw || "AI HTTP error",
         recommendation: fallback,
       });
@@ -2703,36 +2877,21 @@ async function handleAiRecommendation(req, res) {
 
     const payload = await response.json();
     const text = extractResponseText(payload);
-    let parsed = null;
-    try {
-      parsed = JSON.parse(text);
-    } catch (error) {
-      parsed = null;
-    }
-
+    const parsed = extractFirstJsonObject(text);
     if (!parsed || typeof parsed !== "object") {
-      sendJson(res, 200, { ok: true, source: "fallback", recommendation: fallback });
+      sendJson(res, 200, { ok: true, source: "local-free", recommendation: fallback });
       return;
     }
 
     sendJson(res, 200, {
       ok: true,
-      source: "ai",
-      recommendation: {
-        title: String(parsed.title || fallback.title),
-        reason: String(parsed.reason || fallback.reason),
-        selections: parsed.selections && typeof parsed.selections === "object" ? parsed.selections : fallback.selections,
-        services: Array.isArray(parsed.services) ? parsed.services.map((item) => String(item || "")).filter(Boolean) : fallback.services,
-        fps_estimate:
-          parsed.fps_estimate && typeof parsed.fps_estimate === "object"
-            ? parsed.fps_estimate
-            : fallback.fps_estimate,
-      },
+      source: "openai",
+      recommendation: normalizeAiRecommendation(parsed, fallback),
     });
   } catch (error) {
     sendJson(res, 200, {
       ok: true,
-      source: "fallback",
+      source: "local-free",
       warning: String(error?.message || "AI unavailable"),
       recommendation: fallback,
     });
@@ -2991,6 +3150,15 @@ async function requestListener(req, res) {
     if (req.method === "GET" && url.pathname === "/api/user-state") {
       if (!requireAdminSession(req, res)) return;
       await handleGetUserState(res);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/admin/railway-status") {
+      if (isRateLimited(req, "admin-railway-status", 120, 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de requêtes statut Railway. Réessayez dans 1 minute." });
+        return;
+      }
+      if (!requireAdminSession(req, res)) return;
+      await handleAdminRailwayStatus(res);
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/backup-site-zip") {

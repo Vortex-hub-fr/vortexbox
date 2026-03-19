@@ -1,0 +1,124 @@
+:root {
+  /* Core palette */
+  --vb-bg-0: #030d1c;
+  --vb-bg-1: #061a31;
+  --vb-surface-1: rgba(12, 34, 58, 0.94);
+  --vb-surface-2: rgba(8, 24, 42, 0.96);
+
+  /* Premium accents */
+  --vb-accent: #5db7ff;
+  --vb-accent-strong: #81d0ff;
+  --vb-accent-soft: rgba(127, 231, 255, 0.34);
+  --vb-border: rgba(237, 202, 120, 0.52);
+  --vb-border-strong: rgba(245, 220, 154, 0.82);
+  --vb-glow: rgba(242, 208, 128, 0.32);
+
+  /* Text */
+  --vb-text: #f3f8ff;
+  --vb-text-muted: #c7d9ea;
+
+  /* Status */
+  --vb-success: #98f0c0;
+  --vb-info: #ead8ab;
+  --vb-warning: #ffe0a3;
+  --vb-danger: #ffb3b3;
+
+  /* Geometry */
+  --vb-r-sm: 12px;
+  --vb-r-md: 16px;
+  --vb-r-lg: 20px;
+
+  /* Elevation */
+  --vb-shadow-1: 0 12px 22px rgba(2, 10, 24, 0.28);
+  --vb-shadow-2: 0 20px 34px rgba(2, 10, 24, 0.36);
+  --vb-shadow-3: 0 28px 52px rgba(2, 10, 24, 0.52);
+
+  /* Motion */
+  --vb-fast: 170ms;
+  --vb-base: 280ms;
+  --vb-page: 760ms;
+}
+
+/* Base */
+body {
+  color: var(--vb-text);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(245, 213, 133, 0.08), transparent 30%),
+    radial-gradient(circle at 100% 16%, rgba(208, 159, 66, 0.1), transparent 34%),
+    linear-gradient(180deg, var(--vb-bg-1), var(--vb-bg-0));
+}
+
+/* Surfaces */
+.vb-surface {
+  border: 1px solid var(--vb-border);
+  border-radius: var(--vb-r-md);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 229, 165, 0.14), transparent 38%),
+    radial-gradient(circle at 0% 100%, rgba(220, 169, 72, 0.12), transparent 34%),
+    linear-gradient(168deg, var(--vb-surface-1), var(--vb-surface-2));
+  box-shadow:
+    var(--vb-shadow-2),
+    0 0 28px rgba(241, 207, 128, 0.12),
+    inset 0 1px 0 rgba(255, 242, 206, 0.12);
+}
+
+/* Primary button */
+.vb-btn-primary {
+  color: #fff7e2;
+  border: 1px solid var(--vb-border);
+  border-radius: var(--vb-r-sm);
+  background:
+    radial-gradient(circle at 22% 0%, rgba(255, 233, 180, 0.22), transparent 46%),
+    linear-gradient(165deg, rgba(154, 106, 28, 0.62), rgba(92, 61, 15, 0.7));
+  box-shadow:
+    0 18px 30px rgba(52, 31, 8, 0.42),
+    0 0 26px var(--vb-glow),
+    inset 0 1px 0 rgba(255, 241, 198, 0.24);
+  transition:
+    transform var(--vb-fast) cubic-bezier(0.2, 0.75, 0.2, 1),
+    box-shadow var(--vb-fast) cubic-bezier(0.2, 0.75, 0.2, 1),
+    border-color var(--vb-fast) cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.vb-btn-primary:hover {
+  transform: translateY(-2px) scale(1.018);
+  border-color: var(--vb-border-strong);
+  box-shadow:
+    0 22px 36px rgba(63, 38, 10, 0.46),
+    0 0 34px rgba(244, 211, 130, 0.44),
+    inset 0 1px 0 rgba(255, 247, 221, 0.3);
+}
+
+.vb-btn-primary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(6, 20, 34, 0.96),
+    0 0 0 4px rgba(245, 220, 154, 0.44),
+    0 22px 36px rgba(63, 38, 10, 0.46);
+}
+
+/* Inputs */
+.vb-input {
+  color: var(--vb-text);
+  border: 1px solid color-mix(in srgb, var(--vb-border) 72%, rgba(146, 214, 255, 0.36) 28%);
+  border-radius: var(--vb-r-sm);
+  background: linear-gradient(180deg, rgba(10, 30, 51, 0.95), rgba(6, 20, 36, 0.97));
+}
+
+.vb-input::placeholder {
+  color: rgba(193, 207, 224, 0.72);
+}
+
+/* Status chips */
+.vb-status-ok { color: var(--vb-success); }
+.vb-status-info { color: var(--vb-info); }
+.vb-status-warning { color: var(--vb-warning); }
+.vb-status-danger { color: var(--vb-danger); }
+
+/* Usage rules:
+1) 70% bleu nuit / 20% bleu technique / 10% or.
+2) Or reserve aux actions, highlights et etats actifs.
+3) Un seul style de bouton principal.
+4) 3 niveaux d'ombre max.
+5) Motion courte et propre: hover <= 180ms, page <= 800ms.
+*/

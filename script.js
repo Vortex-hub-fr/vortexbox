@@ -56,6 +56,7 @@ const promoFeedbackEl = document.getElementById("promo-feedback");
 const navMachinesLinkEl = document.getElementById("nav-machines-link");
 const navFichesLinkEl = document.getElementById("nav-fiches-link");
 const navSmartSearchInputEl = document.getElementById("nav-smart-search");
+const navSmartPremiumBtnEl = document.getElementById("nav-smart-premium-btn");
 const navSmartResultsEl = document.getElementById("nav-smart-results");
 const navSmartKeywordsEl = document.getElementById("nav-smart-keywords");
 const navSmartKeywordsListEl = document.getElementById("nav-smart-keywords-list");
@@ -109,6 +110,9 @@ const vortexBotToggleEl = document.getElementById("vortexbot-toggle");
 const vortexBotPanelEl = document.getElementById("vortexbot-panel");
 const vortexBotCloseEl = document.getElementById("vortexbot-close");
 const vortexBotMessagesEl = document.getElementById("vortexbot-messages");
+const vortexBotActionsEl = document.querySelector("#vortexbot-panel .vortexbot-actions");
+const vortexBotHeadTitleEl = document.querySelector("#vortexbot-panel .vortexbot-head-title h3");
+const vortexBotHeadSubtitleEl = document.querySelector("#vortexbot-panel .vortexbot-head-title p");
 
 function bindVortexBotFallbackDelegation() {
   if (window.__vbBotFallbackBound) return;
@@ -281,6 +285,7 @@ const adminProcessLinkModalCloseBtn = document.getElementById("admin-process-lin
 const adminProcessLinkTitleInput = document.getElementById("admin-process-link-title-input");
 const adminProcessLinkUrlInput = document.getElementById("admin-process-link-url-input");
 const adminProcessLinkCancelBtn = document.getElementById("admin-process-link-cancel");
+const adminProcessLinkOpenUrlBtn = document.getElementById("admin-process-link-open-url");
 const adminProcessLinkSaveBtn = document.getElementById("admin-process-link-save");
 const adminProcessFileModalEl = document.getElementById("admin-process-file-modal");
 const adminProcessFileModalCloseBtn = document.getElementById("admin-process-file-modal-close");
@@ -302,7 +307,13 @@ const adminBackupZipBtn = document.getElementById("admin-backup-zip-btn");
 const adminBackupFeedbackEl = document.getElementById("admin-backup-feedback");
 const adminBackupLastStateEl = document.getElementById("admin-backup-last-state");
 const adminBackupFilenameInput = document.getElementById("admin-backup-filename");
+const adminBackupProgressWrapEl = document.getElementById("admin-backup-progress-wrap");
+const adminBackupProgressLabelEl = document.getElementById("admin-backup-progress-label");
+const adminBackupProgressValueEl = document.getElementById("admin-backup-progress-value");
+const adminBackupProgressBarEl = document.getElementById("admin-backup-progress-bar");
 const adminCcServerEl = document.getElementById("admin-cc-server");
+const adminCcRailwayEl = document.getElementById("admin-cc-railway");
+const adminCcRailwayMetaEl = document.getElementById("admin-cc-railway-meta");
 const adminCcTimeEl = document.getElementById("admin-cc-time");
 const adminCcBackupEl = document.getElementById("admin-cc-backup");
 const CONFIG_VISUAL_SLOT_COUNT = 4;
@@ -390,6 +401,7 @@ const adminUsersSearchInput = document.getElementById("admin-users-search");
 const adminGlobalSearchInput = document.getElementById("admin-global-search");
 const adminSearchResultsEl = document.getElementById("admin-search-results");
 const adminDensityToggleEl = document.getElementById("admin-density-toggle");
+const adminThemeToggleEl = document.getElementById("admin-theme-toggle");
 const adminLivePreviewTitleEl = document.getElementById("admin-live-preview-title");
 const adminLivePreviewSubtitleEl = document.getElementById("admin-live-preview-subtitle");
 const adminLivePreviewImageEl = document.getElementById("admin-live-preview-image");
@@ -428,6 +440,7 @@ const COOKIE_CONSENT_KEY = "vortexbox-cookie-consent";
 const ADMIN_TABS_ORDER_KEY = "vortexbox-admin-tabs-order";
 const ADMIN_LIVE_MODE_KEY = "vortexbox-admin-live-mode";
 const ADMIN_DENSITY_KEY = "vortexbox-admin-density";
+const ADMIN_THEME_KEY = "vortexbox-admin-theme";
 const ADMIN_PROFILE_PHOTO_KEY = "vortexbox-admin-profile-photo";
 const ADMIN_HISTORY_KEY = "vortexbox-admin-history";
 const USER_ACTIVITY_KEY = "vortexbox-user-activity";
@@ -868,6 +881,7 @@ let diskApiAvailability = null;
 let lastDiskSyncError = "";
 let vortexBotAdvisor = { active: false, step: "", answers: {} };
 let vortexBotLastRecommendation = null;
+let vortexBotActiveMode = "advisor";
 let proofStatsObserver = null;
 let profileAdminPhotoDraft = "";
 let proofStatsAnimated = false;
@@ -891,6 +905,13 @@ let pendingAiAdvisorDeepLink = false;
 let pendingConfiguratorDeepLink = false;
 let adminUploadProgressHideTimer = null;
 let adminControlClockTimer = null;
+let adminRailwayStatusTimer = null;
+let adminRailwayStatusInFlight = false;
+let adminRailwayLatencyMs = 0;
+let adminRailwayTone = "offline";
+let adminCcServerHistory = [];
+let adminCcRailwayHistory = [];
+let adminCcPulseTimer = null;
 let activeConnectionEmail = "";
 let activeConnectionBaseSeconds = 0;
 let activeConnectionSessionStartAt = 0;
@@ -2075,6 +2096,72 @@ function initializeNavSmartSearch() {
   });
 }
 
+function initializeNavPremiumButton() {
+  if (!navSmartPremiumBtnEl) return;
+  const navSmartWrapEl = navSmartPremiumBtnEl.closest(".nav-smart-wrap");
+  if (!navSmartWrapEl) return;
+  let premiumMenuEl = navSmartWrapEl.querySelector(".nav-smart-premium-menu");
+  if (!premiumMenuEl) {
+    premiumMenuEl = document.createElement("div");
+    premiumMenuEl.className = "nav-smart-premium-menu hidden";
+    premiumMenuEl.setAttribute("aria-label", "Menu premium");
+    navSmartWrapEl.appendChild(premiumMenuEl);
+  }
+
+  const navLinks = Array.from(document.querySelectorAll(".nav .nav-links a[href]"));
+  const entries = navLinks
+    .map((link) => {
+      const label = String(link.textContent || "").trim();
+      const href = String(link.getAttribute("href") || "").trim();
+      return {
+        label: label ? `Rechercher: ${label}` : "",
+        href,
+      };
+    })
+    .filter((entry) => entry.label && entry.href);
+
+  premiumMenuEl.innerHTML = entries
+    .map(
+      (entry) =>
+        `<button type="button" class="nav-smart-premium-item" data-href="${escapeHtml(entry.href)}">${escapeHtml(entry.label)}</button>`
+    )
+    .join("");
+
+  let isOpen = false;
+  const showMenu = () => {
+    isOpen = true;
+    premiumMenuEl.classList.remove("hidden");
+    navSmartWrapEl.classList.add("premium-open");
+  };
+  const hideMenu = () => {
+    isOpen = false;
+    premiumMenuEl.classList.add("hidden");
+    navSmartWrapEl.classList.remove("premium-open");
+  };
+
+  navSmartPremiumBtnEl.addEventListener("click", () => {
+    if (isOpen) {
+      hideMenu();
+      return;
+    }
+    showMenu();
+  });
+
+  premiumMenuEl.addEventListener("click", (event) => {
+    const item = event.target.closest("button[data-href]");
+    if (!item) return;
+    const href = String(item.dataset.href || "").trim();
+    if (!href) return;
+    hideMenu();
+    window.location.href = href;
+  });
+
+  document.addEventListener("click", (event) => {
+    if (navSmartWrapEl.contains(event.target)) return;
+    hideMenu();
+  });
+}
+
 function initializeRevealAnimations() {
   const sections = Array.from(document.querySelectorAll("main .section"));
   if (!sections.length) return;
@@ -2344,6 +2431,193 @@ function setVortexBotOpen(isOpen) {
   vortexBotToggleEl.setAttribute("aria-expanded", isOpen ? "true" : "false");
 }
 
+function getVortexBotModeConfig(mode) {
+  const map = {
+    advisor: {
+      subtitle: "Assistant build gaming IA",
+      intro: [
+        "Mode Conseil IA activé.",
+        "Je peux vous recommander une configuration idéale en 3 questions.",
+      ],
+      actions: [
+        { id: "go-ai-advisor", label: "Recommandation IA" },
+        { id: "go-configurator", label: "Ouvrir le configurateur" },
+        { id: "go-compare", label: "Comparer 2 build" },
+        { id: "go-telegram", label: "Parler à un expert" },
+      ],
+    },
+    sav: {
+      subtitle: "Assistant support & SAV",
+      intro: [
+        "Mode SAV activé.",
+        "Je peux vous orienter vers garantie, délais, support prioritaire ou FAQ.",
+      ],
+      actions: [
+        { id: "go-support-sav", label: "Ouvrir Support & SAV" },
+        { id: "go-garantie", label: "Garantie 2 ans" },
+        { id: "go-livraison", label: "Délais livraison" },
+        { id: "go-support-faq", label: "FAQ rapide" },
+      ],
+    },
+    offers: {
+      subtitle: "Assistant offres & optimisation",
+      intro: [
+        "Mode Offres activé.",
+        "Je peux booster votre panier avec promo, services et top build.",
+      ],
+      actions: [
+        { id: "go-promo", label: "Activer promo" },
+        { id: "go-services", label: "Services recommandés" },
+        { id: "go-top", label: "Top build" },
+        { id: "go-budget", label: "Conseil budget" },
+      ],
+    },
+    admin: {
+      subtitle: "Assistant administration premium",
+      intro: [
+        "Mode Admin activé.",
+        "Je peux vous guider vers le contrôle admin et le suivi système.",
+      ],
+      actions: [
+        { id: "go-admin-console", label: "Ouvrir admin" },
+        { id: "go-admin-railway", label: "Etat Railway" },
+        { id: "go-telegram", label: "Support direct" },
+        { id: "go-support-faq", label: "Documentation" },
+      ],
+    },
+  };
+  return map[String(mode || "").toLowerCase()] || map.advisor;
+}
+
+function renderVortexBotActions(actions = []) {
+  if (!vortexBotActionsEl) return;
+  const items = Array.isArray(actions) ? actions : [];
+  vortexBotActionsEl.innerHTML = items
+    .map(
+      (action) =>
+        `<button type="button" data-bot-action="${escapeHtml(String(action.id || ""))}">${escapeHtml(
+          String(action.label || "Action")
+        )}</button>`
+    )
+    .join("");
+}
+
+function ensureVortexBotModeTabs() {
+  if (!vortexBotPanelEl) return;
+  const head = vortexBotPanelEl.querySelector(".vortexbot-head");
+  if (!head) return;
+  if (vortexBotPanelEl.querySelector(".vortexbot-modes")) return;
+  const wrap = document.createElement("div");
+  wrap.className = "vortexbot-modes";
+  wrap.innerHTML = `
+    <button type="button" class="vortexbot-mode-btn" data-bot-mode="advisor">Conseil IA</button>
+    <button type="button" class="vortexbot-mode-btn" data-bot-mode="sav">SAV</button>
+    <button type="button" class="vortexbot-mode-btn" data-bot-mode="offers">Offres</button>
+    <button type="button" class="vortexbot-mode-btn" data-bot-mode="admin">Admin</button>
+  `;
+  head.insertAdjacentElement("afterend", wrap);
+}
+
+function setVortexBotMode(mode, options = {}) {
+  const config = getVortexBotModeConfig(mode);
+  const normalized = String(mode || "advisor").toLowerCase();
+  const shouldLog = options && Object.prototype.hasOwnProperty.call(options, "log") ? Boolean(options.log) : true;
+  vortexBotActiveMode = ["advisor", "sav", "offers", "admin"].includes(normalized) ? normalized : "advisor";
+
+  const tabButtons = Array.from(vortexBotPanelEl?.querySelectorAll(".vortexbot-mode-btn[data-bot-mode]") || []);
+  tabButtons.forEach((button) => {
+    const isActive = String(button.dataset.botMode || "") === vortexBotActiveMode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+
+  if (vortexBotHeadTitleEl) vortexBotHeadTitleEl.textContent = "VortexBot";
+  if (vortexBotHeadSubtitleEl) vortexBotHeadSubtitleEl.textContent = config.subtitle;
+
+  if (vortexBotMessagesEl) {
+    vortexBotMessagesEl.innerHTML = "";
+    config.intro.forEach((message) => appendVortexBotMessage(message));
+  }
+
+  renderVortexBotActions(config.actions);
+  if (shouldLog) recordVortexBotHistory("Mode Bot", vortexBotActiveMode);
+}
+
+function handleVortexBotQuickAction(action) {
+  const key = String(action || "");
+  if (key === "go-ai-advisor") {
+    handleVortexBotIntent("advisor");
+    return;
+  }
+  if (key === "go-configurator") {
+    handleVortexBotIntent("configure");
+    return;
+  }
+  if (key === "go-telegram") {
+    handleVortexBotIntent("telegram");
+    return;
+  }
+  if (key === "go-compare") {
+    handleVortexBotIntent("compare");
+    return;
+  }
+  if (key === "go-services") {
+    handleVortexBotIntent("services");
+    return;
+  }
+  if (key === "go-promo") {
+    handleVortexBotIntent("promo");
+    return;
+  }
+  if (key === "go-top") {
+    handleVortexBotIntent("top");
+    return;
+  }
+  if (key === "go-budget") {
+    handleVortexBotIntent("budget");
+    return;
+  }
+  if (key === "go-garantie") {
+    handleVortexBotIntent("garantie");
+    return;
+  }
+  if (key === "go-livraison") {
+    handleVortexBotIntent("livraison");
+    return;
+  }
+  if (key === "go-support-sav") {
+    appendVortexBotMessage("Je vous ouvre le centre Support & SAV.");
+    window.location.href = "support-sav.html";
+    return;
+  }
+  if (key === "go-support-faq") {
+    appendVortexBotMessage("Je vous redirige vers la FAQ VortexBox.");
+    window.location.href = "faq.html";
+    return;
+  }
+  if (key === "go-admin-console") {
+    const adminBtn = document.getElementById("admin-toggle");
+    if (adminBtn && !adminBtn.classList.contains("hidden")) {
+      adminBtn.click();
+      appendVortexBotMessage("Console admin ouverte.");
+    } else {
+      appendVortexBotMessage("Accès admin requis. Connectez-vous avec un compte administrateur.");
+    }
+    return;
+  }
+  if (key === "go-admin-railway") {
+    appendVortexBotMessage(
+      "Statut Railway disponible dans l'admin: onglet Console / état serveur. Je peux vous y guider si besoin."
+    );
+    return;
+  }
+  if (key === "go-home") {
+    window.location.href = "index.html";
+    return;
+  }
+  handleVortexBotIntent("faq");
+}
+
 function resolveAdvisorRecommendation(answers) {
   const budget = answers.budget || "mid";
   const game = answers.game || "mix";
@@ -2373,6 +2647,13 @@ function resolveAdvisorRecommendation(answers) {
     specs: ["CPU Ryzen 7 / i7", "GPU RTX 5070 Ti", "RAM 32 Go DDR5", "SSD 1 To NVMe"],
     reason: "Configuration équilibrée pour e-sport compétitif et AAA en haute qualité.",
   };
+}
+
+function getAdvisorSourceLabel(source) {
+  const key = String(source || "").toLowerCase();
+  if (key === "hf-free") return "IA gratuite";
+  if (key === "openai" || key === "ai") return "IA premium";
+  return "IA locale gratuite";
 }
 
 async function requestAiAdvisorRecommendation(answers) {
@@ -2407,6 +2688,7 @@ async function requestAiAdvisorRecommendation(answers) {
     const payload = await response.json();
     const recommendation = payload?.recommendation && typeof payload.recommendation === "object" ? payload.recommendation : null;
     if (!recommendation) return fallback;
+    const source = String(payload?.source || "local-free");
     return {
       title: String(recommendation.title || fallback.title),
       price: fallback.price,
@@ -2418,7 +2700,8 @@ async function requestAiAdvisorRecommendation(answers) {
         recommendation.fps_estimate && typeof recommendation.fps_estimate === "object"
           ? recommendation.fps_estimate
           : null,
-      source: payload?.source || "ai",
+      source,
+      sourceLabel: getAdvisorSourceLabel(source),
     };
   } catch (error) {
     return fallback;
@@ -2539,8 +2822,9 @@ async function handleVortexBotAdvisorChoice(step, value) {
             .map(([key, val]) => `• ${key}: ${val}`)
             .join("\n")}`
         : "";
+    const sourceLabel = getAdvisorSourceLabel(reco?.source);
     appendVortexBotMessage(
-      `Recommandation VortexBot ${reco?.source === "ai" ? "IA" : ""}:\n${reco.title}\n${reco.reason}${fpsBlock}\n\nJ'applique cette base dans le configurateur.`
+      `Recommandation VortexBot (${sourceLabel}):\n${reco.title}\n${reco.reason}${fpsBlock}\n\nJ'applique cette base dans le configurateur.`
     );
     const score = estimateLeadScoreFromAdvisor(vortexBotAdvisor.answers);
     appendVortexBotMessage(`Score de qualification: ${score}/100. Un expert peut finaliser votre devis en 2 minutes sur Telegram.`);
@@ -2698,6 +2982,8 @@ function initializeVortexBot() {
   if (!vortexBotEl || !vortexBotToggleEl || !vortexBotPanelEl) return;
   vortexBotToggleEl.dataset.vbBound = "1";
   if (vortexBotCloseEl) vortexBotCloseEl.dataset.vbBound = "1";
+  ensureVortexBotModeTabs();
+  setVortexBotMode(vortexBotActiveMode, { log: false });
 
   vortexBotToggleEl.addEventListener("click", () => {
     const opening = vortexBotPanelEl.classList.contains("hidden");
@@ -2709,21 +2995,15 @@ function initializeVortexBot() {
   }
 
   vortexBotPanelEl.addEventListener("click", (event) => {
+    const modeButton = event.target.closest("button[data-bot-mode]");
+    if (modeButton) {
+      setVortexBotMode(modeButton.dataset.botMode || "advisor");
+      return;
+    }
     const quickAction = event.target.closest("button[data-bot-action]");
     if (quickAction) {
-      const action = String(quickAction.dataset.botAction || "");
-      if (action === "go-ai-advisor") {
-        handleVortexBotIntent("advisor");
-        return;
-      }
-      if (action === "go-configurator") {
-        handleVortexBotIntent("configure");
-        return;
-      }
-      if (action === "go-telegram") {
-        handleVortexBotIntent("telegram");
-        return;
-      }
+      handleVortexBotQuickAction(String(quickAction.dataset.botAction || ""));
+      return;
     }
     const choice = event.target.closest("button[data-bot-step][data-bot-value]");
     if (choice) {
@@ -3787,6 +4067,7 @@ function showAdminEditor() {
   if (adminKpiGateEl) adminKpiGateEl.classList.add("hidden");
   if (adminEditor) adminEditor.classList.remove("hidden");
   setAdminDensityMode(loadAdminDensityMode());
+  setAdminThemeMode(loadAdminThemeMode());
   fillAdminFields();
   setActiveAdminTab("general");
   if (pendingAdminDeepLinkTab) {
@@ -3826,6 +4107,26 @@ function loadAdminDensityMode() {
     return localStorage.getItem(ADMIN_DENSITY_KEY) === "compact" ? "compact" : "comfort";
   } catch (error) {
     return "comfort";
+  }
+}
+
+function setAdminThemeMode(theme) {
+  const safeTheme = ["aurora", "obsidian", "titanium"].includes(String(theme || "").toLowerCase())
+    ? String(theme || "").toLowerCase()
+    : "aurora";
+  document.documentElement.setAttribute("data-admin-theme", safeTheme);
+  if (adminThemeToggleEl) adminThemeToggleEl.value = safeTheme;
+  try {
+    localStorage.setItem(ADMIN_THEME_KEY, safeTheme);
+  } catch (error) {}
+}
+
+function loadAdminThemeMode() {
+  try {
+    const value = String(localStorage.getItem(ADMIN_THEME_KEY) || "").toLowerCase();
+    return ["aurora", "obsidian", "titanium"].includes(value) ? value : "aurora";
+  } catch (error) {
+    return "aurora";
   }
 }
 
@@ -4558,6 +4859,44 @@ function getConfiguratorCategorySelectLabel(label) {
   return cleaned || raw;
 }
 
+function extractGpuVramGb(text) {
+  const raw = String(text || "");
+  const upper = raw.toUpperCase();
+  const gpuContext = /(RTX|GTX|RX|RADEON|GEFORCE|ARC|VRAM|GDDR|CARTE GRAPHIQUE|GPU)/.test(upper);
+  if (!gpuContext) return 0;
+  const matches = Array.from(upper.matchAll(/([0-9]{1,2})\s*(?:GO|GB)\b/g)).map((m) => Number(m[1]));
+  if (!matches.length) return 0;
+  const valid = matches.filter((n) => Number.isFinite(n) && n >= 4 && n <= 48);
+  return valid.length ? Math.max(...valid) : 0;
+}
+
+function inferGpuRangeTierFromText(text) {
+  const source = String(text || "");
+  const value = source.toLowerCase();
+  if (!/(rtx|gtx|rx\s*[0-9]|radeon|geforce|arc|gpu|carte graphique)/i.test(source)) {
+    return { tier: 0, label: "" };
+  }
+
+  let tier = 1; // 1: Pulse, 2: Nova, 3: Titan, 4: Elite
+  const vram = extractGpuVramGb(source);
+
+  if (/rtx\s*5090|rtx\s*4090/.test(value)) tier = 4;
+  else if (/rtx\s*5080|rtx\s*4080/.test(value)) tier = 3;
+  else if (/rtx\s*5070\s*ti|rtx\s*4070\s*ti/.test(value)) tier = 3;
+  else if (/rtx\s*5070|rtx\s*4070/.test(value)) tier = 2;
+  else if (/rtx\s*5060|rtx\s*4060|rtx\s*3070|rtx\s*3060/.test(value)) tier = 1;
+
+  if (/rx\s*7900\s*xtx/.test(value)) tier = Math.max(tier, 3);
+  else if (/rx\s*7900\s*xt|rx\s*7800\s*xt/.test(value)) tier = Math.max(tier, 2);
+
+  if (vram >= 24) tier = Math.max(tier, 4);
+  else if (vram >= 16) tier = Math.min(4, Math.max(tier, tier + 1));
+  else if (vram >= 12 && tier < 2) tier = 2;
+
+  const labels = ["", "Pulse", "Nova", "Titan", "Elite"];
+  return { tier: Math.max(1, Math.min(4, tier)), label: labels[Math.max(1, Math.min(4, tier))], vram };
+}
+
 function detectGpuTier(text) {
   const value = String(text || "").toLowerCase();
   let score = 0;
@@ -4587,6 +4926,15 @@ function detectGpuTier(text) {
   if (/arc\s*a770|arc\s*a780/.test(value)) score = Math.max(score, 2.8);
   if (/arc\s*a750/.test(value)) score = Math.max(score, 2.5);
 
+  const vram = extractGpuVramGb(text);
+  if (vram >= 24) score += 0.55;
+  else if (vram >= 20) score += 0.45;
+  else if (vram >= 16) score += 0.35;
+  else if (vram >= 12) score += 0.2;
+
+  const rangeTier = inferGpuRangeTierFromText(text).tier || 1;
+  score += (rangeTier - 1) * 0.25;
+
   return score;
 }
 
@@ -4594,12 +4942,27 @@ function detectCpuTier(text) {
   const value = String(text || "").toLowerCase();
   let score = 1;
 
+  if (/\bi9\b|ultra\s*9|ryzen\s*9/.test(value)) score = Math.max(score, 6.2);
+  if (/\bi7\b|ultra\s*7|ryzen\s*7/.test(value)) score = Math.max(score, 5.4);
+  if (/\bi5\b|ultra\s*5|ryzen\s*5/.test(value)) score = Math.max(score, 4.6);
+
   if (/ultra\s*9|i9[-\s]*14900|i9[-\s]*13900|ryzen\s*9\s*9950|ryzen\s*9\s*7950/.test(value)) score = Math.max(score, 7);
   if (/i7[-\s]*14700|i7[-\s]*13700|i5[-\s]*14600|ryzen\s*7\s*7800x3d|ryzen\s*9\s*7900/.test(value)) score = Math.max(score, 6.2);
   if (/i7|i5[-\s]*13600|i5[-\s]*13500|ryzen\s*7\s*7700|ryzen\s*5\s*7600x3d/.test(value)) score = Math.max(score, 5.4);
   if (/i5|i3[-\s]*14100|i3[-\s]*13100|ryzen\s*5\s*7600|ryzen\s*5\s*7500/.test(value)) score = Math.max(score, 4.5);
   if (/i5[-\s]*12400|i5[-\s]*13400|ryzen\s*5\s*5600|ryzen\s*7\s*5700/.test(value)) score = Math.max(score, 3.7);
   if (/i3[-\s]*12100|ryzen\s*5\s*4500|ryzen\s*5\s*4600/.test(value)) score = Math.max(score, 2.8);
+
+  const cpuPair = value.match(/([0-9]{1,2})\s*c\s*\/\s*([0-9]{1,2})\s*t/);
+  const coreMatch = value.match(/([0-9]{1,2})\s*(?:coeurs|cores?)/);
+  const threadMatch = value.match(/([0-9]{1,2})\s*(?:threads?|thred|th)\b/);
+  const cores = Number(cpuPair?.[1] || coreMatch?.[1] || 0);
+  const threads = Number(cpuPair?.[2] || threadMatch?.[1] || 0);
+  if (cores >= 16) score += 0.6;
+  else if (cores >= 14) score += 0.45;
+  else if (cores >= 12) score += 0.28;
+  if (threads >= 32) score += 0.35;
+  else if (threads >= 24) score += 0.2;
 
   return score;
 }
@@ -4646,6 +5009,7 @@ function estimateFpsFromSelection() {
   if (!selectedRadios.length) return null;
 
   let gpuTier = 0;
+  let gpuRangeTier = 1;
   let cpuTier = 1;
   let ramBonus = 0;
   let storageBonus = 0;
@@ -4671,6 +5035,9 @@ function estimateFpsFromSelection() {
     const context = `${label} ${option} ${description}`;
     const optionPrice = Number(radio.value || 0);
     if (/(carte graphique|gpu)/.test(label) || isGpuValue(context)) gpuTier = Math.max(gpuTier, detectGpuTier(context));
+    if (/(carte graphique|gpu)/.test(label) || isGpuValue(context)) {
+      gpuRangeTier = Math.max(gpuRangeTier, inferGpuRangeTierFromText(context).tier || 1);
+    }
     if (/(processeur|cpu)/.test(label) || isCpuValue(context)) cpuTier = Math.max(cpuTier, detectCpuTier(context));
     if (/(memoire|mémoire|ram)/.test(label) || isRamValue(context)) ramBonus = Math.max(ramBonus, detectRamBonus(context));
     if (/(stockage|ssd|nvme|disque)/.test(label) || isStorageValue(context)) {
@@ -4690,6 +5057,7 @@ function estimateFpsFromSelection() {
   const platformBoost = ramBonus * 120 + storageBonus * 80 + pricingTier * 12;
   const salesBoost = pricingTier * 10 + priceScale * 18;
   const cpuGpuSynergy = Math.max(0, (effectiveGpuTier * cpuTier) / 2.4);
+  const rangeBoost = Math.max(0, gpuRangeTier - 1);
 
   const fpsByGame = {
     warzone: Math.round(
@@ -4698,6 +5066,7 @@ function estimateFpsFromSelection() {
         cpuTier * 11 +
         balanceTier * 9 +
         cpuGpuSynergy +
+        rangeBoost * 14 +
         platformBoost +
         salesBoost * 1.1 +
         referenceVariance
@@ -4708,6 +5077,7 @@ function estimateFpsFromSelection() {
         cpuTier * 9 +
         balanceTier * 6.5 +
         cpuGpuSynergy * 0.8 +
+        rangeBoost * 11 +
         platformBoost * 0.88 +
         salesBoost * 0.85 +
         referenceVariance * 0.7
@@ -4718,6 +5088,7 @@ function estimateFpsFromSelection() {
         cpuTier * 9 +
         balanceTier * 6.4 +
         cpuGpuSynergy * 0.82 +
+        rangeBoost * 10 +
         platformBoost * 0.82 +
         salesBoost * 0.8 +
         referenceVariance * 0.65
@@ -6049,7 +6420,7 @@ function renderMachines() {
     return { fps, silence, upgrade, fit };
   };
 
-  const adminLive = isAdminLiveMode();
+  const adminLive = isAdminLiveMode() && Boolean(adminPanel && !adminPanel.classList.contains("hidden"));
   machinesCardsEl.innerHTML = siteContent.machines
     .map((machine, index) => {
       const badgeFallback = index === 0 ? "Best-seller" : index === 1 ? "Ultra premium" : "Meilleur rapport perf/prix";
@@ -7292,6 +7663,17 @@ function renderConfigurator() {
       const serviceTag = getConfiguratorServiceTag(service, serviceIndex);
       const serviceId = `config-service-${serviceIndex}`;
       const descriptionHtml = formatInfoParagraphs(service.description);
+      const isSoftwareSuite = /suites?\s+logiciels?/i.test(String(service.label || ""));
+      const premiumTickerHtml = isSoftwareSuite
+        ? `
+          <div class="config-premium-marquee" aria-label="Message premium défilant">
+            <div class="config-premium-marquee-track">
+              <span>Votre partenaire de confiance pour une expérience gaming sans compromis</span>
+              <span aria-hidden="true">Votre partenaire de confiance pour une expérience gaming sans compromis</span>
+            </div>
+          </div>
+        `
+        : "";
       return `
       <label class="toggle config-service-item" for="${serviceId}">
         <button
@@ -7340,6 +7722,7 @@ function renderConfigurator() {
         </div>
         <span class="config-service-price">+${Number(service.price)} € <span class="price-ttc">TTC</span></span>
       </label>
+      ${premiumTickerHtml}
     `
       }
     )
@@ -7589,24 +7972,104 @@ function renderPremiumBreadcrumb() {
     .join("");
 }
 
+function resolvePremiumRouteTone(pathname) {
+  const path = String(pathname || "").toLowerCase();
+  if (path.includes("support-sav")) return "support";
+  if (path.includes("jeux")) return "gaming";
+  if (path.includes("faq") || path.includes("about")) return "content";
+  return "core";
+}
+
 function initializePageTransitions() {
-  document.body.classList.add("page-enter");
-  window.requestAnimationFrame(() => {
-    document.body.classList.add("page-enter-active");
-    window.setTimeout(() => {
-      document.body.classList.remove("page-enter");
-      document.body.classList.remove("page-enter-active");
-    }, 620);
+  const body = document.body;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let navigationLocked = false;
+  let progressValue = 0;
+  let progressTimer = 0;
+
+  let transitionShell = document.querySelector(".vb-page-transition");
+  if (!transitionShell) {
+    transitionShell = document.createElement("div");
+    transitionShell.className = "vb-page-transition";
+    transitionShell.innerHTML = `
+      <div class="vb-page-transition-bar"><span class="vb-page-transition-fill"></span></div>
+      <div class="vb-page-transition-glow"></div>
+    `;
+    document.body.appendChild(transitionShell);
+  }
+  const progressFill = transitionShell.querySelector(".vb-page-transition-fill");
+  const setTone = (tone) => {
+    const safeTone = ["core", "support", "gaming", "content"].includes(String(tone || "")) ? String(tone) : "core";
+    transitionShell.setAttribute("data-route-tone", safeTone);
+    body.setAttribute("data-route-tone", safeTone);
+  };
+  setTone(resolvePremiumRouteTone(window.location.pathname));
+
+  const setProgress = (target, animate = true) => {
+    progressValue = Math.max(0, Math.min(100, Number(target) || 0));
+    if (!progressFill) return;
+    progressFill.style.transitionDuration = animate ? "280ms" : "0ms";
+    progressFill.style.width = `${progressValue}%`;
+  };
+
+  const clearProgressLoop = () => {
+    if (!progressTimer) return;
+    window.clearInterval(progressTimer);
+    progressTimer = 0;
+  };
+
+  const startProgressLoop = () => {
+    clearProgressLoop();
+    progressTimer = window.setInterval(() => {
+      if (progressValue >= 88) {
+        clearProgressLoop();
+        return;
+      }
+      const step = progressValue < 52 ? 8 : 3;
+      setProgress(progressValue + step, true);
+    }, 170);
+  };
+
+  if (!reduceMotion) {
+    body.classList.add("vb-page-enter");
+    setProgress(14, false);
+    window.requestAnimationFrame(() => {
+      body.classList.add("vb-page-enter-active");
+      setProgress(34, true);
+      window.setTimeout(() => setProgress(62, true), 120);
+      window.setTimeout(() => setProgress(100, true), 360);
+      window.setTimeout(() => {
+        body.classList.remove("vb-page-enter");
+        body.classList.remove("vb-page-enter-active");
+        body.classList.remove("vb-route-transitioning");
+      }, 860);
+    });
+  }
+
+  window.addEventListener("pageshow", () => {
+    navigationLocked = false;
+    clearProgressLoop();
+    setProgress(100, false);
+    body.classList.remove("vb-route-exit");
+    body.classList.remove("vb-route-transitioning");
+    window.setTimeout(() => setProgress(0, false), 240);
   });
 
   document.addEventListener(
     "click",
     (event) => {
+      if (navigationLocked) return;
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
       const link = event.target.closest("a[href]");
       if (!link) return;
       if (link.target === "_blank" || link.hasAttribute("download")) return;
+
       const href = String(link.getAttribute("href") || "").trim();
       if (!href || href.startsWith("#") || href.startsWith("javascript:") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+
       let targetUrl;
       try {
         targetUrl = new URL(href, window.location.href);
@@ -7615,11 +8078,22 @@ function initializePageTransitions() {
       }
       if (targetUrl.origin !== window.location.origin) return;
       if (targetUrl.href === window.location.href) return;
+
       event.preventDefault();
-      document.body.classList.add("page-exit");
+      navigationLocked = true;
+      setTone(resolvePremiumRouteTone(targetUrl.pathname));
+      body.classList.add("vb-route-transitioning");
+      body.classList.add("vb-route-exit");
+      setProgress(10, false);
+      startProgressLoop();
+      window.setTimeout(() => setProgress(74, true), 120);
+      window.setTimeout(() => {
+        clearProgressLoop();
+        setProgress(100, true);
+      }, 520);
       window.setTimeout(() => {
         window.location.href = targetUrl.href;
-      }, 320);
+      }, reduceMotion ? 40 : 620);
     },
     true
   );
@@ -7935,7 +8409,7 @@ function renderAdminMachinesEditor() {
               (src, imageIndex) => `
               <div class="admin-machine-image-item">
                 <img class="admin-preview" alt="Aperçu build ${machineIndex + 1}-${imageIndex + 1}" src="${src}" />
-                <button class="admin-danger" type="button" data-action="remove-machine-image-at" data-machine-index="${machineIndex}" data-image-index="${imageIndex}">X</button>
+                <button class="admin-danger admin-mini-remove-btn" type="button" data-action="remove-machine-image-at" data-machine-index="${machineIndex}" data-image-index="${imageIndex}" aria-label="Supprimer l'image" title="Supprimer l'image">×</button>
               </div>
             `
             )
@@ -7949,7 +8423,7 @@ function renderAdminMachinesEditor() {
               (spec, specIndex) => `
             <div class="admin-spec-row">
               <input type="text" data-action="spec-field" data-spec-target="front" data-machine-index="${machineIndex}" data-spec-index="${specIndex}" value="${escapeHtml(spec)}" />
-              <button class="admin-danger" type="button" data-action="remove-spec" data-spec-target="front" data-machine-index="${machineIndex}" data-spec-index="${specIndex}">X</button>
+              <button class="admin-danger admin-mini-remove-btn" type="button" data-action="remove-spec" data-spec-target="front" data-machine-index="${machineIndex}" data-spec-index="${specIndex}" aria-label="Supprimer la ligne" title="Supprimer la ligne">×</button>
             </div>
           `
             )
@@ -8119,7 +8593,7 @@ function renderAdminConfiguratorEditor() {
           <input type="number" min="0" step="1" data-action="service-price" data-service-index="${sIndex}" value="${Number(service.price)}" />
           <button class="admin-secondary" type="button" data-action="move-service-up" data-service-index="${sIndex}" ${sIndex <= 0 ? "disabled" : ""}>Monter</button>
           <button class="admin-secondary" type="button" data-action="move-service-down" data-service-index="${sIndex}" ${sIndex >= adminServicesDraft.length - 1 ? "disabled" : ""}>Descendre</button>
-          <button class="admin-danger" type="button" data-action="remove-service" data-service-index="${sIndex}">X</button>
+          <button class="admin-danger admin-mini-remove-btn" type="button" data-action="remove-service" data-service-index="${sIndex}" aria-label="Supprimer le service" title="Supprimer le service">×</button>
         </div>
         <label>
           Description du service (bouton i)
@@ -8590,6 +9064,33 @@ function setAdminBackupFeedback(message, tone = "") {
   adminBackupFeedbackEl.classList.add(variant);
 }
 
+function setAdminBackupProgressVisible(visible) {
+  if (!adminBackupProgressWrapEl) return;
+  adminBackupProgressWrapEl.classList.toggle("hidden", !visible);
+}
+
+function setAdminBackupProgress({
+  percent = 0,
+  label = "",
+  valueLabel = "",
+  indeterminate = false,
+  tone = "",
+} = {}) {
+  if (!adminBackupProgressWrapEl) return;
+  setAdminBackupProgressVisible(true);
+  const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+  if (adminBackupProgressLabelEl) adminBackupProgressLabelEl.textContent = label || "Préparation...";
+  if (adminBackupProgressValueEl) {
+    adminBackupProgressValueEl.textContent = valueLabel || `${Math.round(safePercent)}%`;
+  }
+  if (adminBackupProgressBarEl) {
+    adminBackupProgressBarEl.style.width = `${safePercent}%`;
+  }
+  adminBackupProgressWrapEl.classList.toggle("is-indeterminate", Boolean(indeterminate));
+  adminBackupProgressWrapEl.classList.toggle("is-success", tone === "success");
+  adminBackupProgressWrapEl.classList.toggle("is-error", tone === "error");
+}
+
 function formatBytes(value) {
   const bytes = Math.max(0, Number(value) || 0);
   if (bytes < 1024) return `${bytes} B`;
@@ -8639,7 +9140,52 @@ function renderLastBackupState() {
   if (adminCcBackupEl) adminCcBackupEl.textContent = shortTime;
 }
 
+function pushAdminHistorySample(list, value, max = 14) {
+  const safeValue = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+  const next = Array.isArray(list) ? list.slice(-Math.max(0, max - 1)) : [];
+  next.push(safeValue);
+  return next;
+}
+
+function renderAdminCcSparkline(target, values) {
+  if (!(target instanceof HTMLElement)) return;
+  const source = Array.isArray(values) ? values : [];
+  if (!source.length) {
+    target.innerHTML = "";
+    return;
+  }
+  target.innerHTML = source
+    .map((value) => `<i style="height:${Math.max(14, Math.min(100, value))}%;"></i>`)
+    .join("");
+}
+
+function ensureAdminControlCenterPremiumUi() {
+  const center = document.querySelector(".admin-control-center");
+  if (!(center instanceof HTMLElement)) return;
+  if (center.dataset.premiumEnhanced === "1") return;
+  center.dataset.premiumEnhanced = "1";
+  const cards = Array.from(center.querySelectorAll(".admin-control-card"));
+  cards.forEach((card) => {
+    if (!(card instanceof HTMLElement)) return;
+    card.classList.add("admin-control-card-premium");
+  });
+
+  if (adminCcServerEl?.parentElement && !document.getElementById("admin-cc-server-meter")) {
+    adminCcServerEl.parentElement.insertAdjacentHTML(
+      "beforeend",
+      '<div class="admin-cc-meter"><span id="admin-cc-server-meter"></span></div><div class="admin-cc-sparkline" id="admin-cc-server-spark"></div>'
+    );
+  }
+  if (adminCcRailwayEl?.parentElement && !document.getElementById("admin-cc-railway-meter")) {
+    adminCcRailwayEl.parentElement.insertAdjacentHTML(
+      "beforeend",
+      '<div class="admin-cc-meter"><span id="admin-cc-railway-meter"></span></div><div class="admin-cc-sparkline" id="admin-cc-railway-spark"></div>'
+    );
+  }
+}
+
 function updateAdminControlCenter() {
+  ensureAdminControlCenterPremiumUi();
   if (adminCcTimeEl) {
     adminCcTimeEl.textContent = new Date().toLocaleTimeString("fr-FR", {
       hour: "2-digit",
@@ -8651,22 +9197,137 @@ function updateAdminControlCenter() {
     const online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
     adminCcServerEl.textContent = online ? "En ligne" : "Hors ligne";
     adminCcServerEl.classList.toggle("is-offline", !online);
+    const serverHealth = online ? 96 : 18;
+    adminCcServerHistory = pushAdminHistorySample(adminCcServerHistory, serverHealth);
+    const serverMeter = document.getElementById("admin-cc-server-meter");
+    if (serverMeter instanceof HTMLElement) serverMeter.style.width = `${serverHealth}%`;
+    renderAdminCcSparkline(document.getElementById("admin-cc-server-spark"), adminCcServerHistory);
+  }
+}
+
+function formatAdminDurationCompact(totalSeconds) {
+  const safe = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const days = Math.floor(safe / 86400);
+  const hours = Math.floor((safe % 86400) / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  if (days > 0) return `${days}j ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+function setAdminRailwayControlState({ label = "--", meta = "", tone = "" } = {}) {
+  if (adminCcRailwayEl) {
+    adminCcRailwayEl.textContent = label;
+    adminCcRailwayEl.classList.remove("is-online", "is-degraded", "is-offline");
+    if (tone === "online") adminCcRailwayEl.classList.add("is-online");
+    if (tone === "degraded") adminCcRailwayEl.classList.add("is-degraded");
+    if (tone === "offline") adminCcRailwayEl.classList.add("is-offline");
+  }
+  if (adminCcRailwayMetaEl) {
+    adminCcRailwayMetaEl.textContent = meta || "—";
+  }
+  const health = tone === "online" ? 95 : tone === "degraded" ? 62 : 20;
+  adminCcRailwayHistory = pushAdminHistorySample(adminCcRailwayHistory, health);
+  const railwayMeter = document.getElementById("admin-cc-railway-meter");
+  if (railwayMeter instanceof HTMLElement) railwayMeter.style.width = `${health}%`;
+  renderAdminCcSparkline(document.getElementById("admin-cc-railway-spark"), adminCcRailwayHistory);
+}
+
+async function refreshAdminRailwayStatus(force = false) {
+  if (!adminCcRailwayEl) return;
+  if (!force && (!adminEditor || adminEditor.classList.contains("hidden"))) return;
+  if (adminRailwayStatusInFlight) return;
+  adminRailwayStatusInFlight = true;
+  const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+  try {
+    const response = await fetch("/api/admin/railway-status", {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    const elapsed = Math.max(
+      0,
+      Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt)
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload = await response.json().catch(() => ({}));
+    if (!payload?.ok) throw new Error(payload?.error || "Réponse Railway invalide");
+
+    const uptimeSec = Math.max(0, Number(payload?.app?.uptimeSec) || 0);
+    const commit = String(payload?.version?.commit || "").trim();
+    const commitLabel = commit ? commit.slice(0, 7) : "n/a";
+    const degraded = elapsed > 1200 || Boolean(payload?.health?.memoryPressure);
+    adminRailwayLatencyMs = elapsed;
+    adminRailwayTone = degraded ? "degraded" : "online";
+    const statusLabel = degraded ? `Dégradé · ${elapsed} ms` : `En ligne · ${elapsed} ms`;
+    const meta = `uptime ${formatAdminDurationCompact(uptimeSec)} · ${commitLabel}`;
+    setAdminRailwayControlState({
+      label: statusLabel,
+      meta,
+      tone: degraded ? "degraded" : "online",
+    });
+  } catch (error) {
+    adminRailwayLatencyMs = 0;
+    adminRailwayTone = "offline";
+    setAdminRailwayControlState({
+      label: "Hors ligne",
+      meta: "Railway non joignable",
+      tone: "offline",
+    });
+  } finally {
+    adminRailwayStatusInFlight = false;
   }
 }
 
 function startAdminControlCenterClock() {
   if (adminControlClockTimer) clearInterval(adminControlClockTimer);
+  if (adminRailwayStatusTimer) clearInterval(adminRailwayStatusTimer);
+  if (adminCcPulseTimer) clearInterval(adminCcPulseTimer);
+  ensureAdminControlCenterPremiumUi();
   updateAdminControlCenter();
+  refreshAdminRailwayStatus(true);
   adminControlClockTimer = window.setInterval(updateAdminControlCenter, 1000);
+  adminRailwayStatusTimer = window.setInterval(() => refreshAdminRailwayStatus(false), 30000);
+  adminCcPulseTimer = window.setInterval(() => {
+    const pulse = adminRailwayTone === "online" ? 92 : adminRailwayTone === "degraded" ? 60 : 18;
+    adminCcRailwayHistory = pushAdminHistorySample(adminCcRailwayHistory, pulse + Math.round((Math.random() - 0.5) * 8));
+    renderAdminCcSparkline(document.getElementById("admin-cc-railway-spark"), adminCcRailwayHistory);
+    const serverOnline = typeof navigator === "undefined" ? true : navigator.onLine !== false;
+    const serverPulse = serverOnline ? 95 : 20;
+    adminCcServerHistory = pushAdminHistorySample(adminCcServerHistory, serverPulse + Math.round((Math.random() - 0.5) * 4));
+    renderAdminCcSparkline(document.getElementById("admin-cc-server-spark"), adminCcServerHistory);
+  }, 1800);
 }
 
 async function triggerAdminBackupZipDownload() {
   setAdminBackupFeedback("Préparation de la sauvegarde ZIP en cours...", "info");
+  setAdminBackupProgress({
+    percent: 8,
+    label: "Initialisation du coffre de sauvegarde...",
+    valueLabel: "Préparation",
+    indeterminate: true,
+  });
   try {
     const preferredFileName = normalizeAdminBackupFileName(
       adminBackupFilenameInput?.value || `vortexbox-site-backup-${Date.now()}`,
       "SAV VortexBox"
     );
+    // Ouvrir le sélecteur "Enregistrer sous" dès le clic utilisateur
+    // (avant les await réseau) pour conserver l'activation utilisateur.
+    let saveHandle = false;
+    if (typeof window.showSaveFilePicker === "function") {
+      saveHandle = await openBackupSavePicker(preferredFileName);
+      if (saveHandle === null) return;
+    }
+
+    setAdminBackupProgress({
+      percent: 14,
+      label: "Génération de l'archive ZIP...",
+      valueLabel: "Serveur",
+      indeterminate: true,
+    });
+
     const controller = new AbortController();
     // La sauvegarde peut être volumineuse (uploads), on laisse plus de marge.
     const timeout = window.setTimeout(() => controller.abort(), 20 * 60 * 1000);
@@ -8695,10 +9356,6 @@ async function triggerAdminBackupZipDownload() {
       throw new Error(message);
     }
 
-    const blob = await response.blob();
-    if (!blob || blob.size <= 0) {
-      throw new Error("Le serveur a renvoyé une sauvegarde vide (0 octet).");
-    }
     const disposition = response.headers.get("content-disposition") || "";
     const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
     const serverFileName = match?.[1] || `vortexbox-site-backup-${Date.now()}.zip`;
@@ -8706,16 +9363,92 @@ async function triggerAdminBackupZipDownload() {
       adminBackupFilenameInput?.value || serverFileName.replace(/\.zip$/i, ""),
       "SAV VortexBox"
     );
-    // Ouvrir le sélecteur après génération évite la création de fichiers 0 octet
-    // si la requête échoue ou expire.
-    const saveHandle = await openBackupSavePicker(finalFileName);
-    if (saveHandle === null) return;
+
+    const totalBytes = Math.max(0, Number(response.headers.get("content-length")) || 0);
+    const reader = response.body?.getReader?.();
+    let downloadedBytes = 0;
     let pickerResult = false;
+    let writable = null;
+    let wroteToFileHandle = false;
+    let blob = null;
+    const chunks = [];
+
     if (saveHandle && typeof saveHandle.createWritable === "function") {
-      await writeBackupToHandle(saveHandle, blob);
+      writable = await saveHandle.createWritable();
       pickerResult = true;
+    }
+
+    if (reader) {
+      setAdminBackupProgress({
+        percent: totalBytes > 0 ? 16 : 20,
+        label: "Téléchargement chiffré de la sauvegarde...",
+        valueLabel: totalBytes > 0 ? "0%" : "Flux",
+        indeterminate: totalBytes <= 0,
+      });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        downloadedBytes += value.byteLength || value.length || 0;
+        if (writable) {
+          await writable.write(value);
+          wroteToFileHandle = true;
+        } else {
+          chunks.push(value);
+        }
+        if (totalBytes > 0) {
+          const percent = Math.min(99, Math.max(16, Math.round((downloadedBytes / totalBytes) * 100)));
+          setAdminBackupProgress({
+            percent,
+            label: "Téléchargement chiffré de la sauvegarde...",
+            valueLabel: `${percent}%`,
+            indeterminate: false,
+          });
+        } else {
+          setAdminBackupProgress({
+            percent: 46,
+            label: "Téléchargement en flux (taille dynamique)...",
+            valueLabel: formatBytes(downloadedBytes),
+            indeterminate: true,
+          });
+        }
+      }
     } else {
-      const url = URL.createObjectURL(blob);
+      setAdminBackupProgress({
+        percent: 52,
+        label: "Finalisation du téléchargement...",
+        valueLabel: "Flux",
+        indeterminate: true,
+      });
+      blob = await response.blob();
+      if (!blob || blob.size <= 0) {
+        throw new Error("Le serveur a renvoyé une sauvegarde vide (0 octet).");
+      }
+      if (writable) {
+        await writable.write(blob);
+        wroteToFileHandle = true;
+      }
+      downloadedBytes = blob.size || 0;
+    }
+
+    if (writable) {
+      await writable.close();
+    }
+
+    setAdminBackupProgress({
+      percent: 100,
+      label: "Finalisation premium...",
+      valueLabel: "100%",
+      indeterminate: false,
+      tone: "success",
+    });
+
+    if (!wroteToFileHandle) {
+      const safeBlob = blob && blob.size > 0 ? blob : new Blob(chunks, { type: "application/zip" });
+      if (!safeBlob || safeBlob.size <= 0) {
+        throw new Error("Le serveur a renvoyé une sauvegarde vide (0 octet).");
+      }
+      const url = URL.createObjectURL(safeBlob);
       const link = document.createElement("a");
       link.href = url;
       link.download = finalFileName;
@@ -8723,12 +9456,14 @@ async function triggerAdminBackupZipDownload() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      downloadedBytes = downloadedBytes || safeBlob.size || 0;
     }
+
     saveAdminBackupFilenamePreference();
     saveLastBackupState({
       at: new Date().toISOString(),
       fileName: finalFileName,
-      sizeBytes: blob.size || 0,
+      sizeBytes: downloadedBytes || blob?.size || 0,
     });
     renderLastBackupState();
     setAdminBackupFeedback(
@@ -8737,12 +9472,26 @@ async function triggerAdminBackupZipDownload() {
     );
   } catch (error) {
     if (error?.name === "AbortError") {
+      setAdminBackupProgress({
+        percent: 100,
+        label: "Temps d'attente dépassé.",
+        valueLabel: "Timeout",
+        indeterminate: false,
+        tone: "error",
+      });
       setAdminBackupFeedback(
         "La génération ZIP prend trop de temps. Réessayez, ou redémarrez le serveur (node server.js).",
         "error"
       );
       return;
     }
+    setAdminBackupProgress({
+      percent: 100,
+      label: "Échec de la sauvegarde.",
+      valueLabel: "Erreur",
+      indeterminate: false,
+      tone: "error",
+    });
     const fallback =
       "Impossible de télécharger la sauvegarde ZIP. Vérifiez que le serveur est lancé avec: node server.js";
     setAdminBackupFeedback(error.message || fallback, "error");
@@ -8902,7 +9651,7 @@ function enableAdminProcessQuicklinksDrag() {
   links.forEach((link) => link.setAttribute("draggable", "false"));
 }
 
-function openAdminProcessLinkModal(sectionKey = "achats", index = -1) {
+function openAdminProcessLinkModal(sectionKey = "achats", index = -1, focusField = "title") {
   if (!adminProcessLinkModalEl || !adminProcessLinkTitleInput || !adminProcessLinkUrlInput) return;
   activeAdminProcessLinkSection = PROCESS_LINK_SECTIONS.some((item) => item.key === sectionKey) ? sectionKey : "achats";
   activeAdminProcessLinkEditIndex = Number.isInteger(index) ? index : -1;
@@ -8919,7 +9668,13 @@ function openAdminProcessLinkModal(sectionKey = "achats", index = -1) {
   if (modalTitle) modalTitle.textContent = editing ? `Modifier - ${sectionLabel}` : `Nouveau - ${sectionLabel}`;
   adminProcessLinkModalEl.classList.remove("hidden");
   window.setTimeout(() => {
+    if (focusField === "url") {
+      adminProcessLinkUrlInput.focus();
+      adminProcessLinkUrlInput.select();
+      return;
+    }
     adminProcessLinkTitleInput.focus();
+    adminProcessLinkTitleInput.select();
   }, 0);
 }
 
@@ -8959,6 +9714,18 @@ async function saveAdminProcessLinkFromModal() {
   );
   renderAdminProcessusEditor();
   closeAdminProcessLinkModal();
+}
+
+function launchAdminProcessUrlFromModal() {
+  if (!adminProcessLinkUrlInput) return;
+  const rawUrl = String(adminProcessLinkUrlInput.value || "").trim();
+  const normalizedUrl = normalizeProcessLinkUrl(rawUrl);
+  if (!normalizedUrl) {
+    setAdminProcessFeedback("URL invalide. Collez une adresse web valide.");
+    adminProcessLinkUrlInput.focus();
+    return;
+  }
+  window.open(normalizedUrl, "_blank", "noopener,noreferrer");
 }
 
 function openAdminProcessFileModal(index = -1) {
@@ -10216,20 +10983,71 @@ function renderAdminProcessusEditor() {
     listEl.innerHTML = sectionDraft
       .map((item, index) => {
         const normalizedUrl = normalizeProcessLinkUrl(item.url);
-        const linkButton = normalizedUrl
-          ? `<a class="download-btn" href="${normalizedUrl}" target="_blank" rel="noopener noreferrer">Ouvrir le lien</a>`
+        const openLinkButton = normalizedUrl
+          ? `<a class="download-btn" href="${normalizedUrl}" target="_blank" rel="noopener noreferrer">Lancer URL</a>`
           : '<span class="admin-file-name">URL invalide ou vide</span>';
+        const sectionIsSuppliers = sectionKey === "achats";
+        const editButtons = sectionIsSuppliers
+          ? `
+            <button
+              class="admin-icon-premium-btn"
+              type="button"
+              data-action="edit-process-link-field"
+              data-edit-field="title"
+              data-process-link-index="${index}"
+              data-process-link-section="${escapeHtml(sectionKey)}"
+              aria-label="Modifier le titre"
+              title="Modifier le titre"
+            >
+              ✎
+            </button>
+            <button
+              class="admin-icon-premium-btn"
+              type="button"
+              data-action="edit-process-link-field"
+              data-edit-field="url"
+              data-process-link-index="${index}"
+              data-process-link-section="${escapeHtml(sectionKey)}"
+              aria-label="Modifier le lien"
+              title="Modifier le lien"
+            >
+              🔗
+            </button>
+            <button
+              class="admin-icon-premium-btn"
+              type="button"
+              data-action="launch-process-link-url"
+              data-process-link-index="${index}"
+              data-process-link-section="${escapeHtml(sectionKey)}"
+              aria-label="Lancer URL"
+              title="Lancer URL"
+            >
+              ↗
+            </button>
+          `
+          : `
+            <button class="admin-secondary" type="button" data-action="edit-process-link" data-process-link-index="${index}" data-process-link-section="${escapeHtml(sectionKey)}">Modifier</button>
+          `;
+        const footerActions = sectionIsSuppliers
+          ? `
+            <div class="admin-process-link-footer-actions">
+              <div class="admin-process-link-premium-actions">
+                ${editButtons}
+              </div>
+            </div>
+          `
+          : `<div class="technical-actions">${openLinkButton}</div>`;
         return `
           <article class="admin-tech-card">
             <div class="admin-machine-header">
               <h5>${escapeHtml(item.label || `Entrée ${index + 1}`)}</h5>
               <div class="admin-option-actions">
-                <button class="admin-secondary" type="button" data-action="edit-process-link" data-process-link-index="${index}" data-process-link-section="${escapeHtml(sectionKey)}">Modifier</button>
+                ${editButtons}
                 <button class="admin-danger" type="button" data-action="remove-process-link" data-process-link-index="${index}" data-process-link-section="${escapeHtml(sectionKey)}">Supprimer</button>
               </div>
             </div>
             <p class="admin-file-name">${escapeHtml(item.url || "Adresse non renseignée")}</p>
-            <div class="technical-actions">${linkButton}</div>
+            ${footerActions}
           </article>
         `;
       })
@@ -11998,6 +12816,24 @@ function normalizeSearchText(value) {
 
 function scoreGpuFromText(value) {
   const text = normalizeSearchText(value).toUpperCase();
+  const getVramBonus = () => {
+    const vram = extractGpuVramGb(text);
+    if (!Number.isFinite(vram)) return 0;
+    if (vram >= 24) return 7;
+    if (vram >= 20) return 6;
+    if (vram >= 16) return 4;
+    if (vram >= 12) return 2;
+    if (vram >= 10) return 1;
+    return 0;
+  };
+  const getRangeBonus = () => {
+    const tier = inferGpuRangeTierFromText(text).tier || 1;
+    if (tier >= 4) return 7;
+    if (tier >= 3) return 4;
+    if (tier >= 2) return 2;
+    return 0;
+  };
+
   const nvidiaMatch = text.match(/(?:RTX|GTX)\s*([0-9]{3,4})/);
   if (nvidiaMatch) {
     const code = Number(nvidiaMatch[1]);
@@ -12007,6 +12843,8 @@ function scoreGpuFromText(value) {
     else if (code >= 3000) base = 60 + Math.min(12, (code - 3000) / 100);
     if (text.includes("TI")) base += 3;
     if (text.includes("SUPER")) base += 2;
+    base += getVramBonus();
+    base += getRangeBonus();
     return clampPercent(base);
   }
   const amdMatch = text.match(/RX\s*([0-9]{3,4})/);
@@ -12017,14 +12855,43 @@ function scoreGpuFromText(value) {
     else if (code >= 7000) base = 72 + Math.min(14, (code - 7000) / 100);
     else if (code >= 6000) base = 62 + Math.min(10, (code - 6000) / 100);
     if (text.includes("XT")) base += 3;
+    base += getVramBonus();
+    base += getRangeBonus();
     return clampPercent(base);
   }
-  if (text.includes("ARC")) return 58;
+  if (text.includes("ARC")) return clampPercent(58 + getVramBonus() + getRangeBonus());
   return null;
 }
 
 function scoreCpuFromText(value) {
   const text = normalizeSearchText(value).toUpperCase();
+  const coreThreadBoost = () => {
+    const pair = text.match(/([0-9]{1,2})\s*C\s*\/\s*([0-9]{1,2})\s*T/);
+    const coreMatch = text.match(/([0-9]{1,2})\s*(?:COEURS|COEURS|CORES?)/);
+    const threadMatch = text.match(/([0-9]{1,2})\s*(?:THREADS?|THRED|TH)\b/);
+    const cores = Number(pair?.[1] || coreMatch?.[1] || 0);
+    const threads = Number(pair?.[2] || threadMatch?.[1] || 0);
+    let boost = 0;
+    if (cores >= 24) boost += 8;
+    else if (cores >= 20) boost += 6;
+    else if (cores >= 16) boost += 4;
+    else if (cores >= 14) boost += 3;
+    else if (cores >= 12) boost += 2;
+    if (threads >= 48) boost += 4;
+    else if (threads >= 32) boost += 3;
+    else if (threads >= 28) boost += 2;
+    else if (threads >= 24) boost += 1;
+    return boost;
+  };
+
+  const ultraMatch = text.match(/ULTRA\s*([579])(?:\s*([0-9]{3}))?/);
+  if (ultraMatch) {
+    const tier = Number(ultraMatch[1]);
+    let base = { 5: 72, 7: 84, 9: 93 }[tier] || 70;
+    base += coreThreadBoost();
+    return clampPercent(base);
+  }
+
   const intelMatch = text.match(/I([3579])[-\s]?([0-9]{4,5})?/);
   if (intelMatch) {
     const tier = Number(intelMatch[1]);
@@ -12034,6 +12901,7 @@ function scoreCpuFromText(value) {
     if (generation >= 14) base += 4;
     else if (generation >= 13) base += 3;
     else if (generation >= 12) base += 2;
+    base += coreThreadBoost();
     return clampPercent(base);
   }
   const ryzenMatch = text.match(/RYZEN\s*([3579])\s*([0-9]{4,5})?/);
@@ -12045,8 +12913,13 @@ function scoreCpuFromText(value) {
     if (generation >= 8) base += 4;
     else if (generation >= 7) base += 3;
     else if (generation >= 5) base += 2;
+    base += coreThreadBoost();
     return clampPercent(base);
   }
+  if (/\bI9\b/.test(text)) return clampPercent(90 + coreThreadBoost());
+  if (/\bI7\b/.test(text)) return clampPercent(80 + coreThreadBoost());
+  if (/\bI5\b/.test(text)) return clampPercent(68 + coreThreadBoost());
+  if (/\bI3\b/.test(text)) return clampPercent(54 + coreThreadBoost());
   return null;
 }
 
@@ -12076,20 +12949,23 @@ function updateSummary() {
   let selectedServicesCount = 0;
   let supportPriorityBoost = 0;
   let deliveryBoost = 0;
-  const performanceInputs = { gpu: null, cpu: null, ram: null };
+  const performanceInputs = { gpu: null, cpu: null, ram: null, gpuRangeTier: 0 };
 
   form.querySelectorAll('input[type="radio"][data-config-component="1"]:checked').forEach((radio) => {
     const value = Number(radio.value || 0);
     const optionName = String(radio.dataset.optionName || "");
+    const optionDescription = String(radio.dataset.optionDescription || "");
     const componentLabel = String(radio.dataset.label || "");
-    const combinedText = `${componentLabel} ${optionName}`;
+    const combinedText = `${componentLabel} ${optionName} ${optionDescription}`;
     const gpuScore = scoreGpuFromText(combinedText);
+    const gpuRangeTier = inferGpuRangeTierFromText(combinedText).tier || 0;
     const cpuScore = scoreCpuFromText(combinedText);
     const ramScore = scoreRamFromText(combinedText);
     total += value;
     selectedComponentsCount += 1;
     selectedComponentPriceTotal += Math.max(0, value);
     if (gpuScore !== null) performanceInputs.gpu = Math.max(performanceInputs.gpu || 0, gpuScore);
+    if (gpuRangeTier) performanceInputs.gpuRangeTier = Math.max(performanceInputs.gpuRangeTier || 0, gpuRangeTier);
     if (cpuScore !== null) performanceInputs.cpu = Math.max(performanceInputs.cpu || 0, cpuScore);
     if (ramScore !== null) performanceInputs.ram = Math.max(performanceInputs.ram || 0, ramScore);
     entries.push(`${radio.dataset.label}: ${optionName}`);
@@ -12146,20 +13022,24 @@ function updateTrustMeter(metrics = {}) {
   const deliveryBoost = Math.max(0, Number(metrics.deliveryBoost) || 0);
   const performanceInputs = metrics.performanceInputs && typeof metrics.performanceInputs === "object"
     ? metrics.performanceInputs
-    : { gpu: null, cpu: null, ram: null };
+    : { gpu: null, cpu: null, ram: null, gpuRangeTier: 0 };
 
   let performance = 0;
   if (selectedComponentsCount > 0) {
     const gpu = Number(performanceInputs.gpu);
     const cpu = Number(performanceInputs.cpu);
     const ram = Number(performanceInputs.ram);
+    const gpuRangeTier = Math.max(0, Number(performanceInputs.gpuRangeTier) || 0);
     const hasGpu = Number.isFinite(gpu) && gpu > 0;
     const hasCpu = Number.isFinite(cpu) && cpu > 0;
     const hasRam = Number.isFinite(ram) && ram > 0;
     if (hasGpu || hasCpu || hasRam) {
-      const weighted = (hasGpu ? gpu * 0.5 : 0) + (hasCpu ? cpu * 0.32 : 0) + (hasRam ? ram * 0.18 : 0);
-      const missingPenalty = (hasGpu ? 0 : 22) + (hasCpu ? 0 : 14) + (hasRam ? 0 : 10);
-      performance = clampPercent(weighted - missingPenalty + 6);
+      const weightedSum = (hasGpu ? gpu * 0.52 : 0) + (hasCpu ? cpu * 0.33 : 0) + (hasRam ? ram * 0.15 : 0);
+      const presentWeight = (hasGpu ? 0.52 : 0) + (hasCpu ? 0.33 : 0) + (hasRam ? 0.15 : 0);
+      const normalized = weightedSum / Math.max(0.25, presentWeight);
+      const missingPenalty = (hasGpu ? 0 : 12) + (hasCpu ? 0 : 8) + (hasRam ? 0 : 5);
+      const rangeBoost = Math.max(0, gpuRangeTier - 1) * 6;
+      performance = clampPercent(normalized - missingPenalty + 4 + rangeBoost);
     } else {
       const avgComponentPrice = selectedComponentsCount > 0 ? selectedComponentPriceTotal / selectedComponentsCount : 0;
       performance = clampPercent(50 + Math.min(32, avgComponentPrice / 70) + Math.min(9, selectedComponentsCount * 1.5));
@@ -12858,6 +13738,10 @@ if (adminProcessLinkCancelBtn) {
   adminProcessLinkCancelBtn.addEventListener("click", closeAdminProcessLinkModal);
 }
 
+if (adminProcessLinkOpenUrlBtn) {
+  adminProcessLinkOpenUrlBtn.addEventListener("click", launchAdminProcessUrlFromModal);
+}
+
 if (adminProcessLinkSaveBtn) {
   adminProcessLinkSaveBtn.addEventListener("click", saveAdminProcessLinkFromModal);
 }
@@ -13282,6 +14166,20 @@ if (adminProcessLinksLists.length) {
       const sectionDraft = getProcessSectionDraft(sectionKey);
       const index = Number(button.dataset.processLinkIndex);
       if (Number.isNaN(index) || !sectionDraft[index]) return;
+      if (button.dataset.action === "edit-process-link-field") {
+        const focusField = String(button.dataset.editField || "").trim() === "url" ? "url" : "title";
+        openAdminProcessLinkModal(sectionKey, index, focusField);
+        return;
+      }
+      if (button.dataset.action === "launch-process-link-url") {
+        const normalizedUrl = normalizeProcessLinkUrl(sectionDraft[index]?.url);
+        if (!normalizedUrl) {
+          setAdminProcessFeedback("URL invalide. Impossible de lancer le lien.");
+          return;
+        }
+        window.open(normalizedUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
       if (button.dataset.action === "edit-process-link") {
         openAdminProcessLinkModal(sectionKey, index);
         return;
@@ -14993,6 +15891,13 @@ document.addEventListener("keydown", (event) => {
   });
 });
 
+function openAdminPanelFromToggle() {
+  adminToggleAwaitingOpen = false;
+  if (adminPanel) adminPanel.classList.remove("hidden");
+  showAdminEditor();
+  setFeedback("");
+}
+
 adminToggle.addEventListener("click", () => {
   const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
   if (!isAdminEmail(sessionEmail) || sessionStorage.getItem(SESSION_KEY) !== "1") return;
@@ -15007,16 +15912,21 @@ adminToggle.addEventListener("click", () => {
   }
 
   if (panelHidden && adminToggleAwaitingOpen) {
-    adminToggleAwaitingOpen = false;
-    adminPanel.classList.remove("hidden");
-    showAdminEditor();
-    setFeedback("");
+    openAdminPanelFromToggle();
     return;
   }
 
   adminPanel.classList.add("hidden");
   adminToggleAwaitingOpen = false;
   setFeedback("");
+});
+
+adminToggle.addEventListener("dblclick", () => {
+  const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
+  if (!isAdminEmail(sessionEmail) || sessionStorage.getItem(SESSION_KEY) !== "1") return;
+  sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
+  refreshAdminLiveMode();
+  openAdminPanelFromToggle();
 });
 
 if (adminLiveExitBtn) {
@@ -16724,6 +17634,12 @@ if (adminDensityToggleEl) {
   });
 }
 
+if (adminThemeToggleEl) {
+  adminThemeToggleEl.addEventListener("change", () => {
+    setAdminThemeMode(adminThemeToggleEl.value);
+  });
+}
+
 if (adminGlobalSearchInput) {
   adminGlobalSearchInput.addEventListener("input", () => {
     renderAdminSearchResults(adminGlobalSearchInput.value);
@@ -16987,18 +17903,37 @@ function mountPremiumPreloader() {
   preloader.className = "vb-preloader";
   preloader.innerHTML = `
     <div class="vb-preloader-core">
+      <div class="vb-preloader-orbit"></div>
       <div class="vb-preloader-logo"><img src="favicon-vb.svg" alt="VB" /></div>
       <div class="vb-preloader-text">VortexBox Premium</div>
+      <div class="vb-preloader-subtext" id="vb-preloader-subtext">Initialisation atelier...</div>
+      <div class="vb-preloader-progress"><span id="vb-preloader-progress-fill"></span></div>
     </div>
   `;
   document.body.appendChild(preloader);
-  requestAnimationFrame(() => preloader.classList.add("is-ready"));
+  const progressFill = preloader.querySelector("#vb-preloader-progress-fill");
+  const subtextEl = preloader.querySelector("#vb-preloader-subtext");
+  const steps = [
+    { t: 90, p: 24, label: "Chargement des modules premium..." },
+    { t: 250, p: 58, label: "Optimisation de l'affichage..." },
+    { t: 420, p: 84, label: "Préparation de l'expérience..." },
+    { t: 620, p: 100, label: "Prêt." },
+  ];
+  requestAnimationFrame(() => {
+    preloader.classList.add("is-ready");
+    steps.forEach((step) => {
+      window.setTimeout(() => {
+        if (progressFill instanceof HTMLElement) progressFill.style.width = `${Math.max(0, Math.min(100, step.p))}%`;
+        if (subtextEl instanceof HTMLElement) subtextEl.textContent = step.label;
+      }, step.t);
+    });
+  });
   const hide = () => {
     preloader.classList.add("is-hidden");
     window.setTimeout(() => preloader.remove(), 450);
   };
   window.addEventListener("load", hide, { once: true });
-  window.setTimeout(hide, 1400);
+  window.setTimeout(hide, 1600);
 }
 
 function initializePremiumRevealAndSpotlight() {
@@ -17107,6 +18042,8 @@ async function initializeApp() {
   initializeAdminProcessConsoleCapture();
   window.addEventListener("online", updateAdminControlCenter);
   window.addEventListener("offline", updateAdminControlCenter);
+  window.addEventListener("online", () => refreshAdminRailwayStatus(true));
+  window.addEventListener("offline", () => refreshAdminRailwayStatus(true));
   initializeSiteAuth();
   await validateAdminSessionWithServer();
   if (hasContentPendingDiskSync() && isAdminSessionAuthorized()) {
@@ -17128,6 +18065,7 @@ async function initializeApp() {
   applyAdminProcessQuicklinksOrder();
   enableAdminProcessQuicklinksDrag();
   setAdminDensityMode(loadAdminDensityMode());
+  setAdminThemeMode(loadAdminThemeMode());
   initializeRevealAnimations();
   initializeVortexBot();
   tryConsumeConfiguratorDeepLink();

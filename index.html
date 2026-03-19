@@ -19,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260313adminfix16" />
+    <link rel="stylesheet" href="styles.css?v=20260319admintoggle1" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -160,8 +160,8 @@
             <input
               id="nav-smart-search"
               class="nav-smart-search"
-              type="search"
-              placeholder="Recherche menu..."
+              type="text"
+              placeholder="Recherche rapide"
               aria-label="Recherche intelligente dans le menu"
               title="Tapez 2 lettres pour trouver une page du menu"
               autocomplete="off"
@@ -609,7 +609,7 @@
           <p class="vortexbot-msg bot">Choisissez une action rapide ci-dessous.</p>
         </div>
         <div class="vortexbot-actions">
-          <button type="button" data-bot-action="go-ai-advisor">Conseil IA instantane</button>
+          <button type="button" data-bot-action="go-ai-advisor">Recommandation IA</button>
           <button type="button" data-bot-action="go-configurator">Ouvrir le configurateur</button>
           <button type="button" data-bot-action="go-telegram">Contacter sur Telegram</button>
         </div>
@@ -692,6 +692,11 @@
               <p>Etat serveur</p>
               <strong id="admin-cc-server">En ligne</strong>
             </article>
+            <article class="admin-control-card admin-control-card-railway">
+              <p>Etat Railway</p>
+              <strong id="admin-cc-railway">--</strong>
+              <small id="admin-cc-railway-meta">Vérification...</small>
+            </article>
             <article class="admin-control-card">
               <p>Heure locale</p>
               <strong id="admin-cc-time">--:--:--</strong>
@@ -703,6 +708,14 @@
           </section>
 
           <div class="admin-ux-row">
+            <label class="admin-theme-control" for="admin-theme-toggle">
+              Thème admin
+              <select id="admin-theme-toggle">
+                <option value="aurora">Aurora (Recommandé)</option>
+                <option value="obsidian">Obsidian</option>
+                <option value="titanium">Titanium</option>
+              </select>
+            </label>
             <label class="admin-density-control" for="admin-density-toggle">
               Densité admin
               <select id="admin-density-toggle">
@@ -843,8 +856,10 @@
                 Rechercher un utilisateur
                 <input id="admin-users-search" type="search" placeholder="email@outlook.com" />
               </label>
-              <h5 class="admin-subtitle">Utilisateurs inscrits</h5>
-              <div id="admin-users-list-panel"></div>
+              <div class="admin-users-list-block">
+                <p class="admin-users-list-title">Utilisateurs inscrits</p>
+                <div id="admin-users-list-panel" class="admin-users-list-panel"></div>
+              </div>
             </div>
           </section>
 
@@ -1423,7 +1438,7 @@
           </section>
 
           <section class="admin-content-panel hidden" id="admin-content-processus" data-tab-content="processus">
-            <h4>Processus - Dossiers confidentiels (PDF)</h4>
+            <h4>Mode super administrateur</h4>
             <div class="admin-tech-card">
               <h5 class="admin-subtitle">Accès protégé</h5>
               <label>
@@ -1608,6 +1623,15 @@
                   </div>
                   <button class="cta" id="admin-backup-zip-btn" type="button">Télécharger la sauvegarde ZIP</button>
                   <p class="admin-file-name">Au clic, choisissez le lecteur et le répertoire via “Enregistrer sous”.</p>
+                  <div id="admin-backup-progress-wrap" class="admin-backup-progress hidden" aria-live="polite">
+                    <div class="admin-backup-progress-head">
+                      <span id="admin-backup-progress-label">Initialisation...</span>
+                      <span id="admin-backup-progress-value">0%</span>
+                    </div>
+                    <div class="admin-backup-progress-track">
+                      <div id="admin-backup-progress-bar" class="admin-backup-progress-bar"></div>
+                    </div>
+                  </div>
                   <p id="admin-backup-last-state" class="admin-file-name">Dernière sauvegarde: aucune</p>
                   <p id="admin-backup-feedback" class="admin-feedback"></p>
                 </div>
@@ -1629,6 +1653,7 @@
                   </label>
                   <div class="admin-option-actions">
                     <button class="admin-secondary" id="admin-process-link-cancel" type="button">Annuler</button>
+                    <button class="admin-secondary" id="admin-process-link-open-url" type="button">Lancer URL</button>
                     <button class="cta" id="admin-process-link-save" type="button">Enregistrer le lien</button>
                   </div>
                 </article>
