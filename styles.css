@@ -7480,30 +7480,38 @@ video.admin-preview {
 }
 
 .profile-config-actions {
-  display: flex;
-  gap: 0.45rem;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
   margin-top: 0.55rem;
-  flex-wrap: wrap;
+  align-items: stretch;
 }
 
 .profile-config-actions button {
+  height: 52px;
   min-height: 52px;
-  min-width: 156px;
-  padding: 0.56rem 0.95rem;
+  min-width: 0;
+  width: 100%;
+  padding: 0.56rem 0.9rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   font-size: 0.9rem;
   font-weight: 800;
+  line-height: 1.05;
   letter-spacing: 0.01em;
   border-radius: 0.8rem;
 }
 
 @media (max-width: 900px) {
+  .profile-config-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .profile-config-actions button {
+    height: 46px;
     min-height: 46px;
-    min-width: 140px;
     font-size: 0.84rem;
     padding: 0.5rem 0.8rem;
   }
