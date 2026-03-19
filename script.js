@@ -10865,12 +10865,20 @@ function buildProcessInvoicePdfBlob(invoice) {
     new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(
       Math.max(0, Number(value) || 0)
     );
-  const issueDate = safeInvoice.issueDate
-    ? new Date(`${safeInvoice.issueDate}T12:00:00`).toLocaleDateString("fr-FR")
-    : new Date().toLocaleDateString("fr-FR");
-  const dueDate = safeInvoice.dueDate
-    ? new Date(`${safeInvoice.dueDate}T12:00:00`).toLocaleDateString("fr-FR")
-    : "";
+  const parseDateLabel = (rawValue, fallbackToToday = false) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return fallbackToToday ? new Date().toLocaleDateString("fr-FR") : "";
+    const isoMatch = /^\d{4}-\d{2}-\d{2}$/.test(raw);
+    const parsed = isoMatch ? new Date(`${raw}T12:00:00`) : new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return fallbackToToday ? new Date().toLocaleDateString("fr-FR") : "";
+    return parsed.toLocaleDateString("fr-FR");
+  };
+  const issueDate = parseDateLabel(safeInvoice.issueDate, true);
+  const dueDate = parseDateLabel(safeInvoice.dueDate, false);
+  const isQuoteMode = String(safeInvoice.documentType || "").trim().toLowerCase() === "quote";
+  const docHeader = isQuoteMode ? "DEVIS ULTRA PREMIUM PRO" : "FACTURE CLIENT PREMIUM";
+  const docLabel = isQuoteMode ? "Devis" : "Facture";
+  const docDetailsLabel = isQuoteMode ? "DETAIL DU DEVIS" : "DETAIL DE LA FACTURE";
   const stream = [];
   const addText = (text, x, y, options = {}) => {
     const font = options.bold ? "F2" : "F1";
@@ -10883,9 +10891,9 @@ function buildProcessInvoicePdfBlob(invoice) {
   stream.push("0.06 0.23 0.39 rg 32 760 531 58 re f\n");
   stream.push("0.38 0.87 0.98 RG 32 760 531 58 re S\n");
   addText("VORTEXBOX", 48, 792, { bold: true, size: 28, color: "0.82 0.97 1" });
-  addText("FACTURE CLIENT PREMIUM", 250, 792, { bold: true, size: 15, color: "0.82 0.97 1" });
+  addText(docHeader, 250, 792, { bold: true, size: 15, color: "0.82 0.97 1" });
   addText("VortexBox - Paris - VortexCore@outlook.Fr", 48, 772, { size: 11, color: "0.74 0.92 1" });
-  addText(`Facture: ${safeInvoice.number || "VB-FACTURE"}`, 48, 738, { bold: true, size: 14, color: "0.70 0.92 1" });
+  addText(`${docLabel}: ${safeInvoice.number || "VB-FACTURE"}`, 48, 738, { bold: true, size: 14, color: "0.70 0.92 1" });
   addText(`Date: ${issueDate}`, 385, 738, { size: 11, color: "0.88 0.96 1" });
   if (dueDate) addText(`Echeance: ${dueDate}`, 385, 720, { size: 11, color: "0.88 0.96 1" });
 
@@ -10902,7 +10910,7 @@ function buildProcessInvoicePdfBlob(invoice) {
   );
 
   let y = 610;
-  addText("DETAIL DE LA FACTURE", 48, y, { bold: true, size: 13, color: "0.60 0.93 1" });
+  addText(docDetailsLabel, 48, y, { bold: true, size: 13, color: "0.60 0.93 1" });
   y -= 24;
   normalizedLines.forEach((line, index) => {
     const labelLines = wrapProcessInvoicePdfLine(line.label, 48);
@@ -11067,12 +11075,17 @@ function buildProfileQuoteFallbackPdf(config, email) {
 
   const now = new Date();
   const invoiceLikeQuote = {
+    documentType: "quote",
     number: `DEVIS-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(
       now.getHours()
     ).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`,
+    issueDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`,
     clientName: customerName || "Client professionnel",
     clientEmail: String(email || "").trim().toLowerCase(),
-    dueDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("fr-FR"),
+    dueDate: (() => {
+      const due = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, "0")}-${String(due.getDate()).padStart(2, "0")}`;
+    })(),
     lines,
     notes:
       "Devis genere en mode local. Prix TTC. TVA 20% incluse et detaillee dans le total. Conditions pro: validite 30 jours.",
