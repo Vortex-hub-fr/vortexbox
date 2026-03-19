@@ -10967,14 +10967,20 @@ function buildProcessInvoicePdfBlob(invoice) {
   objects.push(latin1BytesFromString("2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"));
   objects.push(
     latin1BytesFromString(
-      "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >> endobj\n"
+      "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /ProcSet [/PDF /Text] /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >> endobj\n"
     )
   );
   objects.push(latin1BytesFromString(`4 0 obj << /Length ${contentBytes.length} >> stream\n`));
   objects.push(contentBytes);
   objects.push(latin1BytesFromString("\nendstream endobj\n"));
-  objects.push(latin1BytesFromString("5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n"));
-  objects.push(latin1BytesFromString("6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> endobj\n"));
+  objects.push(
+    latin1BytesFromString("5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >> endobj\n")
+  );
+  objects.push(
+    latin1BytesFromString(
+      "6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >> endobj\n"
+    )
+  );
 
   const header = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe2, 0xe3, 0xcf, 0xd3, 0x0a]);
   let offset = header.length;
