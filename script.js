@@ -10803,8 +10803,9 @@ function getAdminProcessInvoicePayload() {
 
 function normalizeProcessInvoicePdfText(value) {
   return String(value || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[’‘]/g, "'")
+    .replace(/[–—]/g, "-")
+    .replace(/\u00a0/g, " ")
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
     .replace(/[^\x20-\x7E\u00A0-\u00FF\n]/g, " ")
