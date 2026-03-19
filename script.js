@@ -10803,6 +10803,8 @@ function getAdminProcessInvoicePayload() {
 
 function normalizeProcessInvoicePdfText(value) {
   return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
     .replace(/[^\x20-\x7E\u00A0-\u00FF\n]/g, " ")
@@ -10861,6 +10863,10 @@ function buildProcessInvoicePdfBlob(invoice) {
     })
     .filter((line) => line.label || line.total > 0);
   const totalTtc = normalizedLines.reduce((sum, line) => sum + line.total, 0);
+  const vatRate = Math.max(0, Number(safeInvoice.vatRate) || 20);
+  const divisor = 1 + vatRate / 100;
+  const totalHt = divisor > 0 ? totalTtc / divisor : totalTtc;
+  const totalVat = Math.max(0, totalTtc - totalHt);
   const euro = (value) =>
     new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(
       Math.max(0, Number(value) || 0)
@@ -10939,10 +10945,19 @@ function buildProcessInvoicePdfBlob(invoice) {
     noteY -= 15;
   });
 
-  stream.push("0.08 0.30 0.48 rg 320 92 243 68 re f\n");
-  stream.push("0.45 0.93 0.99 RG 320 92 243 68 re S\n");
-  addText("TOTAL TTC", 340, 134, { bold: true, size: 14, color: "0.70 0.95 1" });
-  addText(`${euro(totalTtc)} EUR TTC`, 340, 108, { bold: true, size: 22, color: "1 1 1" });
+  if (isQuoteMode) {
+    stream.push("0.08 0.30 0.48 rg 300 84 263 96 re f\n");
+    stream.push("0.45 0.93 0.99 RG 300 84 263 96 re S\n");
+    addText("SYNTHESE TVA", 318, 160, { bold: true, size: 12, color: "0.70 0.95 1" });
+    addText(`Total HT: ${euro(totalHt)} EUR`, 318, 142, { size: 10, color: "0.92 0.99 1" });
+    addText(`TVA ${vatRate}%: ${euro(totalVat)} EUR`, 318, 126, { size: 10, color: "0.92 0.99 1" });
+    addText(`Total TTC: ${euro(totalTtc)} EUR`, 318, 104, { bold: true, size: 16, color: "1 1 1" });
+  } else {
+    stream.push("0.08 0.30 0.48 rg 320 92 243 68 re f\n");
+    stream.push("0.45 0.93 0.99 RG 320 92 243 68 re S\n");
+    addText("TOTAL TTC", 340, 134, { bold: true, size: 14, color: "0.70 0.95 1" });
+    addText(`${euro(totalTtc)} EUR TTC`, 340, 108, { bold: true, size: 22, color: "1 1 1" });
+  }
   addText("Garantie 2 ans incluse - Support premium VortexBox", 48, 58, { size: 10, color: "0.74 0.92 1" });
 
   const contentBytes = latin1BytesFromString(stream.join(""));
@@ -11076,6 +11091,7 @@ function buildProfileQuoteFallbackPdf(config, email) {
   const now = new Date();
   const invoiceLikeQuote = {
     documentType: "quote",
+    vatRate: 20,
     number: `DEVIS-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(
       now.getHours()
     ).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`,
@@ -11088,7 +11104,7 @@ function buildProfileQuoteFallbackPdf(config, email) {
     })(),
     lines,
     notes:
-      "Devis genere en mode local. Prix TTC. TVA 20% incluse et detaillee dans le total. Conditions pro: validite 30 jours.",
+      "Devis VortexBox. Prix TTC. TVA 20% detaillee. Conditions pro: validite 30 jours.",
   };
   const { blob } = buildProcessInvoicePdfBlob(invoiceLikeQuote);
   const fileName = sanitizeFileName(
