@@ -10805,10 +10805,12 @@ function normalizeProcessInvoicePdfText(value) {
   return String(value || "")
     .replace(/[’‘]/g, "'")
     .replace(/[–—]/g, "-")
+    .replace(/[•]/g, "-")
     .replace(/\u00a0/g, " ")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .replace(/[^\x20-\x7E\u00A0-\u00FF\n]/g, " ")
+    .replace(/\r\n/g, " ")
+    .replace(/\r/g, " ")
+    .replace(/\n/g, " ")
+    .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, " ")
     .trim();
 }
 

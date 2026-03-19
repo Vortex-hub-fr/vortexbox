@@ -382,13 +382,14 @@ function extFromMime(mime) {
 
 function normalizePdfText(value) {
   return String(value || "")
-    .replace(/\r\n/g, "\n")
+    .replace(/\r\n/g, " ")
+    .replace(/\r/g, " ")
+    .replace(/\n/g, " ")
     .replace(/[’]/g, "'")
     .replace(/[–—]/g, "-")
     .replace(/[•]/g, "-")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\x20-\x7E\xA0-\xFF\n]/g, "");
+    .replace(/\u00a0/g, " ")
+    .replace(/[^\x20-\x7E\xA0-\xFF]/g, " ");
 }
 
 function escapePdfString(value) {
