@@ -8956,10 +8956,12 @@ function setAdminRailwayUpdateFeedback(message, tone = "") {
 function getRailwayUpdateCommand() {
   return [
     'cd "/Users/brunosoler/Documents/Playground" || { echo "Dossier introuvable."; exit 1; }',
+    "git fetch origin",
     "git add .",
     "node tools/stage-about-videos-from-content.js",
     'git commit -m "MAJ VortexBox" || echo "Aucun changement a commit"',
-    "git push origin main",
+    "git pull --rebase origin main",
+    "git push origin HEAD:main",
   ].join("\n");
 }
 
