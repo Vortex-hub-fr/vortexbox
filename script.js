@@ -11233,36 +11233,8 @@ async function exportProfileConfigQuotePdf(config, email) {
   if (!safeConfig) {
     throw new Error("Configuration introuvable.");
   }
-  const customerName = String(profileDisplayNameInput?.value || getUserDisplayName(email) || "Client professionnel").trim();
-  try {
-    const response = await fetch("/api/profile-config-quote-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify({
-        config: safeConfig,
-        customer: {
-          name: customerName,
-          email: String(email || "").trim().toLowerCase(),
-          company: customerName,
-        },
-      }),
-    });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      throw new Error(String(payload?.error || `HTTP ${response.status}`));
-    }
-    const blob = await response.blob();
-    const fileName = extractFileNameFromContentDisposition(
-      response.headers.get("content-disposition"),
-      sanitizeFileName(`devis-pro-${safeConfig?.title || "vortexbox"}.pdf`, "devis-pro-vortexbox.pdf")
-    );
-    const objectUrl = URL.createObjectURL(blob);
-    return { fileName, objectUrl, fallback: false };
-  } catch (error) {
-    const payload = buildProfileQuoteFallbackPdf(safeConfig, email);
-    return { ...payload, fallback: true, warning: String(error?.message || "API indisponible") };
-  }
+  const payload = buildProfileQuoteFallbackPdf(safeConfig, email);
+  return { ...payload, fallback: true, warning: "Generation locale forcee (mode compatibilite)." };
 }
 
 function renderAdminProcessusEditor() {
