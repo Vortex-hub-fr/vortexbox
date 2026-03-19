@@ -5357,7 +5357,8 @@ textarea {
 }
 
 .admin-railway-update-modal-card {
-  width: min(720px, 96vw);
+  width: min(720px, calc(100vw - 2.25rem));
+  max-width: calc(100vw - 2.25rem);
 }
 
 #admin-railway-update-command {
