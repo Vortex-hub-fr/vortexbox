@@ -447,7 +447,7 @@ function buildProcessInvoicePdfBuffer(invoice) {
     const font = options.bold ? "F2" : "F1";
     const size = options.size || 11;
     const color = options.color || "1 1 1";
-    stream.push(`BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${escapePdfString(text)}) Tj ET\n`);
+    stream.push(`${color} rg BT /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${escapePdfString(text)}) Tj ET\n`);
   };
 
   stream.push("0.02 0.08 0.18 rg 0 0 595 842 re f\n");
@@ -578,7 +578,7 @@ function buildProfileQuotePdfBuffer(quote) {
     const font = options.bold ? "F2" : "F1";
     const size = options.size || 11;
     const color = options.color || "1 1 1";
-    stream.push(`BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x} ${y} Tm (${escapePdfString(text)}) Tj ET\n`);
+    stream.push(`${color} rg BT /${font} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${escapePdfString(text)}) Tj ET\n`);
   };
 
   stream.push("0.02 0.08 0.18 rg 0 0 595 842 re f\n");
