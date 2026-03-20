@@ -4,7 +4,6 @@ const USER_LOG_KEY = "vortexbox-user-log";
 const SITE_USERS_KEY = "vortexbox-site-users";
 const PENDING_ACTIVATION_KEY = "vortexbox-pending-activation";
 const AUTH_REMEMBER_KEY = "vortexbox-auth-remember";
-const AUTH_RESET_CODES_KEY = "vortexbox-reset-codes";
 const USER_CONFIGS_KEY = "vortexbox-user-configs";
 const PROMO_CODES_KEY = "vortexbox-promo-codes";
 const ADMIN_PROFILE_PHOTO_KEY = "vortexbox-admin-profile-photo";
@@ -41,6 +40,13 @@ const bgMusicControlEl = document.getElementById("bg-music-control");
 const bgMusicToggleEl = document.getElementById("bg-music-toggle");
 const bgMusicEl = document.getElementById("bg-music");
 const cookieBannerEl = document.getElementById("cookie-banner");
+document.addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-telegram-url]");
+  if (!btn) return;
+  const url = String(btn.getAttribute("data-telegram-url") || "").trim();
+  if (!/^https:\/\/t\.me\//i.test(url)) return;
+  window.open(url, "_blank", "noopener,noreferrer");
+});
 const cookieCustomizePanelEl = document.getElementById("cookie-customize-panel");
 const cookieAcceptAllBtn = document.getElementById("cookie-accept-all");
 const cookieRejectAllBtn = document.getElementById("cookie-reject-all");
@@ -1375,6 +1381,104 @@ async function requestAdminSessionLogout() {
   } catch (error) {}
 }
 
+async function requestUserAuthLogin(email, password, remember) {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+      remember: Boolean(remember),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Accès refusé.");
+  return payload;
+}
+
+async function requestUserAuthActivation(email, password) {
+  const response = await fetch("/api/auth/request-activation", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Impossible d'initier l'activation.");
+  return payload;
+}
+
+async function requestUserAuthActivate(email, password, code, remember) {
+  const response = await fetch("/api/auth/activate", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+      code: String(code || "").trim(),
+      remember: Boolean(remember),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Activation refusée.");
+  return payload;
+}
+
+async function requestUserAuthRequestReset(email) {
+  const response = await fetch("/api/auth/request-reset", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: String(email || "").trim().toLowerCase() }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Echec de la demande de réinitialisation.");
+  return payload;
+}
+
+async function requestUserAuthConfirmReset(email, newPassword, code) {
+  const response = await fetch("/api/auth/confirm-reset", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      newPassword: String(newPassword || ""),
+      code: String(code || "").trim(),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Réinitialisation refusée.");
+  return payload;
+}
+
+async function requestUserSessionStatus() {
+  const response = await fetch("/api/auth/session", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) return { ok: false };
+  return payload;
+}
+
+async function requestUserSessionLogout() {
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+  } catch (error) {}
+}
+
 function isAdminSessionAuthorized() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   return isAdminEmail(sessionEmail) && sessionStorage.getItem(SESSION_KEY) === "1";
@@ -1486,7 +1590,7 @@ function loadSiteUsers() {
       .filter((item) => item && typeof item.email === "string")
       .map((item) => ({
         email: String(item.email || "").trim().toLowerCase(),
-        password: String(item.password || ""),
+        password: "",
         isActive: item.isActive === undefined ? true : Boolean(item.isActive),
         activationCode: String(item.activationCode || ""),
         activationSentAt: String(item.activationSentAt || ""),
@@ -1766,37 +1870,6 @@ function initializeSegmentedCodeInput(inputEl) {
   syncHidden();
 }
 
-function loadResetCodes() {
-  try {
-    const raw = localStorage.getItem(AUTH_RESET_CODES_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch (error) {
-    return {};
-  }
-}
-
-function saveResetCodes(map) {
-  localStorage.setItem(AUTH_RESET_CODES_KEY, JSON.stringify(map || {}));
-}
-
-async function sendAuthCodeByEmail(email, code, type) {
-  const response = await fetch("/api/send-auth-code", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: String(email || "").trim().toLowerCase(),
-      code: String(code || "").trim(),
-      type: type === "reset" ? "reset" : "activation",
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload.ok) {
-    throw new Error(payload.error || "Echec d'envoi email.");
-  }
-}
-
 function setRememberedAuthEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
   if (!isAllowedOutlookEmail(normalized)) {
@@ -1842,27 +1915,16 @@ function initializeForgotPasswordFlow() {
       setAuthResetFeedback("Réinitialisation admin désactivée ici. Contactez l'administrateur.", "error");
       return;
     }
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (!existing) {
-      setAuthResetFeedback("Compte introuvable pour cette adresse.", "error");
-      return;
-    }
-
-    const code = generateActivationCode();
-    const allCodes = loadResetCodes();
-    allCodes[email] = { code, expiresAt: Date.now() + 10 * 60 * 1000 };
     try {
-      await sendAuthCodeByEmail(email, code, "reset");
+      await requestUserAuthRequestReset(email);
     } catch (error) {
       setAuthResetFeedback(`Impossible d'envoyer le code par email: ${error.message || "configuration serveur manquante"}`, "error");
       return;
     }
-    saveResetCodes(allCodes);
     setAuthResetFeedback(`Code envoyé à ${email}. Vérifiez votre boîte mail Outlook.`, "success");
   });
 
-  authResetConfirmBtnEl?.addEventListener("click", () => {
+  authResetConfirmBtnEl?.addEventListener("click", async () => {
     const email = String(authResetEmailEl?.value || siteLoginEmailEl?.value || "").trim().toLowerCase();
     const newPassword = String(authResetPasswordEl?.value || "");
     const code = String(authResetCodeEl?.value || "").trim();
@@ -1874,22 +1936,12 @@ function initializeForgotPasswordFlow() {
       setAuthResetFeedback("Mot de passe trop court (6 caractères minimum).", "error");
       return;
     }
-    const allCodes = loadResetCodes();
-    const token = allCodes[email];
-    if (!token || token.code !== code || Number(token.expiresAt || 0) < Date.now()) {
-      setAuthResetFeedback("Code invalide ou expiré.", "error");
+    try {
+      await requestUserAuthConfirmReset(email, newPassword, code);
+    } catch (error) {
+      setAuthResetFeedback(String(error?.message || "Code invalide ou expiré."), "error");
       return;
     }
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (!existing) {
-      setAuthResetFeedback("Compte introuvable.", "error");
-      return;
-    }
-    existing.password = newPassword;
-    saveSiteUsers(users);
-    delete allCodes[email];
-    saveResetCodes(allCodes);
     setAuthResetFeedback("Mot de passe réinitialisé. Vous pouvez vous connecter.", "success");
     setAuthFeedback("Réinitialisation réussie. Connectez-vous avec votre nouveau mot de passe.", "success");
     if (siteLoginEmailEl) siteLoginEmailEl.value = email;
@@ -1936,19 +1988,29 @@ function lockSite() {
   applyBackgroundMusicAccess();
 }
 
-function initializeSiteAuth() {
+async function initializeSiteAuth() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   const rememberedEmail = getRememberedAuthEmail();
-  const existingEmail = isAllowedOutlookEmail(sessionEmail) ? sessionEmail : rememberedEmail;
   if (authRememberEl) authRememberEl.checked = Boolean(rememberedEmail);
   if (siteLoginEmailEl && isAllowedOutlookEmail(rememberedEmail) && !siteLoginEmailEl.value) {
     siteLoginEmailEl.value = rememberedEmail;
   }
-  if (isAllowedOutlookEmail(existingEmail)) {
-    sessionStorage.setItem(AUTH_SESSION_KEY, existingEmail);
+  const serverSession = await requestUserSessionStatus();
+  if (serverSession?.ok && isAllowedOutlookEmail(serverSession.email)) {
+    const activeEmail = String(serverSession.email || "").trim().toLowerCase();
+    sessionStorage.setItem(AUTH_SESSION_KEY, activeEmail);
+    sessionStorage.removeItem(SESSION_KEY);
+    syncRememberPreference(activeEmail);
     unlockSite();
     return;
   }
+  if (sessionEmail && isAdminEmail(sessionEmail) && sessionStorage.getItem(SESSION_KEY) === "1") {
+    sessionStorage.setItem(AUTH_SESSION_KEY, sessionEmail);
+    unlockSite();
+    return;
+  }
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
   lockSite();
   const pendingEmail = sessionStorage.getItem(PENDING_ACTIVATION_KEY) || "";
   if (isAllowedOutlookEmail(pendingEmail)) {
@@ -2215,6 +2277,7 @@ if (siteLoginFormEl) {
     event.preventDefault();
     const email = String(siteLoginEmailEl.value || "").trim().toLowerCase();
     const password = String(siteLoginPasswordEl.value || "");
+    const remember = authRememberEl ? Boolean(authRememberEl.checked) : true;
 
     if (!isAllowedOutlookEmail(email)) {
       setAuthFeedback("Adresse non autorisée. Utilisez une adresse Outlook.", "error");
@@ -2244,29 +2307,20 @@ if (siteLoginFormEl) {
       return;
     }
 
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
     const enteredActivationCode = String(siteActivationCodeEl?.value || "").trim();
 
     if (authMode === "new") {
-      if (existing && (existing.revoked || existing.blacklisted)) {
-        setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
-        return;
-      }
-      if (existing && !existing.isActive && enteredActivationCode) {
-        if (enteredActivationCode.length !== 10) {
-          setAuthFeedback("Le code d'activation doit contenir 10 caractères.", "error");
+      if (enteredActivationCode) {
+        if (enteredActivationCode.length !== 6) {
+          setAuthFeedback("Le code d'activation doit contenir 6 chiffres.", "error");
           return;
         }
-        if (String(existing.activationCode || "").toLowerCase() !== enteredActivationCode.toLowerCase()) {
-          setAuthFeedback("Code invalide. Vérifiez le code reçu.", "error");
+        try {
+          await requestUserAuthActivate(email, password, enteredActivationCode, remember);
+        } catch (error) {
+          setAuthFeedback(String(error?.message || "Code invalide. Vérifiez le code reçu."), "error");
           return;
         }
-        existing.password = password;
-        existing.isActive = true;
-        existing.activationCode = "";
-        existing.activationSentAt = "";
-        saveSiteUsers(users);
         setPendingActivation("");
         showActivationStep(false);
         sessionStorage.setItem(AUTH_SESSION_KEY, email);
@@ -2277,53 +2331,36 @@ if (siteLoginFormEl) {
         setAuthFeedback("");
         return;
       }
-      if (existing && existing.isActive) {
-        setAuthFeedback("Ce compte existe déjà. Passez sur Utilisateur pour vous connecter.", "error");
+      try {
+        await requestUserAuthActivation(email, password);
+      } catch (error) {
+        setAuthFeedback(String(error?.message || "Impossible d'envoyer le code d'activation."), "error");
         return;
       }
-      const code =
-        existing && !existing.isActive && String(existing.activationCode || "").length === 10
-          ? String(existing.activationCode)
-          : generateActivationCode();
-      if (existing) {
-        existing.password = password;
-        existing.activationCode = code;
-        existing.activationSentAt = new Date().toISOString();
-      } else {
-        users.push({
-          email,
-          password,
-          isActive: false,
-          activationCode: code,
-          activationSentAt: new Date().toISOString(),
-          revoked: false,
-          blacklisted: false,
-        });
-      }
-      saveSiteUsers(users);
       setPendingActivation(email);
       showActivationStep(true);
       if (siteActivationCodeEl) {
-        siteActivationCodeEl.value = code;
+        siteActivationCodeEl.value = "";
         siteActivationCodeEl.focus();
-        siteActivationCodeEl.select();
       }
-      setAuthFeedback(`Code d'activation: ${code} (10 caractères). Conservez-le pour activer le compte.`, "success");
+      setAuthFeedback("Code d'activation envoyé par email (6 chiffres). Entrez-le pour finaliser votre compte.", "success");
       return;
     } else {
-      if (existing && (existing.revoked || existing.blacklisted)) {
-        setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
+      try {
+        await requestUserAuthLogin(email, password, remember);
+      } catch (error) {
+        const message = String(error?.message || "Identifiants incorrects.");
+        if (/non activ/i.test(message)) {
+          setPendingActivation(email);
+          showActivationStep(true);
+          setAuthFeedback("Compte non activé. Entrez le code d'activation à 6 chiffres.", "info");
+          return;
+        }
+        setAuthFeedback(message, "error");
         return;
       }
-      if (!existing || existing.password !== password) {
-        setAuthFeedback("Identifiants incorrects.", "error");
-        return;
-      }
-      if (!existing.isActive) {
+      if (pendingActivationEmail && pendingActivationEmail === email) {
         setPendingActivation(email);
-        showActivationStep(true);
-        setAuthFeedback("Compte non activé. Entrez le code d'activation à 10 caractères.", "info");
-        return;
       }
     }
 
@@ -2344,36 +2381,30 @@ if (authModeUserBtn && authModeNewBtn) {
 }
 
 if (siteActivateBtnEl) {
-  siteActivateBtnEl.addEventListener("click", () => {
+  siteActivateBtnEl.addEventListener("click", async () => {
     const email = String(siteLoginEmailEl.value || pendingActivationEmail || "").trim().toLowerCase();
+    const password = String(siteLoginPasswordEl?.value || "");
     const code = String(siteActivationCodeEl?.value || "").trim();
     if (!email || !code) {
-      setAuthFeedback("Entrez votre email et le code d'activation à 10 caractères.", "error");
+      setAuthFeedback("Entrez votre email et le code d'activation à 6 chiffres.", "error");
       return;
     }
-    if (code.length !== 10) {
-      setAuthFeedback("Le code d'activation doit contenir 10 caractères.", "error");
+    if (password.length < 6) {
+      setAuthFeedback("Entrez aussi votre mot de passe (6 caractères minimum).", "error");
       return;
     }
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (existing && (existing.revoked || existing.blacklisted)) {
-      setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
-      return;
-    }
-    if (!existing || existing.isActive) {
-      setAuthFeedback("Aucun compte en attente d'activation pour cet email.", "error");
-      return;
-    }
-    if (String(existing.activationCode || "").toLowerCase() !== code.toLowerCase()) {
-      setAuthFeedback("Code invalide. Vérifiez le code reçu.", "error");
+    if (code.length !== 6) {
+      setAuthFeedback("Le code d'activation doit contenir 6 chiffres.", "error");
       return;
     }
 
-    existing.isActive = true;
-    existing.activationCode = "";
-    existing.activationSentAt = "";
-    saveSiteUsers(users);
+    const remember = authRememberEl ? Boolean(authRememberEl.checked) : true;
+    try {
+      await requestUserAuthActivate(email, password, code, remember);
+    } catch (error) {
+      setAuthFeedback(String(error?.message || "Code invalide. Vérifiez le code reçu."), "error");
+      return;
+    }
     setPendingActivation("");
     showActivationStep(false);
     sessionStorage.setItem(AUTH_SESSION_KEY, email);
@@ -2389,6 +2420,8 @@ if (userLogoutBtn) {
   userLogoutBtn.addEventListener("click", async () => {
     if (sessionStorage.getItem(SESSION_KEY) === "1") {
       await requestAdminSessionLogout();
+    } else {
+      await requestUserSessionLogout();
     }
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
@@ -2537,7 +2570,7 @@ async function initializeAboutPage() {
   initializePageTransitions();
   initializeUltraPremiumVisuals();
   optimizeMediaLoadingHints();
-  initializeSiteAuth();
+  await initializeSiteAuth();
   refreshNavSessionButtons();
   window.addEventListener("pageshow", refreshNavSessionButtons);
   window.addEventListener("storage", (event) => {

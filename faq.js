@@ -4,7 +4,6 @@ const USER_LOG_KEY = "vortexbox-user-log";
 const SITE_USERS_KEY = "vortexbox-site-users";
 const PENDING_ACTIVATION_KEY = "vortexbox-pending-activation";
 const AUTH_REMEMBER_KEY = "vortexbox-auth-remember";
-const AUTH_RESET_CODES_KEY = "vortexbox-reset-codes";
 const USER_CONFIGS_KEY = "vortexbox-user-configs";
 const PROMO_CODES_KEY = "vortexbox-promo-codes";
 const ADMIN_PROFILE_PHOTO_KEY = "vortexbox-admin-profile-photo";
@@ -42,6 +41,13 @@ const bgMusicControlEl = document.getElementById("bg-music-control");
 const bgMusicToggleEl = document.getElementById("bg-music-toggle");
 const bgMusicEl = document.getElementById("bg-music");
 const cookieBannerEl = document.getElementById("cookie-banner");
+document.addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-telegram-url]");
+  if (!btn) return;
+  const url = String(btn.getAttribute("data-telegram-url") || "").trim();
+  if (!/^https:\/\/t\.me\//i.test(url)) return;
+  window.open(url, "_blank", "noopener,noreferrer");
+});
 const cookieCustomizePanelEl = document.getElementById("cookie-customize-panel");
 const cookieAcceptAllBtn = document.getElementById("cookie-accept-all");
 const cookieRejectAllBtn = document.getElementById("cookie-reject-all");
@@ -146,9 +152,8 @@ function bindProgressiveMedia(root = document) {
     image.addEventListener(
       "error",
       () => {
-        window.setTimeout(() => {
-          if (image.complete && image.naturalWidth > 0) markLoaded();
-        }, 120);
+        image.src = "/favicon-vb.svg";
+        window.setTimeout(markLoaded, 60);
       },
       { once: true }
     );
@@ -845,6 +850,73 @@ function renderGamesResultsToolbar(totalCount, filteredCount, pageCount, current
       <button class="games-page-btn" type="button" data-games-page-action="next" ${page >= pages ? "disabled" : ""}>Suivant</button>
     </div>
   `;
+}
+
+let gamesLoadProgressHideTimer = null;
+
+function setupGamesCoversLoadProgress(host = gamesGridEl) {
+  if (!host) return;
+  const progressEl = host.querySelector(".games-load-progress");
+  if (!progressEl) return;
+  const progressCardEl = host.querySelector(".game-cover-card-progress");
+
+  const fillEl = progressEl.querySelector(".games-load-progress-fill");
+  const valueEl = progressEl.querySelector(".games-load-progress-value");
+  const trackEl = progressEl.querySelector(".games-load-progress-track");
+  const coverImages = Array.from(host.querySelectorAll("img.game-cover-media.js-progressive-media"));
+  const total = coverImages.length;
+  const doneSet = new WeakSet();
+  let done = 0;
+
+  if (gamesLoadProgressHideTimer) {
+    window.clearTimeout(gamesLoadProgressHideTimer);
+    gamesLoadProgressHideTimer = null;
+  }
+
+  const update = () => {
+    const safeDone = Math.max(0, Math.min(total, done));
+    const percent = total ? Math.round((safeDone / total) * 100) : 100;
+    if (fillEl) fillEl.style.width = `${percent}%`;
+    if (valueEl) valueEl.textContent = `${percent}%`;
+    if (trackEl) {
+      trackEl.setAttribute("aria-valuenow", String(percent));
+      trackEl.setAttribute("aria-valuetext", `${percent}%`);
+    }
+    progressEl.classList.toggle("is-complete", total > 0 && safeDone >= total);
+
+    if (total > 0 && safeDone >= total) {
+      progressCardEl?.classList.add("is-catalog-ready");
+      gamesLoadProgressHideTimer = window.setTimeout(() => {
+        progressEl.classList.add("is-hidden");
+      }, 260);
+    } else {
+      progressCardEl?.classList.remove("is-catalog-ready");
+      progressEl.classList.remove("is-hidden");
+    }
+  };
+
+  const markDone = (image) => {
+    if (!image || doneSet.has(image)) return;
+    doneSet.add(image);
+    done += 1;
+    update();
+  };
+
+  if (!total) {
+    update();
+    return;
+  }
+
+  coverImages.forEach((image) => {
+    if (image.complete) {
+      markDone(image);
+      return;
+    }
+    image.addEventListener("load", () => markDone(image), { once: true });
+    image.addEventListener("error", () => markDone(image), { once: true });
+  });
+
+  update();
 }
 
 let authMode = "user";
@@ -1789,6 +1861,104 @@ async function requestAdminSessionLogout() {
   } catch (error) {}
 }
 
+async function requestUserAuthLogin(email, password, remember) {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+      remember: Boolean(remember),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Accès refusé.");
+  return payload;
+}
+
+async function requestUserAuthActivation(email, password) {
+  const response = await fetch("/api/auth/request-activation", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Impossible d'initier l'activation.");
+  return payload;
+}
+
+async function requestUserAuthActivate(email, password, code, remember) {
+  const response = await fetch("/api/auth/activate", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+      code: String(code || "").trim(),
+      remember: Boolean(remember),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Activation refusée.");
+  return payload;
+}
+
+async function requestUserAuthRequestReset(email) {
+  const response = await fetch("/api/auth/request-reset", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: String(email || "").trim().toLowerCase() }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Echec de la demande de réinitialisation.");
+  return payload;
+}
+
+async function requestUserAuthConfirmReset(email, newPassword, code) {
+  const response = await fetch("/api/auth/confirm-reset", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      newPassword: String(newPassword || ""),
+      code: String(code || "").trim(),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Réinitialisation refusée.");
+  return payload;
+}
+
+async function requestUserSessionStatus() {
+  const response = await fetch("/api/auth/session", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) return { ok: false };
+  return payload;
+}
+
+async function requestUserSessionLogout() {
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+  } catch (error) {}
+}
+
 function isAdminSessionAuthorized() {
   const email = getCurrentAuthEmail();
   return isAdminEmail(email) && sessionStorage.getItem(SESSION_KEY) === "1";
@@ -1797,8 +1967,7 @@ function isAdminSessionAuthorized() {
 function getCurrentAuthEmail() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   if (isAllowedOutlookEmail(sessionEmail)) return sessionEmail;
-  const rememberedEmail = getRememberedAuthEmail();
-  return isAllowedOutlookEmail(rememberedEmail) ? rememberedEmail : "";
+  return "";
 }
 
 function refreshNavSessionButtons() {
@@ -1946,7 +2115,7 @@ function loadSiteUsers() {
       .filter((item) => item && typeof item.email === "string")
       .map((item) => ({
         email: String(item.email || "").trim().toLowerCase(),
-        password: String(item.password || ""),
+        password: "",
         isActive: item.isActive === undefined ? true : Boolean(item.isActive),
         activationCode: String(item.activationCode || ""),
         activationSentAt: String(item.activationSentAt || ""),
@@ -2226,37 +2395,6 @@ function initializeSegmentedCodeInput(inputEl) {
   syncHidden();
 }
 
-function loadResetCodes() {
-  try {
-    const raw = localStorage.getItem(AUTH_RESET_CODES_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch (error) {
-    return {};
-  }
-}
-
-function saveResetCodes(map) {
-  localStorage.setItem(AUTH_RESET_CODES_KEY, JSON.stringify(map || {}));
-}
-
-async function sendAuthCodeByEmail(email, code, type) {
-  const response = await fetch("/api/send-auth-code", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: String(email || "").trim().toLowerCase(),
-      code: String(code || "").trim(),
-      type: type === "reset" ? "reset" : "activation",
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload.ok) {
-    throw new Error(payload.error || "Echec d'envoi email.");
-  }
-}
-
 function setRememberedAuthEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
   if (!isAllowedOutlookEmail(normalized)) {
@@ -2302,27 +2440,16 @@ function initializeForgotPasswordFlow() {
       setAuthResetFeedback("Réinitialisation admin désactivée ici. Contactez l'administrateur.", "error");
       return;
     }
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (!existing) {
-      setAuthResetFeedback("Compte introuvable pour cette adresse.", "error");
-      return;
-    }
-
-    const code = generateActivationCode();
-    const allCodes = loadResetCodes();
-    allCodes[email] = { code, expiresAt: Date.now() + 10 * 60 * 1000 };
     try {
-      await sendAuthCodeByEmail(email, code, "reset");
+      await requestUserAuthRequestReset(email);
     } catch (error) {
       setAuthResetFeedback(`Impossible d'envoyer le code par email: ${error.message || "configuration serveur manquante"}`, "error");
       return;
     }
-    saveResetCodes(allCodes);
     setAuthResetFeedback(`Code envoyé à ${email}. Vérifiez votre boîte mail Outlook.`, "success");
   });
 
-  authResetConfirmBtnEl?.addEventListener("click", () => {
+  authResetConfirmBtnEl?.addEventListener("click", async () => {
     const email = String(authResetEmailEl?.value || siteLoginEmailEl?.value || "").trim().toLowerCase();
     const newPassword = String(authResetPasswordEl?.value || "");
     const code = String(authResetCodeEl?.value || "").trim();
@@ -2334,22 +2461,12 @@ function initializeForgotPasswordFlow() {
       setAuthResetFeedback("Mot de passe trop court (6 caractères minimum).", "error");
       return;
     }
-    const allCodes = loadResetCodes();
-    const token = allCodes[email];
-    if (!token || token.code !== code || Number(token.expiresAt || 0) < Date.now()) {
-      setAuthResetFeedback("Code invalide ou expiré.", "error");
+    try {
+      await requestUserAuthConfirmReset(email, newPassword, code);
+    } catch (error) {
+      setAuthResetFeedback(String(error?.message || "Code invalide ou expiré."), "error");
       return;
     }
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (!existing) {
-      setAuthResetFeedback("Compte introuvable.", "error");
-      return;
-    }
-    existing.password = newPassword;
-    saveSiteUsers(users);
-    delete allCodes[email];
-    saveResetCodes(allCodes);
     setAuthResetFeedback("Mot de passe réinitialisé. Vous pouvez vous connecter.", "success");
     setAuthFeedback("Réinitialisation réussie. Connectez-vous avec votre nouveau mot de passe.", "success");
     if (siteLoginEmailEl) siteLoginEmailEl.value = email;
@@ -2388,19 +2505,32 @@ function lockSite() {
   }
 }
 
-function initializeSiteAuth() {
+async function initializeSiteAuth() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   const rememberedEmail = getRememberedAuthEmail();
-  const existingEmail = isAllowedOutlookEmail(sessionEmail) ? sessionEmail : rememberedEmail;
   if (authRememberEl) authRememberEl.checked = Boolean(rememberedEmail);
   if (siteLoginEmailEl && isAllowedOutlookEmail(rememberedEmail) && !siteLoginEmailEl.value) {
     siteLoginEmailEl.value = rememberedEmail;
   }
-  if (isAllowedOutlookEmail(existingEmail)) {
-    sessionStorage.setItem(AUTH_SESSION_KEY, existingEmail);
+
+  const serverSession = await requestUserSessionStatus();
+  if (serverSession?.ok && isAllowedOutlookEmail(serverSession.email)) {
+    const activeEmail = String(serverSession.email || "").trim().toLowerCase();
+    sessionStorage.setItem(AUTH_SESSION_KEY, activeEmail);
+    sessionStorage.removeItem(SESSION_KEY);
+    syncRememberPreference(activeEmail);
     unlockSite();
     return;
   }
+
+  if (sessionEmail && isAdminEmail(sessionEmail) && sessionStorage.getItem(SESSION_KEY) === "1") {
+    sessionStorage.setItem(AUTH_SESSION_KEY, sessionEmail);
+    unlockSite();
+    return;
+  }
+
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
   lockSite();
   const pendingEmail = sessionStorage.getItem(PENDING_ACTIVATION_KEY) || "";
   if (isAllowedOutlookEmail(pendingEmail)) {
@@ -2656,8 +2786,9 @@ async function renderGamesCatalog(options = {}) {
         const infoStateClass = isReadyInfo ? "is-ready" : "is-custom";
         const infoEncoded = encodeURIComponent(String(current.info || ""));
         const titleValue = String(current.title || item.title || "Info jeu");
+        const backfaceTitle = String(current.title || item.title || `Jeu ${index + 1}`);
         return `
-        <article class="game-cover-card" data-game-index="${index}" style="--game-stagger:${index}">
+        <article class="game-cover-card ${adminEditable ? "game-cover-card-admin" : ""}" data-game-index="${index}" style="--game-stagger:${index}">
           ${
             adminEditable
               ? `
@@ -2675,16 +2806,18 @@ async function renderGamesCatalog(options = {}) {
             <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
             <span>VortexBox Premium</span>
           </div>
+          <button class="game-cover-info-btn ${infoStateClass}" type="button" data-game-index="${index}" data-game-title="${escapeHtml(titleValue)}" data-game-info="${escapeHtml(infoEncoded)}" aria-label="Information jeu">i</button>
           <div class="game-cover-media-wrap progressive-media-host" data-game-title="${escapeHtml(current.title || item.title)}" style="--cover-url:url('${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image))).replace(/'/g, "%27")}')">
-            <button class="game-cover-info-btn ${infoStateClass}" type="button" data-game-index="${index}" data-game-title="${escapeHtml(titleValue)}" data-game-info="${escapeHtml(infoEncoded)}" aria-label="Information jeu">i</button>
             <img
               class="game-cover-media js-progressive-media"
               src="${escapeHtml(withImageCacheBuster(toPublicImageUrl(item.image)))}"
               alt="${escapeHtml(item.title)}"
               loading="${index < 3 ? "eager" : "lazy"}"
               decoding="async"
-              onerror="this.onerror=null;this.src='/favicon-vb.svg';"
             />
+            <div class="game-cover-media-backface" aria-hidden="true">
+              <p>${escapeHtml(backfaceTitle)}</p>
+            </div>
           </div>
           <p class="game-cover-title">${escapeHtml(current.title || item.title || `Jeu ${index + 1}`)}</p>
         </article>
@@ -2703,7 +2836,42 @@ async function renderGamesCatalog(options = {}) {
       </div>
     `
       : "";
-    gamesGridEl.innerHTML = `${toolbarMarkup}${cardsMarkup}`;
+    const catalogCoverRaw = toPublicImageUrl(
+      pagedSource?.[0]?.item?.image || source?.[0]?.image || "/favicon-vb.svg"
+    );
+    const catalogCoverUrl = withImageCacheBuster(catalogCoverRaw || "/favicon-vb.svg");
+    const progressToolsPlaceholder = adminEditable
+      ? `<div class="games-admin-card-tools games-admin-card-tools-placeholder" aria-hidden="true"></div>`
+      : "";
+    const progressCardMarkup = `
+      <article class="game-cover-card game-cover-card-progress" data-game-index="-1" style="--game-stagger:0">
+        ${progressToolsPlaceholder}
+        <div class="game-cover-topbar">
+          <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
+          <span>VortexBox Premium</span>
+        </div>
+        <div class="game-cover-media-wrap game-cover-progress-wrap" data-game-title="Focus Catalogue" style="--catalog-cover-url:url('${escapeHtml(catalogCoverUrl).replace(/'/g, "%27")}');--catalog-site-cover-url:url('/uploads/Collage%20catalogue.png')">
+          <div class="game-cover-particles" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="game-cover-progress-backface" aria-hidden="true">
+            <p>Focus Catalogue</p>
+            <span>Collection prête</span>
+          </div>
+          <section class="games-load-progress" aria-live="polite" aria-label="Progression chargement jaquettes">
+            <div class="games-load-progress-inline">
+              <div class="games-load-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuetext="0%">
+                <span class="games-load-progress-fill" style="width:0%"></span>
+              </div>
+              <strong class="games-load-progress-value">0%</strong>
+            </div>
+          </section>
+        </div>
+        <p class="game-cover-title">Focus Catalogue</p>
+      </article>
+    `;
+    gamesGridEl.innerHTML = `${toolbarMarkup}${progressCardMarkup}${cardsMarkup}`;
+    setupGamesCoversLoadProgress(gamesGridEl);
     bindProgressiveMedia(gamesGridEl);
   } catch (error) {
     // Keep the static HTML cards if dynamic rendering fails for any reason.
@@ -2858,6 +3026,7 @@ if (siteLoginFormEl) {
     event.preventDefault();
     const email = String(siteLoginEmailEl.value || "").trim().toLowerCase();
     const password = String(siteLoginPasswordEl.value || "");
+    const remember = authRememberEl ? Boolean(authRememberEl.checked) : true;
 
     if (!isAllowedOutlookEmail(email)) {
       setAuthFeedback("Adresse non autorisée. Utilisez une adresse Outlook.", "error");
@@ -2887,29 +3056,20 @@ if (siteLoginFormEl) {
       return;
     }
 
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
     const enteredActivationCode = String(siteActivationCodeEl?.value || "").trim();
 
     if (authMode === "new") {
-      if (existing && (existing.revoked || existing.blacklisted)) {
-        setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
-        return;
-      }
-      if (existing && !existing.isActive && enteredActivationCode) {
-        if (enteredActivationCode.length !== 10) {
-          setAuthFeedback("Le code d'activation doit contenir 10 caractères.", "error");
+      if (enteredActivationCode) {
+        if (enteredActivationCode.length !== 6) {
+          setAuthFeedback("Le code d'activation doit contenir 6 chiffres.", "error");
           return;
         }
-        if (String(existing.activationCode || "").toLowerCase() !== enteredActivationCode.toLowerCase()) {
-          setAuthFeedback("Code invalide. Vérifiez le code reçu.", "error");
+        try {
+          await requestUserAuthActivate(email, password, enteredActivationCode, remember);
+        } catch (error) {
+          setAuthFeedback(String(error?.message || "Code invalide. Vérifiez le code reçu."), "error");
           return;
         }
-        existing.password = password;
-        existing.isActive = true;
-        existing.activationCode = "";
-        existing.activationSentAt = "";
-        saveSiteUsers(users);
         setPendingActivation("");
         showActivationStep(false);
         sessionStorage.setItem(AUTH_SESSION_KEY, email);
@@ -2920,53 +3080,33 @@ if (siteLoginFormEl) {
         setAuthFeedback("");
         return;
       }
-      if (existing && existing.isActive) {
-        setAuthFeedback("Ce compte existe déjà. Passez sur Utilisateur pour vous connecter.", "error");
+      try {
+        await requestUserAuthActivation(email, password);
+      } catch (error) {
+        setAuthFeedback(String(error?.message || "Impossible d'envoyer le code d'activation."), "error");
         return;
       }
-      const code =
-        existing && !existing.isActive && String(existing.activationCode || "").length === 10
-          ? String(existing.activationCode)
-          : generateActivationCode();
-      if (existing) {
-        existing.password = password;
-        existing.activationCode = code;
-        existing.activationSentAt = new Date().toISOString();
-      } else {
-        users.push({
-          email,
-          password,
-          isActive: false,
-          activationCode: code,
-          activationSentAt: new Date().toISOString(),
-          revoked: false,
-          blacklisted: false,
-        });
-      }
-      saveSiteUsers(users);
       setPendingActivation(email);
       showActivationStep(true);
       if (siteActivationCodeEl) {
-        siteActivationCodeEl.value = code;
+        siteActivationCodeEl.value = "";
         siteActivationCodeEl.focus();
-        siteActivationCodeEl.select();
       }
-      setAuthFeedback(`Code d'activation: ${code} (10 caractères). Conservez-le pour activer le compte.`, "success");
+      setAuthFeedback("Code d'activation envoyé par email (6 chiffres). Entrez-le pour finaliser votre compte.", "success");
       return;
     }
 
-    if (existing && (existing.revoked || existing.blacklisted)) {
-      setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
-      return;
-    }
-    if (!existing || existing.password !== password) {
-      setAuthFeedback("Identifiants incorrects.", "error");
-      return;
-    }
-    if (!existing.isActive) {
-      setPendingActivation(email);
-      showActivationStep(true);
-      setAuthFeedback("Compte non activé. Entrez le code d'activation à 10 caractères.", "info");
+    try {
+      await requestUserAuthLogin(email, password, remember);
+    } catch (error) {
+      const message = String(error?.message || "Identifiants incorrects.");
+      if (/non activ/i.test(message)) {
+        setPendingActivation(email);
+        showActivationStep(true);
+        setAuthFeedback("Compte non activé. Entrez le code d'activation à 6 chiffres.", "info");
+        return;
+      }
+      setAuthFeedback(message, "error");
       return;
     }
 
@@ -2987,37 +3127,30 @@ if (authModeUserBtn && authModeNewBtn) {
 }
 
 if (siteActivateBtnEl) {
-  siteActivateBtnEl.addEventListener("click", () => {
+  siteActivateBtnEl.addEventListener("click", async () => {
     const email = String(siteLoginEmailEl.value || pendingActivationEmail || "").trim().toLowerCase();
+    const password = String(siteLoginPasswordEl?.value || "");
     const code = String(siteActivationCodeEl?.value || "").trim();
     if (!email || !code) {
-      setAuthFeedback("Entrez votre email et le code d'activation à 10 caractères.", "error");
+      setAuthFeedback("Entrez votre email et le code d'activation à 6 chiffres.", "error");
       return;
     }
-    if (code.length !== 10) {
-      setAuthFeedback("Le code d'activation doit contenir 10 caractères.", "error");
+    if (password.length < 6) {
+      setAuthFeedback("Entrez aussi votre mot de passe (6 caractères minimum).", "error");
       return;
     }
-
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (existing && (existing.revoked || existing.blacklisted)) {
-      setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
-      return;
-    }
-    if (!existing || existing.isActive) {
-      setAuthFeedback("Aucun compte en attente d'activation pour cet email.", "error");
-      return;
-    }
-    if (String(existing.activationCode || "").toLowerCase() !== code.toLowerCase()) {
-      setAuthFeedback("Code invalide. Vérifiez le code reçu.", "error");
+    if (code.length !== 6) {
+      setAuthFeedback("Le code d'activation doit contenir 6 chiffres.", "error");
       return;
     }
 
-    existing.isActive = true;
-    existing.activationCode = "";
-    existing.activationSentAt = "";
-    saveSiteUsers(users);
+    const remember = authRememberEl ? Boolean(authRememberEl.checked) : true;
+    try {
+      await requestUserAuthActivate(email, password, code, remember);
+    } catch (error) {
+      setAuthFeedback(String(error?.message || "Code invalide. Vérifiez le code reçu."), "error");
+      return;
+    }
     setPendingActivation("");
     showActivationStep(false);
     sessionStorage.setItem(AUTH_SESSION_KEY, email);
@@ -3033,6 +3166,8 @@ if (userLogoutBtn) {
   userLogoutBtn.addEventListener("click", async () => {
     if (sessionStorage.getItem(SESSION_KEY) === "1") {
       await requestAdminSessionLogout();
+    } else {
+      await requestUserSessionLogout();
     }
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
@@ -3191,7 +3326,7 @@ async function initializeFaqPage() {
   initializePageTransitions();
   initializeUltraPremiumVisuals();
   optimizeMediaLoadingHints();
-  initializeSiteAuth();
+  await initializeSiteAuth();
   renderGamesAdminDebug();
   refreshNavSessionButtons();
   window.addEventListener("pageshow", refreshNavSessionButtons);

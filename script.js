@@ -88,6 +88,13 @@ const bgMusicControlEl = document.getElementById("bg-music-control");
 const bgMusicToggleEl = document.getElementById("bg-music-toggle");
 const bgMusicEl = document.getElementById("bg-music");
 const cookieBannerEl = document.getElementById("cookie-banner");
+document.addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-telegram-url]");
+  if (!btn) return;
+  const url = String(btn.getAttribute("data-telegram-url") || "").trim();
+  if (!/^https:\/\/t\.me\//i.test(url)) return;
+  window.open(url, "_blank", "noopener,noreferrer");
+});
 const cookieCustomizePanelEl = document.getElementById("cookie-customize-panel");
 const cookieAcceptAllBtn = document.getElementById("cookie-accept-all");
 const cookieRejectAllBtn = document.getElementById("cookie-reject-all");
@@ -430,7 +437,6 @@ const FAQ_SEED_VERSION = 2;
 const PENDING_ACTIVATION_KEY = "vortexbox-pending-activation";
 const AUTH_REMEMBER_KEY = "vortexbox-auth-remember";
 const AUTH_REMEMBER_CHOICE_KEY = "vortexbox-auth-remember-choice";
-const AUTH_RESET_CODES_KEY = "vortexbox-reset-codes";
 const ADMIN_EMAIL = "vortexcore@outlook.fr";
 const STORAGE_KEY = "vortexbox-content";
 const AUTHORITATIVE_CONTENT_KEY = "vortexbox-content-authoritative";
@@ -3084,8 +3090,7 @@ function isAdminEmail(email) {
 function getCurrentAuthEmail() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   if (isAllowedOutlookEmail(sessionEmail)) return sessionEmail;
-  const rememberedEmail = getRememberedAuthEmail();
-  return isAllowedOutlookEmail(rememberedEmail) ? rememberedEmail : "";
+  return "";
 }
 
 function refreshNavSessionButtons() {
@@ -3130,6 +3135,118 @@ async function requestAdminSessionLogin(email, password) {
 async function requestAdminSessionLogout() {
   try {
     await fetch("/api/admin/logout", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+  } catch (error) {}
+}
+
+async function requestUserAuthLogin(email, password, remember) {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+      remember: Boolean(remember),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Accès refusé.");
+  }
+  return payload;
+}
+
+async function requestUserAuthActivation(email, password) {
+  const response = await fetch("/api/auth/request-activation", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Impossible d'initier l'activation.");
+  }
+  return payload;
+}
+
+async function requestUserAuthActivate(email, password, code, remember) {
+  const response = await fetch("/api/auth/activate", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      password: String(password || ""),
+      code: String(code || "").trim(),
+      remember: Boolean(remember),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Activation refusée.");
+  }
+  return payload;
+}
+
+async function requestUserAuthRequestReset(email) {
+  const response = await fetch("/api/auth/request-reset", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Echec de la demande de réinitialisation.");
+  }
+  return payload;
+}
+
+async function requestUserAuthConfirmReset(email, newPassword, code) {
+  const response = await fetch("/api/auth/confirm-reset", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: String(email || "").trim().toLowerCase(),
+      newPassword: String(newPassword || ""),
+      code: String(code || "").trim(),
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Réinitialisation refusée.");
+  }
+  return payload;
+}
+
+async function requestUserSessionStatus() {
+  const response = await fetch("/api/auth/session", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    return { ok: false };
+  }
+  return payload;
+}
+
+async function requestUserSessionLogout() {
+  try {
+    await fetch("/api/auth/logout", {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
@@ -3212,7 +3329,7 @@ function loadSiteUsers() {
         email: String(item.email || "").trim().toLowerCase(),
         displayName: String(item.displayName || ""),
         profilePhoto: String(item.profilePhoto || ""),
-        password: String(item.password || ""),
+        password: "",
         totalConnectionSeconds: Math.max(0, Math.floor(Number(item.totalConnectionSeconds) || 0)),
         lastSeenAt: String(item.lastSeenAt || ""),
         isActive: item.isActive === undefined ? true : Boolean(item.isActive),
@@ -4404,37 +4521,6 @@ function initializeSegmentedCodeInput(inputEl) {
   syncHidden();
 }
 
-function loadResetCodes() {
-  try {
-    const raw = localStorage.getItem(AUTH_RESET_CODES_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch (error) {
-    return {};
-  }
-}
-
-function saveResetCodes(map) {
-  localStorage.setItem(AUTH_RESET_CODES_KEY, JSON.stringify(map || {}));
-}
-
-async function sendAuthCodeByEmail(email, code, type) {
-  const response = await fetch("/api/send-auth-code", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: String(email || "").trim().toLowerCase(),
-      code: String(code || "").trim(),
-      type: type === "reset" ? "reset" : "activation",
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload.ok) {
-    throw new Error(payload.error || "Echec d'envoi email.");
-  }
-}
-
 function setRememberedAuthEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
   if (!isAllowedOutlookEmail(normalized)) {
@@ -4493,30 +4579,16 @@ function initializeForgotPasswordFlow() {
       setAuthResetFeedback("Réinitialisation admin désactivée ici. Contactez l'administrateur.", "error");
       return;
     }
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (!existing) {
-      setAuthResetFeedback("Compte introuvable pour cette adresse.", "error");
-      return;
-    }
-
-    const code = generateActivationCode();
-    const allCodes = loadResetCodes();
-    allCodes[email] = {
-      code,
-      expiresAt: Date.now() + 10 * 60 * 1000,
-    };
     try {
-      await sendAuthCodeByEmail(email, code, "reset");
+      await requestUserAuthRequestReset(email);
     } catch (error) {
       setAuthResetFeedback(`Impossible d'envoyer le code par email: ${error.message || "configuration serveur manquante"}`, "error");
       return;
     }
-    saveResetCodes(allCodes);
     setAuthResetFeedback(`Code envoyé à ${email}. Vérifiez votre boîte mail Outlook.`, "success");
   });
 
-  authResetConfirmBtnEl?.addEventListener("click", () => {
+  authResetConfirmBtnEl?.addEventListener("click", async () => {
     const email = String(authResetEmailEl?.value || siteLoginEmailEl?.value || "").trim().toLowerCase();
     const newPassword = String(authResetPasswordEl?.value || "");
     const code = String(authResetCodeEl?.value || "").trim();
@@ -4529,24 +4601,12 @@ function initializeForgotPasswordFlow() {
       return;
     }
 
-    const allCodes = loadResetCodes();
-    const token = allCodes[email];
-    if (!token || token.code !== code || Number(token.expiresAt || 0) < Date.now()) {
-      setAuthResetFeedback("Code invalide ou expiré.", "error");
+    try {
+      await requestUserAuthConfirmReset(email, newPassword, code);
+    } catch (error) {
+      setAuthResetFeedback(String(error?.message || "Code invalide ou expiré."), "error");
       return;
     }
-
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (!existing) {
-      setAuthResetFeedback("Compte introuvable.", "error");
-      return;
-    }
-
-    existing.password = newPassword;
-    saveSiteUsers(users);
-    delete allCodes[email];
-    saveResetCodes(allCodes);
     setAuthResetFeedback("Mot de passe réinitialisé. Vous pouvez vous connecter.", "success");
     setAuthFeedback("Réinitialisation réussie. Connectez-vous avec votre nouveau mot de passe.", "success");
     if (siteLoginEmailEl) siteLoginEmailEl.value = email;
@@ -4693,26 +4753,35 @@ function lockSite() {
   applyBackgroundMusicAccess();
 }
 
-function initializeSiteAuth() {
+async function initializeSiteAuth() {
   const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   const rememberChoice = getRememberChoice();
   const rememberEnabled = rememberChoice === null ? true : rememberChoice;
   const rememberedEmail = getRememberedAuthEmail();
-  const existingEmail = isAllowedOutlookEmail(sessionEmail) ? sessionEmail : rememberedEmail;
 
   if (authRememberEl) authRememberEl.checked = rememberEnabled;
   if (siteLoginEmailEl && isAllowedOutlookEmail(rememberedEmail) && !siteLoginEmailEl.value) {
     siteLoginEmailEl.value = rememberedEmail;
   }
 
-  if (isAllowedOutlookEmail(existingEmail)) {
-    sessionStorage.setItem(AUTH_SESSION_KEY, existingEmail);
-    if (!isAdminEmail(existingEmail)) {
-      sessionStorage.removeItem(SESSION_KEY);
-    }
+  const serverSession = await requestUserSessionStatus();
+  if (serverSession?.ok && isAllowedOutlookEmail(serverSession.email)) {
+    const activeEmail = String(serverSession.email || "").trim().toLowerCase();
+    sessionStorage.setItem(AUTH_SESSION_KEY, activeEmail);
+    sessionStorage.removeItem(SESSION_KEY);
+    syncRememberPreference(activeEmail);
     unlockSite();
     return;
   }
+
+  if (sessionEmail && isAdminEmail(sessionEmail) && sessionStorage.getItem(SESSION_KEY) === "1") {
+    sessionStorage.setItem(AUTH_SESSION_KEY, sessionEmail);
+    unlockSite();
+    return;
+  }
+
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
   lockSite();
   const pendingEmail = sessionStorage.getItem(PENDING_ACTIVATION_KEY) || "";
   if (isAllowedOutlookEmail(pendingEmail)) {
@@ -6704,10 +6773,8 @@ function bindProgressiveMedia(root = document) {
     image.addEventListener(
       "error",
       () => {
-        // Some images get swapped to fallback src after first error.
-        window.setTimeout(() => {
-          if (image.complete && image.naturalWidth > 0) markLoaded();
-        }, 120);
+        image.src = "/favicon-vb.svg";
+        window.setTimeout(markLoaded, 60);
       },
       { once: true }
     );
@@ -11056,6 +11123,30 @@ function triggerDownloadFromPath(href, fileName = "") {
 
 function renderAdminProcessusEditor() {
   if (!adminProcessList) return;
+  const getProcessPremiumIcon = (kind) => {
+    if (kind === "edit") {
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l10.06-10.06.92.92L5.92 19.58zM20.71 6.04a1 1 0 0 0 0-1.41L19.37 3.3a1 1 0 0 0-1.41 0l-1.08 1.08 3.75 3.75 1.08-1.09z"/>
+        </svg>
+      `;
+    }
+    if (kind === "link") {
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M10.59 13.41a1 1 0 0 0 1.41 1.41l4.24-4.24a3 3 0 1 0-4.24-4.24L9.88 8.46a1 1 0 1 0 1.41 1.41l2.12-2.12a1 1 0 1 1 1.41 1.41L10.59 13.4z"/>
+          <path d="M13.41 10.59a1 1 0 0 0-1.41-1.41L7.76 13.42a3 3 0 0 0 4.24 4.24l2.12-2.12a1 1 0 0 0-1.41-1.41l-2.12 2.12a1 1 0 1 1-1.41-1.41l4.23-4.24z"/>
+        </svg>
+      `;
+    }
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M14 3h7v7h-2V6.41l-8.29 8.3-1.42-1.42 8.3-8.29H14V3z"/>
+        <path d="M19 19H5V5h6V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6h-2v6z"/>
+      </svg>
+    `;
+  };
+
   setAdminProcessSubtab(activeAdminProcessSubtab);
   renderAdminProcessConsoleEditor();
   renderAdminCrmEditor();
@@ -11114,7 +11205,7 @@ function renderAdminProcessusEditor() {
         const editButtons = sectionIsSuppliers
           ? `
             <button
-              class="admin-icon-premium-btn"
+              class="admin-icon-premium-btn admin-icon-premium-btn--edit"
               type="button"
               data-action="edit-process-link-field"
               data-edit-field="title"
@@ -11123,10 +11214,10 @@ function renderAdminProcessusEditor() {
               aria-label="Modifier le titre"
               title="Modifier le titre"
             >
-              ✎
+              ${getProcessPremiumIcon("edit")}
             </button>
             <button
-              class="admin-icon-premium-btn"
+              class="admin-icon-premium-btn admin-icon-premium-btn--link"
               type="button"
               data-action="edit-process-link-field"
               data-edit-field="url"
@@ -11135,10 +11226,10 @@ function renderAdminProcessusEditor() {
               aria-label="Modifier le lien"
               title="Modifier le lien"
             >
-              🔗
+              ${getProcessPremiumIcon("link")}
             </button>
             <button
-              class="admin-icon-premium-btn"
+              class="admin-icon-premium-btn admin-icon-premium-btn--open"
               type="button"
               data-action="launch-process-link-url"
               data-process-link-index="${index}"
@@ -11146,21 +11237,13 @@ function renderAdminProcessusEditor() {
               aria-label="Lancer URL"
               title="Lancer URL"
             >
-              ↗
+              ${getProcessPremiumIcon("open")}
             </button>
           `
           : `
             <button class="admin-secondary" type="button" data-action="edit-process-link" data-process-link-index="${index}" data-process-link-section="${escapeHtml(sectionKey)}">Modifier</button>
           `;
-        const footerActions = sectionIsSuppliers
-          ? `
-            <div class="admin-process-link-footer-actions">
-              <div class="admin-process-link-premium-actions">
-                ${editButtons}
-              </div>
-            </div>
-          `
-          : `<div class="technical-actions">${openLinkButton}</div>`;
+        const footerActions = sectionIsSuppliers ? "" : `<div class="technical-actions">${openLinkButton}</div>`;
         return `
           <article class="admin-tech-card">
             <div class="admin-machine-header">
@@ -16077,6 +16160,7 @@ if (siteLoginFormEl) {
     event.preventDefault();
     const email = String(siteLoginEmailEl.value || "").trim().toLowerCase();
     const password = String(siteLoginPasswordEl.value || "");
+    const remember = authRememberEl ? Boolean(authRememberEl.checked) : true;
 
     if (password.length < 6) {
       setAuthFeedback("Mot de passe trop court (6 caractères minimum).", "error");
@@ -16111,29 +16195,20 @@ if (siteLoginFormEl) {
       return;
     }
 
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
     const enteredActivationCode = String(siteActivationCodeEl?.value || "").trim();
 
     if (authMode === "new") {
-      if (existing && (existing.revoked || existing.blacklisted)) {
-        setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
-        return;
-      }
-      if (existing && !existing.isActive && enteredActivationCode) {
-        if (enteredActivationCode.length !== 10) {
-          setAuthFeedback("Le code d'activation doit contenir 10 caractères.", "error");
+      if (enteredActivationCode) {
+        if (enteredActivationCode.length !== 6) {
+          setAuthFeedback("Le code d'activation doit contenir 6 chiffres.", "error");
           return;
         }
-        if (String(existing.activationCode || "").toLowerCase() !== enteredActivationCode.toLowerCase()) {
-          setAuthFeedback("Code invalide. Vérifiez le code reçu.", "error");
+        try {
+          await requestUserAuthActivate(email, password, enteredActivationCode, remember);
+        } catch (error) {
+          setAuthFeedback(String(error?.message || "Code invalide. Vérifiez le code reçu."), "error");
           return;
         }
-        existing.password = password;
-        existing.isActive = true;
-        existing.activationCode = "";
-        existing.activationSentAt = "";
-        saveSiteUsers(users);
         setPendingActivation("");
         showActivationStep(false);
         sessionStorage.setItem(AUTH_SESSION_KEY, email);
@@ -16144,57 +16219,37 @@ if (siteLoginFormEl) {
         setAuthFeedback("");
         return;
       }
-      if (existing && existing.isActive) {
-        setAuthFeedback("Ce compte existe déjà. Passez sur Utilisateur pour vous connecter.", "error");
+
+      try {
+        await requestUserAuthActivation(email, password);
+      } catch (error) {
+        setAuthFeedback(String(error?.message || "Impossible d'envoyer le code d'activation."), "error");
         return;
       }
-      const code =
-        existing && !existing.isActive && String(existing.activationCode || "").length === 10
-          ? String(existing.activationCode)
-          : generateActivationCode();
-      if (existing) {
-        existing.password = password;
-        existing.activationCode = code;
-        existing.activationSentAt = new Date().toISOString();
-      } else {
-        users.push({
-          email,
-          displayName: "",
-          profilePhoto: "",
-          password,
-          totalConnectionSeconds: 0,
-          lastSeenAt: "",
-          isActive: false,
-          activationCode: code,
-          activationSentAt: new Date().toISOString(),
-          revoked: false,
-          blacklisted: false,
-        });
-      }
-      saveSiteUsers(users);
       setPendingActivation(email);
       showActivationStep(true);
       if (siteActivationCodeEl) {
-        siteActivationCodeEl.value = code;
+        siteActivationCodeEl.value = "";
         siteActivationCodeEl.focus();
-        siteActivationCodeEl.select();
       }
-      setAuthFeedback(`Code d'activation: ${code} (10 caractères). Conservez-le pour activer le compte.`, "success");
+      setAuthFeedback("Code d'activation envoyé par email (6 chiffres). Entrez-le pour finaliser votre compte.", "success");
       return;
     } else {
-      if (existing && (existing.revoked || existing.blacklisted)) {
-        setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
+      try {
+        await requestUserAuthLogin(email, password, remember);
+      } catch (error) {
+        const message = String(error?.message || "Identifiants incorrects.");
+        if (/non activ/i.test(message)) {
+          setPendingActivation(email);
+          showActivationStep(true);
+          setAuthFeedback("Compte non activé. Entrez le code d'activation à 6 chiffres.", "info");
+          return;
+        }
+        setAuthFeedback(message, "error");
         return;
       }
-      if (!existing || existing.password !== password) {
-        setAuthFeedback("Identifiants incorrects.", "error");
-        return;
-      }
-      if (!existing.isActive) {
+      if (pendingActivationEmail && pendingActivationEmail === email) {
         setPendingActivation(email);
-        showActivationStep(true);
-        setAuthFeedback("Compte non activé. Entrez le code d'activation à 10 caractères.", "info");
-        return;
       }
     }
 
@@ -16309,7 +16364,7 @@ if (profileAvatarPresetsEl) {
 }
 
 if (profileChangePasswordBtn) {
-  profileChangePasswordBtn.addEventListener("click", () => {
+  profileChangePasswordBtn.addEventListener("click", async () => {
     const email = getCurrentSessionEmail();
     if (!email) return;
 
@@ -16335,19 +16390,27 @@ if (profileChangePasswordBtn) {
       return;
     }
 
-    const users = loadSiteUsers();
-    const existing = users.find((user) => user.email === email);
-    if (!existing) {
-      setProfilePasswordFeedback("Profil utilisateur introuvable.");
-      return;
-    }
-    if (existing.password !== currentPassword) {
-      setProfilePasswordFeedback("Mot de passe actuel incorrect.");
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          currentPassword,
+          newPassword,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload?.ok) {
+        setProfilePasswordFeedback(String(payload?.error || "Modification du mot de passe refusée."));
+        return;
+      }
+    } catch (error) {
+      setProfilePasswordFeedback("Erreur réseau pendant la modification du mot de passe.");
       return;
     }
 
-    existing.password = newPassword;
-    saveSiteUsers(users);
     if (profileCurrentPasswordInput) profileCurrentPasswordInput.value = "";
     if (profileNewPasswordInput) profileNewPasswordInput.value = "";
     if (profileConfirmPasswordInput) profileConfirmPasswordInput.value = "";
@@ -16696,36 +16759,30 @@ if (profileDownloadsListEl) {
 }
 
 if (siteActivateBtnEl) {
-  siteActivateBtnEl.addEventListener("click", () => {
+  siteActivateBtnEl.addEventListener("click", async () => {
     const email = String(siteLoginEmailEl.value || pendingActivationEmail || "").trim().toLowerCase();
+    const password = String(siteLoginPasswordEl?.value || "");
     const code = String(siteActivationCodeEl?.value || "").trim();
     if (!email || !code) {
-      setAuthFeedback("Entrez votre email et le code d'activation à 10 caractères.", "error");
+      setAuthFeedback("Entrez votre email et le code d'activation à 6 chiffres.", "error");
       return;
     }
-    if (code.length !== 10) {
-      setAuthFeedback("Le code d'activation doit contenir 10 caractères.", "error");
+    if (password.length < 6) {
+      setAuthFeedback("Entrez aussi votre mot de passe (6 caractères minimum).", "error");
       return;
     }
-    const users = loadSiteUsers();
-    const existing = users.find((u) => u.email === email);
-    if (existing && (existing.revoked || existing.blacklisted)) {
-      setAuthFeedback("Compte bloqué. Contactez l'administrateur.", "error");
-      return;
-    }
-    if (!existing || existing.isActive) {
-      setAuthFeedback("Aucun compte en attente d'activation pour cet email.", "error");
-      return;
-    }
-    if (String(existing.activationCode || "").toLowerCase() !== code.toLowerCase()) {
-      setAuthFeedback("Code invalide. Vérifiez le code reçu.", "error");
+    if (code.length !== 6) {
+      setAuthFeedback("Le code d'activation doit contenir 6 chiffres.", "error");
       return;
     }
 
-    existing.isActive = true;
-    existing.activationCode = "";
-    existing.activationSentAt = "";
-    saveSiteUsers(users);
+    const remember = authRememberEl ? Boolean(authRememberEl.checked) : true;
+    try {
+      await requestUserAuthActivate(email, password, code, remember);
+    } catch (error) {
+      setAuthFeedback(String(error?.message || "Code invalide. Vérifiez le code reçu."), "error");
+      return;
+    }
     setPendingActivation("");
     showActivationStep(false);
     sessionStorage.setItem(AUTH_SESSION_KEY, email);
@@ -16741,6 +16798,8 @@ if (userLogoutBtn) {
   userLogoutBtn.addEventListener("click", async () => {
     if (sessionStorage.getItem(SESSION_KEY) === "1") {
       await requestAdminSessionLogout();
+    } else {
+      await requestUserSessionLogout();
     }
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
@@ -18199,7 +18258,7 @@ async function initializeApp() {
   window.addEventListener("offline", updateAdminControlCenter);
   window.addEventListener("online", () => refreshAdminRailwayStatus(true));
   window.addEventListener("offline", () => refreshAdminRailwayStatus(true));
-  initializeSiteAuth();
+  await initializeSiteAuth();
   await validateAdminSessionWithServer();
   if (hasContentPendingDiskSync() && isAdminSessionAuthorized()) {
     await saveContentSnapshotToDisk(siteContent);

@@ -433,51 +433,6 @@
       "createdAt": "2026-03-19T10:45:24.754Z"
     }
   ],
-  "processus": {
-    "files": [
-      {
-        "title": "Procédure Railway",
-        "fileName": "VortexBox-Tuto-Complet-Railway-Premium-v1.pdf",
-        "fileData": "uploads/processus/1773779192710-8nh2gl-vortexbox-tuto-complet-railway-premium-v1.pdf",
-        "path": "",
-        "fileMime": "application/pdf"
-      }
-    ],
-    "purchases": [
-      {
-        "label": "VortexBox Elite",
-        "url": "https://www.amazon.fr/Mavsloly-i9-14900F-g%C3%A9n%C3%A9ration-graphique-affichages/dp/B0FVLT1Q26?ref_=ast_sto_dp&th=1"
-      },
-      {
-        "label": "VortexBox",
-        "url": "https://www.amazon.fr/Mavsloly-Mini-ordinateur-bureau-Processeur/dp/B0D41PKG2K?ref_=ast_sto_dp&th=1"
-      },
-      {
-        "label": "Clavier & Souris",
-        "url": "https://www.amazon.fr/RedThunder-K20-TKL-R%C3%A9tro%C3%A9clairage-Ultra-Compact-Rechargeable/dp/B0DJ2YZBV1?source=ps-sl-shoppingads-lpcontext&ref_=fplfs&psc=1&smid=A2LGTS14B5W4QT&utm_source=chatgpt.com"
-      },
-      {
-        "label": "Ecran PC",
-        "url": "https://www.amazon.fr/Gawfolk-haut-parleur-incorpor%C3%A9-Compatible-100mm-Noir/dp/B0G4TFJ85H?source=ps-sl-shoppingads-lpcontext&ref_=fplfs&smid=A2RZQCIE5YV417&utm_source=chatgpt.com&th=1"
-      },
-      {
-        "label": "Manette de jeux",
-        "url": "https://www.amazon.fr/MYSTILUCK-Contr%C3%B4leur-d%C3%A9clairage-Changeantes-Ergonomique/dp/B0DJ2PLH9G?source=ps-sl-shoppingads-lpcontext&ref_=fplfs&psc=1&smid=AD85BPYGD3VX7&utm_source=chatgpt.com"
-      },
-      {
-        "label": "Casque VR",
-        "url": "https://www.amazon.fr/Meta-Quest-512-Plus-performant/dp/B09N5CNS5T?source=ps-sl-shoppingads-lpcontext&ref_=fplfs&smid=A1X6FK5RDHNB96&language=fr_FR&utm_source=chatgpt.com&th=1"
-      }
-    ],
-    "crmLeads": [],
-    "invoices": [],
-    "gamesFiles": [],
-    "gamesAssignments": [],
-    "suppliersOrders": [],
-    "stockItems": [],
-    "deliveryItems": [],
-    "savItems": []
-  },
   "faqItems": [
     {
       "question": "VortexBox, c’est quoi exactement ?",
@@ -945,5 +900,17 @@
       }
     ]
   },
-  "_updatedAt": 1773918646295
+  "_updatedAt": 1773997944607,
+  "processus": {
+    "files": [],
+    "purchases": [],
+    "crmLeads": [],
+    "invoices": [],
+    "gamesFiles": [],
+    "gamesAssignments": [],
+    "suppliersOrders": [],
+    "stockItems": [],
+    "savItems": [],
+    "deliveryItems": []
+  }
 }

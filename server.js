@@ -6,6 +6,13 @@ const path = require("path");
 const crypto = require("crypto");
 const { spawn } = require("child_process");
 const { URL } = require("url");
+const zlib = require("zlib");
+const { hashPasswordScrypt, verifyScryptHash } = require("./lib/password-hash");
+const { runStorageRetentionCleanup } = require("./lib/storage-retention");
+const { createUserAuthRouteHandler } = require("./lib/auth-user");
+const { createUploadRouteHandler } = require("./lib/upload-routes");
+const { createContentRouteHandler } = require("./lib/content-routes");
+const { createAdminOpsRouteHandler } = require("./lib/admin-ops-routes");
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 8080);
@@ -16,7 +23,9 @@ const UPLOADS_DIR = path.join(ROOT_DIR, "uploads");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const CONTENT_FILE = path.join(DATA_DIR, "site-content.json");
 const CONTENT_BACKUPS_DIR = path.join(DATA_DIR, "content-backups");
+const BACKUPS_DIR = path.join(ROOT_DIR, "backups");
 const USER_STATE_FILE = path.join(DATA_DIR, "user-state.json");
+const AUTH_USERS_FILE = path.join(DATA_DIR, "auth-users.json");
 const MAX_JSON_BYTES = 15 * 1024 * 1024;
 const MAX_BINARY_UPLOAD_BYTES = 1 * 1024 * 1024 * 1024;
 const ENV_FILE = path.join(ROOT_DIR, ".env");
@@ -96,11 +105,19 @@ const HF_API_KEY = process.env.HF_API_KEY || "";
 const HF_MODEL = process.env.HF_MODEL || "mistralai/Mistral-7B-Instruct-v0.3";
 const AI_FREE_FIRST = String(process.env.AI_FREE_FIRST || "1") === "1";
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "vortexcore@outlook.fr").trim().toLowerCase();
-const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "Eolia460&Qp46uqv");
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "");
+const ADMIN_PASSWORD_HASH = String(process.env.ADMIN_PASSWORD_HASH || "").trim();
 const ADMIN_SESSION_COOKIE = "vb_admin_session";
-const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
-const ADMIN_SESSION_NO_EXPIRY = true;
-const ADMIN_SESSION_PERSIST_MAX_AGE_SECONDS = 60 * 60 * 24 * 365 * 10; // 10 ans
+const ADMIN_SESSION_TTL_MS = 2 * 60 * 60 * 1000;
+const ADMIN_SESSION_NO_EXPIRY = false;
+const ADMIN_SESSION_PERSIST_MAX_AGE_SECONDS = Math.floor(ADMIN_SESSION_TTL_MS / 1000);
+const USER_SESSION_COOKIE = "vb_user_session";
+const USER_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const USER_SESSION_REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const BACKUPS_RETENTION_DAYS = Math.max(1, Number(process.env.BACKUPS_RETENTION_DAYS || 90));
+const CONTENT_BACKUPS_RETENTION_DAYS = Math.max(1, Number(process.env.CONTENT_BACKUPS_RETENTION_DAYS || 30));
+const BACKUPS_KEEP_MIN_FILES = Math.max(1, Number(process.env.BACKUPS_KEEP_MIN_FILES || 8));
+const CONTENT_BACKUPS_KEEP_MIN_FILES = Math.max(1, Number(process.env.CONTENT_BACKUPS_KEEP_MIN_FILES || 30));
 const CONFIG_VISUAL_SLOT_COUNT = 4;
 
 function getConfigVisualSlotIndexes() {
@@ -154,8 +171,11 @@ const MIME_TYPES = {
 };
 
 const RATE_LIMIT_STORE = new Map();
+const RATE_LIMIT_IDENTIFIER_STORE = new Map();
 const UPLOAD_STATUS_STORE = new Map();
 const ADMIN_SESSION_STORE = new Map();
+const USER_SESSION_STORE = new Map();
+const AUTH_CODE_COOLDOWN_STORE = new Map();
 
 function isAdminEmailCandidate(email) {
   const normalized = String(email || "").trim().toLowerCase();
@@ -185,7 +205,36 @@ function isRateLimited(req, key, maxHits, windowMs) {
   return false;
 }
 
+function isRateLimitedByIdentifier(namespace, identifier, maxHits, windowMs) {
+  const id = String(identifier || "").trim().toLowerCase();
+  if (!id) return false;
+  const now = Date.now();
+  const bucketKey = `${namespace}:${id}`;
+  const current = RATE_LIMIT_IDENTIFIER_STORE.get(bucketKey) || [];
+  const valid = current.filter((ts) => now - ts < windowMs);
+  if (valid.length >= maxHits) {
+    RATE_LIMIT_IDENTIFIER_STORE.set(bucketKey, valid);
+    return true;
+  }
+  valid.push(now);
+  RATE_LIMIT_IDENTIFIER_STORE.set(bucketKey, valid);
+  return false;
+}
+
 function buildSecurityHeaders() {
+  const csp = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'self'",
+    "form-action 'self'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' data: blob: https:",
+    "connect-src 'self' https://api.openai.com https://api-inference.huggingface.co https://router.huggingface.co https://api.resend.com",
+  ].join("; ");
   return {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "SAMEORIGIN",
@@ -193,6 +242,7 @@ function buildSecurityHeaders() {
     "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
     "Cross-Origin-Resource-Policy": "same-origin",
     "Cross-Origin-Opener-Policy": "same-origin",
+    "Content-Security-Policy": csp,
   };
 }
 
@@ -232,6 +282,60 @@ function createAdminSession(email) {
     expiresAt: ADMIN_SESSION_NO_EXPIRY ? Number.MAX_SAFE_INTEGER : Date.now() + ADMIN_SESSION_TTL_MS,
   });
   return token;
+}
+
+function verifyAdminPassword(password) {
+  const candidate = String(password || "");
+  if (ADMIN_PASSWORD_HASH) {
+    return verifyScryptHash(candidate, ADMIN_PASSWORD_HASH);
+  }
+  return ADMIN_PASSWORD ? candidate === ADMIN_PASSWORD : false;
+}
+
+function createUserSession(email, remember = false) {
+  const token = crypto.randomBytes(24).toString("hex");
+  const ttlMs = remember ? USER_SESSION_REMEMBER_TTL_MS : USER_SESSION_TTL_MS;
+  USER_SESSION_STORE.set(token, {
+    email: String(email || "").trim().toLowerCase(),
+    expiresAt: Date.now() + ttlMs,
+    remember: Boolean(remember),
+  });
+  return token;
+}
+
+function getUserSession(req) {
+  const cookies = parseCookies(req);
+  const token = String(cookies[USER_SESSION_COOKIE] || "");
+  if (!token) return null;
+  const session = USER_SESSION_STORE.get(token);
+  if (!session) return null;
+  if (Number(session.expiresAt || 0) <= Date.now()) {
+    USER_SESSION_STORE.delete(token);
+    return null;
+  }
+  return { token, email: String(session.email || "").trim().toLowerCase(), remember: Boolean(session.remember) };
+}
+
+function clearUserSession(token) {
+  if (!token) return;
+  USER_SESSION_STORE.delete(token);
+}
+
+function buildUserSessionCookie(req, token) {
+  const session = USER_SESSION_STORE.get(token);
+  const now = Date.now();
+  const maxAgeSeconds = Math.max(0, Math.floor((Number(session?.expiresAt || now) - now) / 1000));
+  return buildCookieHeader(USER_SESSION_COOKIE, token, {
+    maxAge: maxAgeSeconds,
+    secure: shouldUseSecureCookies(req),
+  });
+}
+
+function buildUserSessionClearCookie(req) {
+  return buildCookieHeader(USER_SESSION_COOKIE, "", {
+    maxAge: 0,
+    secure: shouldUseSecureCookies(req),
+  });
 }
 
 function getAdminSession(req) {
@@ -314,6 +418,15 @@ function cleanupAdminSessionStore() {
   for (const [token, session] of ADMIN_SESSION_STORE.entries()) {
     if (Number(session?.expiresAt || 0) <= now) {
       ADMIN_SESSION_STORE.delete(token);
+    }
+  }
+}
+
+function cleanupUserSessionStore() {
+  const now = Date.now();
+  for (const [token, session] of USER_SESSION_STORE.entries()) {
+    if (Number(session?.expiresAt || 0) <= now) {
+      USER_SESSION_STORE.delete(token);
     }
   }
 }
@@ -2153,6 +2266,52 @@ async function handleGetContent(res) {
   }
 }
 
+function stripSensitiveFieldsDeep(value) {
+  if (Array.isArray(value)) return value.map((item) => stripSensitiveFieldsDeep(item));
+  if (!value || typeof value !== "object") return value;
+  const blockedKey = (key) =>
+    /(password|secret|token|session|api[_-]?key|smtp|mail[_-]?pass|auth[_-]?code|reset[_-]?code)/i.test(
+      String(key || "")
+    );
+  const output = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (blockedKey(key)) continue;
+    output[key] = stripSensitiveFieldsDeep(entry);
+  }
+  return output;
+}
+
+function sanitizePublicContent(content) {
+  const base = content && typeof content === "object" ? content : {};
+  const sanitized = stripSensitiveFieldsDeep(base);
+  [
+    "userState",
+    "users",
+    "userLog",
+    "admin",
+    "crm",
+    "stock",
+    "kpis",
+    "processus",
+    "railway",
+    "backups",
+    "internal",
+  ].forEach((key) => {
+    if (key in sanitized) delete sanitized[key];
+  });
+  return sanitized;
+}
+
+async function handleGetPublicContent(res) {
+  try {
+    const raw = await fsp.readFile(CONTENT_FILE, "utf8");
+    const content = JSON.parse(raw);
+    sendJson(res, 200, { ok: true, content: sanitizePublicContent(content) });
+  } catch (error) {
+    sendJson(res, 404, { ok: false, error: "Aucun contenu public disponible." });
+  }
+}
+
 function normalizeGamesCatalogForApi(items) {
   const diskFallback = (() => {
     try {
@@ -2215,7 +2374,7 @@ async function handleAdminSessionLogin(req, res) {
     sendJson(res, 400, { ok: false, error: "Email et mot de passe requis." });
     return;
   }
-  if (!isAdminEmailCandidate(email) || password !== ADMIN_PASSWORD) {
+  if (!isAdminEmailCandidate(email) || !verifyAdminPassword(password)) {
     sendJson(res, 401, { ok: false, error: "Identifiants administrateur invalides." });
     return;
   }
@@ -2250,8 +2409,19 @@ async function handleSaveUserState(req, res) {
     sendJson(res, 400, { error: "Etat utilisateur manquant." });
     return;
   }
+  const safeState = { ...state };
+  if (Array.isArray(safeState.users)) {
+    safeState.users = safeState.users.map((item) => {
+      const next = item && typeof item === "object" ? { ...item } : {};
+      if ("password" in next) next.password = "";
+      if ("passwordHash" in next) next.passwordHash = "";
+      if ("activationCode" in next) next.activationCode = "";
+      if ("resetCode" in next) next.resetCode = "";
+      return next;
+    });
+  }
   await fsp.mkdir(DATA_DIR, { recursive: true });
-  await writeJsonAtomic(USER_STATE_FILE, state);
+  await writeJsonAtomic(USER_STATE_FILE, safeState);
   sendJson(res, 200, { ok: true, file: "data/user-state.json" });
 }
 
@@ -2669,7 +2839,9 @@ function serveStatic(req, res) {
   const isDynamicFrontendAsset = ext === ".js" || ext === ".css";
   const cacheControl =
     ext === ".html" || isDynamicFrontendAsset
-      ? "no-store"
+      ? ext === ".html"
+        ? "no-store"
+        : "public, max-age=604800, stale-while-revalidate=86400"
       : isUploadAsset
         ? "public, max-age=0, must-revalidate"
         : isImmutableAsset
@@ -2742,6 +2914,38 @@ function serveStatic(req, res) {
     return;
   }
 
+  const fileStream = fs.createReadStream(finalPath);
+  const acceptEncoding = String(req.headers["accept-encoding"] || "").toLowerCase();
+  const isCompressibleType =
+    [".html", ".css", ".js", ".json", ".svg", ".txt"].includes(ext) || type.startsWith("text/");
+  const shouldCompress = !rangeHeader && isCompressibleType && totalSize >= 1024;
+  if (shouldCompress && (acceptEncoding.includes("br") || acceptEncoding.includes("gzip"))) {
+    const useBr = acceptEncoding.includes("br");
+    const encoding = useBr ? "br" : "gzip";
+    const compressor = useBr ? zlib.createBrotliCompress() : zlib.createGzip({ level: zlib.constants.Z_BEST_SPEED });
+    res.writeHead(200, {
+      "Content-Type": type,
+      "Accept-Ranges": "bytes",
+      "Cache-Control": cacheControl,
+      ETag: etag,
+      Vary: "Accept-Encoding",
+      "Content-Encoding": encoding,
+      ...(isUploadAsset ? { "X-Vortex-Storage": "disk" } : {}),
+      ...buildSecurityHeaders(),
+    });
+    fileStream.on("error", () => {
+      if (!res.headersSent) {
+        res.writeHead(500, {
+          "Content-Type": "text/plain; charset=utf-8",
+          ...buildSecurityHeaders(),
+        });
+      }
+      res.end("Erreur lecture fichier.");
+    });
+    fileStream.pipe(compressor).pipe(res);
+    return;
+  }
+
   res.writeHead(200, {
     "Content-Type": type,
     "Content-Length": totalSize,
@@ -2751,7 +2955,6 @@ function serveStatic(req, res) {
     ...(isUploadAsset ? { "X-Vortex-Storage": "disk" } : {}),
     ...buildSecurityHeaders(),
   });
-  const fileStream = fs.createReadStream(finalPath);
   fileStream.on("error", () => {
     if (!res.headersSent) {
       res.writeHead(500, {
@@ -2891,6 +3094,7 @@ async function sendAuthCodeEmail(email, code, type) {
 }
 
 async function handleSendAuthCode(req, res) {
+  if (!requireAdminSession(req, res)) return;
   const body = await readJsonBody(req);
   const email = String(body.email || "").trim().toLowerCase();
   const code = String(body.code || "").trim();
@@ -2904,6 +3108,15 @@ async function handleSendAuthCode(req, res) {
     sendJson(res, 400, { ok: false, error: "Code invalide." });
     return;
   }
+  if (isRateLimitedByIdentifier("send-auth-code-email", email, 5, 10 * 60 * 1000)) {
+    sendJson(res, 429, { ok: false, error: "Trop de codes demandés pour cet email. Réessayez plus tard." });
+    return;
+  }
+  const lastSentAt = Number(AUTH_CODE_COOLDOWN_STORE.get(email) || 0);
+  if (Date.now() - lastSentAt < 60 * 1000) {
+    sendJson(res, 429, { ok: false, error: "Veuillez attendre 60 secondes avant un nouveau code." });
+    return;
+  }
 
   const result = await sendAuthCodeEmail(email, code, type);
   if (!result.ok) {
@@ -2911,6 +3124,7 @@ async function handleSendAuthCode(req, res) {
     return;
   }
 
+  AUTH_CODE_COOLDOWN_STORE.set(email, Date.now());
   sendJson(res, 200, { ok: true });
 }
 
@@ -3192,6 +3406,18 @@ function ensureMaintenanceTimers() {
       if (valid.length === 0) RATE_LIMIT_STORE.delete(key);
       else RATE_LIMIT_STORE.set(key, valid);
     }
+    for (const [key, hits] of RATE_LIMIT_IDENTIFIER_STORE.entries()) {
+      if (!Array.isArray(hits) || hits.length === 0) {
+        RATE_LIMIT_IDENTIFIER_STORE.delete(key);
+        continue;
+      }
+      const valid = hits.filter((ts) => now - ts < 10 * 60 * 1000);
+      if (valid.length === 0) RATE_LIMIT_IDENTIFIER_STORE.delete(key);
+      else RATE_LIMIT_IDENTIFIER_STORE.set(key, valid);
+    }
+    for (const [email, ts] of AUTH_CODE_COOLDOWN_STORE.entries()) {
+      if (now - Number(ts || 0) > 30 * 60 * 1000) AUTH_CODE_COOLDOWN_STORE.delete(email);
+    }
   }, 5 * 60 * 1000).unref();
 
   setInterval(() => {
@@ -3201,7 +3427,99 @@ function ensureMaintenanceTimers() {
   setInterval(() => {
     cleanupAdminSessionStore();
   }, 10 * 60 * 1000).unref();
+
+  setInterval(() => {
+    cleanupUserSessionStore();
+  }, 10 * 60 * 1000).unref();
+
+  // Retention automatique des sauvegardes (coût stockage maîtrisé).
+  runStorageRetentionCleanup({
+    backupsDir: BACKUPS_DIR,
+    contentBackupsDir: CONTENT_BACKUPS_DIR,
+    backupsRetentionDays: BACKUPS_RETENTION_DAYS,
+    contentBackupsRetentionDays: CONTENT_BACKUPS_RETENTION_DAYS,
+    backupsKeepMinFiles: BACKUPS_KEEP_MIN_FILES,
+    contentBackupsKeepMinFiles: CONTENT_BACKUPS_KEEP_MIN_FILES,
+    logger: console,
+  }).catch(() => {});
+  setInterval(() => {
+    runStorageRetentionCleanup({
+      backupsDir: BACKUPS_DIR,
+      contentBackupsDir: CONTENT_BACKUPS_DIR,
+      backupsRetentionDays: BACKUPS_RETENTION_DAYS,
+      contentBackupsRetentionDays: CONTENT_BACKUPS_RETENTION_DAYS,
+      backupsKeepMinFiles: BACKUPS_KEEP_MIN_FILES,
+      contentBackupsKeepMinFiles: CONTENT_BACKUPS_KEEP_MIN_FILES,
+      logger: console,
+    }).catch(() => {});
+  }, 12 * 60 * 60 * 1000).unref();
 }
+
+const handleUserAuthRoute = createUserAuthRouteHandler({
+  fsp,
+  dataDir: DATA_DIR,
+  authUsersFile: AUTH_USERS_FILE,
+  writeJsonAtomic,
+  readJsonBody,
+  sendJson,
+  isValidOutlookEmail,
+  isAdminEmailCandidate,
+  isRateLimited,
+  isRateLimitedByIdentifier,
+  isTrustedOrigin,
+  hasJsonContentType,
+  sendAuthCodeEmail,
+  authCodeCooldownStore: AUTH_CODE_COOLDOWN_STORE,
+  hashPasswordScrypt,
+  verifyScryptHash,
+  createUserSession,
+  buildUserSessionCookie,
+  getUserSession,
+  clearUserSession,
+  buildUserSessionClearCookie,
+});
+
+const handleUploadRoute = createUploadRouteHandler({
+  hasJsonContentType,
+  isTrustedOrigin,
+  isRateLimited,
+  sendJson,
+  requireAdminSession,
+  handleUpload,
+  handleBinaryUpload,
+  handleGetUploadProgress,
+  handleListUploads,
+  handleDeleteUpload,
+  handleImportGamesCoversZip,
+});
+
+const handleContentRoute = createContentRouteHandler({
+  hasJsonContentType,
+  isTrustedOrigin,
+  isRateLimited,
+  sendJson,
+  requireAdminSession,
+  handleSaveContent,
+  handleSaveTechnicalSheetImage,
+  handleSaveConfiguratorMedia,
+  handleSavePremiumPhotoSource,
+  handleGetContent,
+  getAdminSession,
+  isAdminEmailCandidate,
+  handleGetPublicContent,
+  handleGetGamesCatalog,
+  handleSaveUserState,
+  handleGetUserState,
+});
+
+const handleAdminOpsRoute = createAdminOpsRouteHandler({
+  isRateLimited,
+  sendJson,
+  requireAdminSession,
+  handleAdminRailwayStatus,
+  handleBackupSiteZip,
+  handleRunRailwayUpdateTerminal,
+});
 
 async function requestListener(req, res) {
   ensureMaintenanceTimers();
@@ -3235,53 +3553,10 @@ async function requestListener(req, res) {
       handleAdminSessionLogout(req, res);
       return;
     }
-    if (req.method === "POST" && url.pathname === "/api/upload") {
-      if (!hasJsonContentType(req)) {
-        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
-        return;
-      }
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "upload", 30, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop d'uploads. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleUpload(req, res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/upload-binary") {
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "upload-binary", 20, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop d'uploads. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleBinaryUpload(req, res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/api/upload-progress") {
-      await handleGetUploadProgress(url, res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/api/uploads-list") {
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "uploads-list", 120, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de requêtes. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleListUploads(url, res);
-      return;
-    }
+    if (await handleUserAuthRoute(req, res, url)) return;
+    if (await handleUploadRoute(req, res, url)) return;
+    if (await handleContentRoute(req, res, url)) return;
+    if (await handleAdminOpsRoute(req, res, url)) return;
     if (req.method === "POST" && url.pathname === "/api/profile-config-quote-pdf") {
       if (!hasJsonContentType(req)) {
         sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
@@ -3314,74 +3589,6 @@ async function requestListener(req, res) {
       await handleSubmitReview(req, res);
       return;
     }
-    if (req.method === "POST" && url.pathname === "/api/save-content") {
-      if (!hasJsonContentType(req)) {
-        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
-        return;
-      }
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "save-content", 240, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleSaveContent(req, res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/save-technical-sheet-image") {
-      if (!hasJsonContentType(req)) {
-        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
-        return;
-      }
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "save-technical-sheet-image", 240, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleSaveTechnicalSheetImage(req, res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/save-configurator-media") {
-      if (!hasJsonContentType(req)) {
-        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
-        return;
-      }
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "save-configurator-media", 240, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleSaveConfiguratorMedia(req, res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/save-premium-photo-source") {
-      if (!hasJsonContentType(req)) {
-        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
-        return;
-      }
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "save-premium-photo-source", 120, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de sauvegardes. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleSavePremiumPhotoSource(req, res);
-      return;
-    }
     if (req.method === "POST" && url.pathname === "/api/process-invoice-pdf") {
       if (!hasJsonContentType(req)) {
         sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
@@ -3399,100 +3606,13 @@ async function requestListener(req, res) {
       await handleProcessInvoicePdf(req, res);
       return;
     }
-    if (req.method === "POST" && url.pathname === "/api/delete-upload") {
-      if (!hasJsonContentType(req)) {
-        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
-        return;
-      }
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "delete-upload", 40, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de suppressions. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleDeleteUpload(req, res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/import-games-covers-zip") {
-      if (!hasJsonContentType(req)) {
-        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
-        return;
-      }
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "import-games-covers-zip", 8, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop d'imports. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleImportGamesCoversZip(req, res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/api/content") {
-      await handleGetContent(res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/api/games-catalog") {
-      await handleGetGamesCatalog(res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/save-user-state") {
-      if (!hasJsonContentType(req)) {
-        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
-        return;
-      }
-      if (!isTrustedOrigin(req)) {
-        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
-        return;
-      }
-      if (isRateLimited(req, "save-user-state", 40, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop d'écritures. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleSaveUserState(req, res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/api/user-state") {
-      if (!requireAdminSession(req, res)) return;
-      await handleGetUserState(res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/api/admin/railway-status") {
-      if (isRateLimited(req, "admin-railway-status", 120, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de requêtes statut Railway. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleAdminRailwayStatus(res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/api/backup-site-zip") {
-      if (isRateLimited(req, "backup-zip", 4, 10 * 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de demandes de sauvegarde. Réessayez plus tard." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleBackupSiteZip(res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/run-railway-update-terminal") {
-      if (isRateLimited(req, "run-railway-update-terminal", 6, 60 * 1000)) {
-        sendJson(res, 429, { ok: false, error: "Trop de tentatives. Réessayez dans 1 minute." });
-        return;
-      }
-      if (!requireAdminSession(req, res)) return;
-      await handleRunRailwayUpdateTerminal(req, res);
-      return;
-    }
     if (req.method === "POST" && url.pathname === "/api/send-auth-code") {
       if (!hasJsonContentType(req)) {
         sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
         return;
       }
       if (isRateLimited(req, "send-auth-code", 6, 10 * 60 * 1000)) {
@@ -3507,7 +3627,11 @@ async function requestListener(req, res) {
         sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
         return;
       }
-      if (isRateLimited(req, "ai-recommend", 30, 60 * 1000)) {
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "ai-recommend", 20, 60 * 1000)) {
         sendJson(res, 429, { ok: false, error: "Trop de requêtes IA. Réessayez dans 1 minute." });
         return;
       }
@@ -3521,14 +3645,18 @@ async function requestListener(req, res) {
 }
 
 if (require.main === module) {
+  if (!ADMIN_PASSWORD && !ADMIN_PASSWORD_HASH) {
+    console.error("ADMIN_PASSWORD ou ADMIN_PASSWORD_HASH manquant. Démarrage annulé pour sécurité.");
+    process.exit(1);
+  }
   const server = http.createServer(requestListener);
   server.listen(PORT, HOST, () => {
     console.log(`VortexBox server running: http://${HOST}:${PORT}`);
     if (!RESEND_API_KEY && (!MAIL_FROM || !SMTP_USER || !SMTP_PASS)) {
       console.log("Email auth non configure. Ajoutez RESEND_API_KEY ou MAIL_FROM+SMTP_USER+SMTP_PASS dans .env");
     }
-    if (!process.env.ADMIN_PASSWORD) {
-      console.log("Admin password fallback actif. Definissez ADMIN_EMAIL et ADMIN_PASSWORD dans .env");
+    if (!ADMIN_PASSWORD_HASH) {
+      console.log("Conseil sécurité: utilisez ADMIN_PASSWORD_HASH (format scrypt$<saltB64>$<hashB64>) au lieu d'un mot de passe en clair.");
     }
   });
 }

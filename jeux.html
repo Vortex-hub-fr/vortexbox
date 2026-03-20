@@ -3,14 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      try {
-        const s = String(sessionStorage.getItem("vortexbox-auth-user") || "").trim().toLowerCase();
-        const r = String(localStorage.getItem("vortexbox-auth-remember") || "").trim().toLowerCase();
-        const email = s || r;
-        if (/@outlook\./i.test(email)) document.documentElement.classList.add("vb-auth-ok");
-      } catch (error) {}
-    </script>
     <title>Jeux | VortexBox Pro</title>
     <meta name="description" content="Catalogue des jaquettes de jeux disponibles sur VortexBox." />
     <link rel="canonical" href="https://vortexbox.onrender.com/jeux.html" />
@@ -27,7 +19,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260319admintoggle1" />
+    <link rel="stylesheet" href="styles.css?v=20260320premiumicons2" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -142,6 +134,322 @@
         margin-top: 1rem;
       }
 
+      .games-load-progress {
+        width: min(92%, 280px);
+        margin: 0 auto;
+        padding: 0.72rem 0.78rem;
+        border-radius: 0.82rem;
+        border: 1px solid rgba(126, 229, 255, 0.34);
+        background:
+          radial-gradient(circle at 92% 0%, rgba(127, 231, 255, 0.16), transparent 44%),
+          linear-gradient(160deg, rgba(8, 27, 48, 0.92), rgba(4, 17, 32, 0.96));
+        box-shadow: 0 10px 24px rgba(2, 10, 24, 0.3);
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 260ms ease, transform 260ms ease;
+      }
+
+      .games-load-progress-inline {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .game-cover-card-progress .game-cover-progress-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform-style: preserve-3d;
+        transition: transform 760ms cubic-bezier(0.2, 0.85, 0.25, 1);
+        background:
+          radial-gradient(circle at 50% 0%, rgba(121, 226, 255, 0.2), transparent 50%),
+          linear-gradient(180deg, rgba(6, 24, 42, 0.88), rgba(4, 15, 28, 0.94));
+      }
+
+      .game-cover-card-progress .games-admin-card-tools-placeholder {
+        min-height: 43px;
+        pointer-events: none;
+      }
+
+      .game-cover-card-progress {
+        border-color: rgba(145, 238, 255, 0.72);
+        background:
+          radial-gradient(circle at 88% 0%, rgba(133, 233, 255, 0.22), transparent 44%),
+          linear-gradient(175deg, rgba(7, 30, 52, 0.96), rgba(4, 17, 32, 0.98));
+        box-shadow:
+          0 20px 34px rgba(2, 10, 24, 0.5),
+          inset 0 0 0 1px rgba(156, 238, 255, 0.2);
+        animation: catalog-card-glow 3.8s ease-in-out infinite;
+      }
+
+      .game-cover-card-progress .game-cover-progress-wrap::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: rotateY(0deg);
+        background:
+          radial-gradient(circle at 88% 4%, rgba(153, 237, 255, 0.24), transparent 42%),
+          linear-gradient(180deg, rgba(4, 20, 37, 0.34), rgba(4, 16, 31, 0.52)),
+          var(--catalog-site-cover-url),
+          var(--catalog-cover-url);
+        background-size: auto, auto, cover, cover;
+        background-position: center, center, center, center;
+        filter: saturate(1.1) contrast(1.08) brightness(0.7);
+        animation: catalog-cover-drift 11s ease-in-out infinite alternate;
+      }
+
+      .game-cover-card-progress .game-cover-progress-wrap::after {
+        content: "";
+        position: absolute;
+        inset: -20% -60%;
+        z-index: 2;
+        background: linear-gradient(
+          108deg,
+          rgba(255, 255, 255, 0) 42%,
+          rgba(147, 235, 255, 0.42) 50%,
+          rgba(255, 255, 255, 0) 58%
+        );
+        transform: translateX(-65%);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .game-cover-card-progress .game-cover-progress-backface {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        gap: 0.35rem;
+        padding: 1rem;
+        text-align: center;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: rotateY(180deg);
+        background:
+          radial-gradient(circle at 84% 10%, rgba(152, 236, 255, 0.26), transparent 42%),
+          linear-gradient(165deg, rgba(6, 27, 47, 0.96), rgba(4, 16, 31, 0.98));
+      }
+
+      .game-cover-card-progress .game-cover-particles {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .game-cover-card-progress .game-cover-particles span {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(255, 233, 179, 0.98);
+        box-shadow:
+          0 0 18px rgba(248, 214, 141, 0.92),
+          0 0 30px rgba(236, 193, 95, 0.7);
+        mix-blend-mode: screen;
+        opacity: 0;
+        animation: catalog-particle-float 5.2s linear infinite;
+      }
+
+      .game-cover-card-progress .game-cover-particles span:nth-child(1) { left: 16%; top: 78%; animation-delay: 0s; }
+      .game-cover-card-progress .game-cover-particles span:nth-child(2) { left: 27%; top: 66%; animation-delay: 0.8s; }
+      .game-cover-card-progress .game-cover-particles span:nth-child(3) { left: 39%; top: 74%; animation-delay: 1.6s; }
+      .game-cover-card-progress .game-cover-particles span:nth-child(4) { left: 53%; top: 62%; animation-delay: 2.2s; }
+      .game-cover-card-progress .game-cover-particles span:nth-child(5) { left: 64%; top: 72%; animation-delay: 2.9s; }
+      .game-cover-card-progress .game-cover-particles span:nth-child(6) { left: 74%; top: 68%; animation-delay: 3.6s; }
+      .game-cover-card-progress .game-cover-particles span:nth-child(7) { left: 83%; top: 76%; animation-delay: 4.3s; }
+      .game-cover-card-progress .game-cover-particles span:nth-child(8) { left: 21%; top: 58%; animation-delay: 5s; }
+
+      .game-cover-card-progress .game-cover-progress-backface p {
+        margin: 0;
+        color: #e9f8ff;
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .game-cover-card-progress .game-cover-progress-backface span {
+        margin: 0;
+        color: #a7d9ef;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .game-cover-card-progress .games-load-progress {
+        position: relative;
+        z-index: 3;
+        width: min(88%, 252px);
+        border: none;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        padding: 0;
+      }
+
+      .game-cover-card-progress.is-catalog-ready:hover .game-cover-progress-wrap {
+        transform: rotateY(180deg);
+      }
+
+      .game-cover-card-progress.is-catalog-ready:hover .game-cover-progress-wrap::after,
+      .game-cover-card-progress.is-catalog-ready:hover .games-load-progress {
+        opacity: 0;
+      }
+
+      .game-cover-card-progress.is-catalog-ready:hover .game-cover-progress-wrap::after {
+        animation: catalog-holo-reveal 400ms ease both;
+      }
+
+      @keyframes catalog-holo-reveal {
+        0% {
+          transform: translateX(-70%);
+          opacity: 0;
+        }
+        45% {
+          opacity: 0.92;
+        }
+        100% {
+          transform: translateX(70%);
+          opacity: 0;
+        }
+      }
+
+      @keyframes catalog-particle-float {
+        0% {
+          transform: translate3d(0, 10px, 0) scale(0.7);
+          opacity: 0;
+        }
+        18% {
+          opacity: 0.88;
+        }
+        68% {
+          opacity: 0.72;
+        }
+        100% {
+          transform: translate3d(0, -28px, 0) scale(1.05);
+          opacity: 0;
+        }
+      }
+
+      .game-cover-card-progress .game-cover-topbar {
+        border-bottom-color: rgba(151, 238, 255, 0.52);
+        background:
+          radial-gradient(circle at 12% 0%, rgba(160, 240, 255, 0.34), transparent 52%),
+          linear-gradient(130deg, rgba(7, 43, 74, 0.98), rgba(10, 79, 126, 0.98));
+        color: #ebfaff;
+        text-shadow: 0 0 12px rgba(146, 235, 255, 0.36);
+      }
+
+      .game-cover-card-progress .game-cover-title {
+        color: #ecf9ff;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        background:
+          linear-gradient(180deg, rgba(9, 37, 64, 0.94), rgba(5, 19, 35, 0.98));
+        border-top: 1px solid rgba(156, 239, 255, 0.34);
+        text-shadow: 0 0 10px rgba(142, 236, 255, 0.24);
+      }
+
+      @keyframes catalog-card-glow {
+        0%,
+        100% {
+          box-shadow:
+            0 20px 34px rgba(2, 10, 24, 0.5),
+            inset 0 0 0 1px rgba(156, 238, 255, 0.18);
+        }
+        50% {
+          box-shadow:
+            0 24px 40px rgba(2, 10, 24, 0.6),
+            inset 0 0 0 1px rgba(177, 245, 255, 0.3);
+        }
+      }
+
+      @keyframes catalog-cover-drift {
+        0% {
+          background-position: center, center, center, center;
+          filter: saturate(1.08) contrast(1.06) brightness(0.68);
+        }
+        100% {
+          background-position: center, center, center top, center bottom;
+          filter: saturate(1.2) contrast(1.12) brightness(0.74);
+        }
+      }
+
+      @keyframes catalog-sweep {
+        0%,
+        14% {
+          transform: translateX(-68%);
+          opacity: 0;
+        }
+        28% {
+          opacity: 0.9;
+        }
+        48% {
+          transform: translateX(72%);
+          opacity: 0;
+        }
+        100% {
+          transform: translateX(72%);
+          opacity: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .game-cover-card-progress,
+        .game-cover-card-progress .game-cover-progress-wrap::before,
+        .game-cover-card-progress .game-cover-progress-wrap::after {
+          animation: none !important;
+        }
+      }
+
+      .games-load-progress.is-hidden {
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+      }
+
+      .games-load-progress.is-complete {
+        border-color: rgba(119, 241, 208, 0.56);
+      }
+
+      .games-load-progress-value {
+        flex: 0 0 auto;
+        color: #c7fbff;
+        font-size: 0.9rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-shadow: 0 0 10px rgba(126, 234, 255, 0.44);
+      }
+
+      .games-load-progress-track {
+        flex: 1 1 auto;
+        margin-top: 0;
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(164, 241, 255, 0.5);
+        background: rgba(3, 15, 28, 0.94);
+        overflow: hidden;
+      }
+
+      .games-load-progress-fill {
+        display: block;
+        height: 100%;
+        width: 0;
+        border-radius: inherit;
+        background:
+          linear-gradient(90deg, #35beff 0%, #67deff 45%, #90ffe0 100%);
+        box-shadow: 0 0 16px rgba(96, 225, 255, 0.72);
+        transition: width 220ms ease;
+      }
+
       .games-results-toolbar {
         margin-top: 0.7rem;
         display: flex;
@@ -206,6 +514,61 @@
 
       .game-cover-media {
         border-bottom: 1px solid rgba(127, 231, 255, 0.2);
+      }
+
+      .game-cover-media-wrap {
+        transform-style: preserve-3d;
+      }
+
+      .game-cover-card .game-cover-info-btn {
+        top: calc(2rem + 0.42rem);
+        right: 0.42rem;
+        z-index: 8;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: translateZ(0);
+        will-change: transform;
+      }
+
+      .game-cover-card.game-cover-card-admin .game-cover-info-btn {
+        top: calc(43px + 2rem + 0.42rem);
+      }
+
+      .game-cover-media-backface {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        padding: 0.9rem;
+        text-align: center;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: rotateY(180deg);
+        background:
+          radial-gradient(circle at 82% 12%, rgba(143, 233, 255, 0.2), transparent 44%),
+          linear-gradient(165deg, rgba(7, 28, 49, 0.96), rgba(4, 17, 32, 0.98));
+      }
+
+      .game-cover-media-backface p {
+        margin: 0;
+        color: #e8f8ff;
+        font-size: 0.9rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .game-cover-card:not(.game-cover-card-progress):hover .game-cover-media-wrap.is-media-loaded {
+          transform: rotateY(180deg);
+        }
+
+        .game-cover-card:not(.game-cover-card-progress):hover .game-cover-info-btn {
+          opacity: 1;
+          pointer-events: auto;
+        }
       }
 
       .game-cover-title {
@@ -298,8 +661,8 @@
         </div>
         <div class="activation-step hidden" id="activation-step">
           <label>
-            Code d'activation (10 caractères)
-            <input id="site-activation-code" type="text" maxlength="10" placeholder="Ab3$k9!Q2z" />
+            Code d'activation (6 chiffres)
+            <input id="site-activation-code" type="text" maxlength="6" inputmode="numeric" placeholder="123456" />
           </label>
           <button class="auth-mode-btn" id="site-activate-btn" type="button">Activer mon compte</button>
         </div>
@@ -336,7 +699,7 @@
             <input id="nav-smart-search" class="nav-smart-search" type="search" placeholder="Recherche menu..." aria-label="Recherche intelligente dans le menu" title="Tapez 2 lettres pour trouver une page du menu" autocomplete="off" name="menu-search" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="search" />
             <div id="nav-smart-results" class="nav-smart-results hidden"></div>
           </div>
-          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" onclick="window.open('https://t.me/VortexCore460','_blank','noopener')"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
+          <button class="admin-btn nav-icon-btn nav-admin-btn nav-telegram-icon-btn" type="button" aria-label="Telegram" title="Telegram" data-telegram-url="https://t.me/VortexCore460"><img src="nav-telegram-icon.svg" alt="" aria-hidden="true" /></button>
           <button class="logout-btn nav-icon-btn nav-profile-btn hidden" id="user-profile-toggle" type="button" aria-label="Mon profil" title="Mon profil"><img src="nav-profile-premium.svg" alt="" aria-hidden="true" /></button>
           <button class="admin-btn nav-icon-btn nav-admin-btn hidden" id="admin-toggle" type="button" aria-label="Administrateur" title="Administrateur"><img src="nav-admin-premium.svg" alt="" aria-hidden="true" /></button>
           <button class="admin-live-exit hidden" id="admin-live-exit" type="button" aria-label="Sortir du mode admin">×</button>
@@ -381,7 +744,7 @@
             <span>VortexBox Premium</span>
           </div>
           <div class="game-cover-media-wrap" data-game-title="Jeu 1" style="--cover-url:url('/uploads/games-covers/1772987532904-j8oqxa-cyber-assault-2026.webp')">
-            <img class="game-cover-media" src="/uploads/games-covers/1772987532904-j8oqxa-cyber-assault-2026.webp" alt="Jeu 1" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/favicon-vb.svg';" />
+            <img class="game-cover-media" src="/uploads/games-covers/1772987532904-j8oqxa-cyber-assault-2026.webp" alt="Jeu 1" loading="eager" decoding="async" />
           </div>
           <p class="game-cover-title">Jeu 1</p>
         </article>
@@ -391,7 +754,7 @@
             <span>VortexBox Premium</span>
           </div>
           <div class="game-cover-media-wrap" data-game-title="Jeu 2" style="--cover-url:url('/uploads/games-covers/1772987833227-1xjipg-jeu-2.webp')">
-            <img class="game-cover-media" src="/uploads/games-covers/1772987833227-1xjipg-jeu-2.webp" alt="Jeu 2" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/favicon-vb.svg';" />
+            <img class="game-cover-media" src="/uploads/games-covers/1772987833227-1xjipg-jeu-2.webp" alt="Jeu 2" loading="eager" decoding="async" />
           </div>
           <p class="game-cover-title">Jeu 2</p>
         </article>
@@ -401,7 +764,7 @@
             <span>VortexBox Premium</span>
           </div>
           <div class="game-cover-media-wrap" data-game-title="Jeu 3" style="--cover-url:url('/uploads/games-covers/1772987824472-p9qewy-cyber-assault-2026.webp')">
-            <img class="game-cover-media" src="/uploads/games-covers/1772987824472-p9qewy-cyber-assault-2026.webp" alt="Jeu 3" loading="eager" decoding="async" onerror="this.onerror=null;this.src='/favicon-vb.svg';" />
+            <img class="game-cover-media" src="/uploads/games-covers/1772987824472-p9qewy-cyber-assault-2026.webp" alt="Jeu 3" loading="eager" decoding="async" />
           </div>
           <p class="game-cover-title">Jeu 3</p>
         </article>
@@ -499,6 +862,6 @@
       </div>
     </section>
 
-    <script src="faq.js?v=20260310faq2"></script>
+    <script src="faq.js?v=20260320premiumicons2"></script>
   </body>
 </html>

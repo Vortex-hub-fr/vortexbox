@@ -7,6 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "check:syntax": "node --check server.js && node --check script.js && node --check faq.js && node --check about.js",
+    "check:inline-handlers": "node tools/check-inline-handlers.js",
+    "check:smoke": "npm run check:syntax && npm run check:inline-handlers",
     "cleanup:uploads:report": "node tools/cleanup-unused-uploads.js",
     "cleanup:uploads:quarantine": "node tools/cleanup-unused-uploads.js --quarantine --yes",
     "cleanup:uploads:delete": "node tools/cleanup-unused-uploads.js --delete --yes",
