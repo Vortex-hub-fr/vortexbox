@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">VortexBox Catalogue Premium</title>
+  <desc id="desc">Visuel premium pour la jaquette catalogue VortexBox</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a2a45"/>
+      <stop offset="55%" stop-color="#081d34"/>
+      <stop offset="100%" stop-color="#061425"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="85%" cy="8%" r="45%">
+      <stop offset="0%" stop-color="#8defff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#8defff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="10%" cy="92%" r="40%">
+      <stop offset="0%" stop-color="#3cb8ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#3cb8ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#79e8ff" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#79e8ff" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3ecbff"/>
+      <stop offset="50%" stop-color="#76e8ff"/>
+      <stop offset="100%" stop-color="#8cf3db"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <rect width="900" height="1200" fill="url(#glowA)"/>
+  <rect width="900" height="1200" fill="url(#glowB)"/>
+
+  <g opacity="0.32">
+    <path d="M0 220 L900 70" stroke="url(#line)" stroke-width="2"/>
+    <path d="M0 360 L900 210" stroke="url(#line)" stroke-width="2"/>
+    <path d="M0 500 L900 350" stroke="url(#line)" stroke-width="2"/>
+    <path d="M0 640 L900 490" stroke="url(#line)" stroke-width="2"/>
+    <path d="M0 780 L900 630" stroke="url(#line)" stroke-width="2"/>
+    <path d="M0 920 L900 770" stroke="url(#line)" stroke-width="2"/>
+    <path d="M0 1060 L900 910" stroke="url(#line)" stroke-width="2"/>
+  </g>
+
+  <g transform="translate(104 120)">
+    <rect x="0" y="0" width="692" height="120" rx="18" fill="#0a2f4f" fill-opacity="0.74" stroke="#80eaff" stroke-opacity="0.45"/>
+    <text x="34" y="53" fill="#dff7ff" font-size="46" font-family="Sora, Arial, sans-serif" font-weight="700">VORTEXBOX</text>
+    <text x="34" y="92" fill="#b8e8ff" font-size="24" font-family="Sora, Arial, sans-serif" font-weight="600">CATALOGUE PREMIUM</text>
+    <rect x="490" y="34" width="170" height="50" rx="25" fill="url(#badge)"/>
+    <text x="575" y="67" text-anchor="middle" fill="#052338" font-size="20" font-family="Sora, Arial, sans-serif" font-weight="800">READY</text>
+  </g>
+
+  <g transform="translate(120 340)" opacity="0.85">
+    <rect x="0" y="0" width="660" height="440" rx="24" fill="#071b30" fill-opacity="0.34" stroke="#7fe7ff" stroke-opacity="0.34"/>
+    <rect x="32" y="36" width="596" height="86" rx="16" fill="#0b3255" fill-opacity="0.65" stroke="#7fe7ff" stroke-opacity="0.28"/>
+    <text x="58" y="92" fill="#d7f4ff" font-size="34" font-family="Sora, Arial, sans-serif" font-weight="700">Chargement des jaquettes</text>
+    <rect x="44" y="160" width="572" height="22" rx="11" fill="#06203a" stroke="#73defa" stroke-opacity="0.35"/>
+    <rect x="44" y="160" width="370" height="22" rx="11" fill="url(#badge)"/>
+    <text x="44" y="242" fill="#bfe9fb" font-size="26" font-family="Sora, Arial, sans-serif" font-weight="600">Expérience premium VortexBox</text>
+    <text x="44" y="286" fill="#a8d8ef" font-size="22" font-family="Sora, Arial, sans-serif">Catalogue visuel haute lisibilité</text>
+    <text x="44" y="326" fill="#a8d8ef" font-size="22" font-family="Sora, Arial, sans-serif">Suivi en temps réel du chargement</text>
+  </g>
+
+  <g opacity="0.45" transform="translate(112 1030)">
+    <rect x="0" y="0" width="676" height="84" rx="14" fill="#081f35" stroke="#7fe7ff" stroke-opacity="0.28"/>
+    <text x="24" y="52" fill="#bde5f8" font-size="26" font-family="Sora, Arial, sans-serif">vortexbox.onrender.com</text>
+  </g>
+</svg>

@@ -1,47 +1,13 @@
 {
-  "updatedAt": "2026-03-19T17:09:03.318Z",
+  "updatedAt": "2026-03-20T09:11:48.172Z",
   "users": [],
   "userLog": [
     {
       "email": "vortexcore@outlook.fr",
-      "date": "2026-03-19T17:08:49.269Z"
+      "date": "2026-03-20T09:11:47.991Z"
     }
   ],
-  "userConfigs": {
-    "vortexcore@outlook.fr": [
-      {
-        "id": "cfg-1773940143136-uduk87",
-        "title": "Config du 19/03/2026 18:09:03",
-        "createdAt": "2026-03-19T17:09:03.136Z",
-        "total": 2353,
-        "components": [
-          {
-            "label": "VortexBox Pulse",
-            "optionName": "RTX 4060 8G- 32G+1T SSD",
-            "price": 2254
-          }
-        ],
-        "services": [
-          {
-            "label": "Montage pro et tests stabilité",
-            "price": 99
-          },
-          {
-            "label": "Pack +15 000 Jeux (Inclus pour l'achat d'une VortexBox)",
-            "price": 0
-          },
-          {
-            "label": "Windows 11 pro (version active)",
-            "price": 0
-          },
-          {
-            "label": "Suites logiciels",
-            "price": 0
-          }
-        ]
-      }
-    ]
-  },
+  "userConfigs": {},
   "promoCodes": [],
   "doneKpiRecommendations": [],
   "actionedKpiRecommendations": [],
