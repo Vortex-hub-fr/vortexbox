@@ -3646,8 +3646,9 @@ async function requestListener(req, res) {
 
 if (require.main === module) {
   if (!ADMIN_PASSWORD && !ADMIN_PASSWORD_HASH) {
-    console.error("ADMIN_PASSWORD ou ADMIN_PASSWORD_HASH manquant. Démarrage annulé pour sécurité.");
-    process.exit(1);
+    console.warn(
+      "ADMIN_PASSWORD ou ADMIN_PASSWORD_HASH manquant. Le serveur démarre pour le healthcheck, mais la connexion admin restera indisponible."
+    );
   }
   const server = http.createServer(requestListener);
   server.listen(PORT, HOST, () => {
