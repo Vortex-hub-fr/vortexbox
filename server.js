@@ -23,6 +23,8 @@ const UPLOADS_DIR = path.join(ROOT_DIR, "uploads");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const CONTENT_FILE = path.join(DATA_DIR, "site-content.json");
 const CONTENT_BACKUPS_DIR = path.join(DATA_DIR, "content-backups");
+const CONTENT_HISTORY_DIR = path.join(DATA_DIR, "content-history");
+const CONTENT_AUDIT_FILE = path.join(DATA_DIR, "admin-content-audit.json");
 const BACKUPS_DIR = path.join(ROOT_DIR, "backups");
 const USER_STATE_FILE = path.join(DATA_DIR, "user-state.json");
 const AUTH_USERS_FILE = path.join(DATA_DIR, "auth-users.json");
@@ -107,6 +109,8 @@ const AI_FREE_FIRST = String(process.env.AI_FREE_FIRST || "1") === "1";
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "vortexcore@outlook.fr").trim().toLowerCase();
 const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "");
 const ADMIN_PASSWORD_HASH = String(process.env.ADMIN_PASSWORD_HASH || "").trim();
+const ADMIN_ROLE = String(process.env.ADMIN_ROLE || "super-admin").trim().toLowerCase();
+const ADMIN_ACCOUNTS_JSON = String(process.env.ADMIN_ACCOUNTS_JSON || "").trim();
 const ADMIN_SESSION_COOKIE = "vb_admin_session";
 const ADMIN_SESSION_TTL_MS = 2 * 60 * 60 * 1000;
 const ADMIN_SESSION_NO_EXPIRY = false;
@@ -119,6 +123,7 @@ const CONTENT_BACKUPS_RETENTION_DAYS = Math.max(1, Number(process.env.CONTENT_BA
 const BACKUPS_KEEP_MIN_FILES = Math.max(1, Number(process.env.BACKUPS_KEEP_MIN_FILES || 8));
 const CONTENT_BACKUPS_KEEP_MIN_FILES = Math.max(1, Number(process.env.CONTENT_BACKUPS_KEEP_MIN_FILES || 30));
 const CONFIG_VISUAL_SLOT_COUNT = 4;
+const CONTENT_AUDIT_LIMIT = 120;
 
 function getConfigVisualSlotIndexes() {
   return Array.from({ length: CONFIG_VISUAL_SLOT_COUNT }, (_, index) => index);
@@ -140,7 +145,116 @@ function buildAdminEmailCandidates(email) {
   return set;
 }
 
-const ADMIN_EMAIL_CANDIDATES = buildAdminEmailCandidates(ADMIN_EMAIL);
+const ADMIN_ROLE_SUPER = "super-admin";
+const ADMIN_ROLE_EDITOR = "editeur";
+const ADMIN_ROLE_SUPPORT = "support";
+const ADMIN_ROLE_SET = new Set([ADMIN_ROLE_SUPER, ADMIN_ROLE_EDITOR, ADMIN_ROLE_SUPPORT]);
+const ADMIN_PERMISSION_MATRIX = {
+  [ADMIN_ROLE_SUPER]: new Set(["*"]),
+  [ADMIN_ROLE_EDITOR]: new Set([
+    "content:read",
+    "content:write",
+    "content:history:read",
+    "content:rollback",
+    "content:history:manage",
+    "uploads:read",
+    "uploads:write",
+    "backups:create",
+    "ops:read",
+    "users:manage",
+  ]),
+  [ADMIN_ROLE_SUPPORT]: new Set([
+    "content:read",
+    "content:history:read",
+    "uploads:read",
+    "ops:read",
+  ]),
+};
+
+function normalizeAdminRole(role) {
+  const normalized = String(role || "").trim().toLowerCase();
+  if (ADMIN_ROLE_SET.has(normalized)) return normalized;
+  return ADMIN_ROLE_SUPPORT;
+}
+
+function sanitizeAdminAccount(input = {}) {
+  const raw = input && typeof input === "object" ? input : {};
+  const email = String(raw.email || "").trim().toLowerCase();
+  const password = String(raw.password || "");
+  const passwordHash = String(raw.passwordHash || "").trim();
+  const role = normalizeAdminRole(raw.role || ADMIN_ROLE_SUPPORT);
+  if (!email || (!password && !passwordHash)) return null;
+  return {
+    email,
+    password,
+    passwordHash,
+    role,
+  };
+}
+
+function parseAdminAccountsJson(rawValue) {
+  if (!rawValue) return [];
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((entry) => sanitizeAdminAccount(entry)).filter(Boolean);
+  } catch (error) {
+    return [];
+  }
+}
+
+function buildAdminAccounts() {
+  const byEmail = new Map();
+  if (ADMIN_EMAIL && (ADMIN_PASSWORD || ADMIN_PASSWORD_HASH)) {
+    byEmail.set(
+      ADMIN_EMAIL,
+      sanitizeAdminAccount({
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+        passwordHash: ADMIN_PASSWORD_HASH,
+        role: ADMIN_ROLE || ADMIN_ROLE_SUPER,
+      })
+    );
+  }
+  for (const account of parseAdminAccountsJson(ADMIN_ACCOUNTS_JSON)) {
+    byEmail.set(account.email, account);
+  }
+  return Array.from(byEmail.values()).filter(Boolean);
+}
+
+const ADMIN_ACCOUNTS = buildAdminAccounts();
+const ADMIN_ACCOUNTS_BY_EMAIL = new Map(ADMIN_ACCOUNTS.map((account) => [account.email, account]));
+const ADMIN_EMAIL_CANDIDATES = (() => {
+  const set = buildAdminEmailCandidates(ADMIN_EMAIL);
+  for (const account of ADMIN_ACCOUNTS) {
+    if (account?.email) set.add(account.email);
+  }
+  return set;
+})();
+
+function getAdminAccountByEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized) return null;
+  const direct = ADMIN_ACCOUNTS_BY_EMAIL.get(normalized);
+  if (direct) return direct;
+  if (buildAdminEmailCandidates(ADMIN_EMAIL).has(normalized)) {
+    return ADMIN_ACCOUNTS_BY_EMAIL.get(ADMIN_EMAIL) || null;
+  }
+  return null;
+}
+
+function getAdminPermissionsForRole(role) {
+  const normalizedRole = normalizeAdminRole(role || ADMIN_ROLE_SUPPORT);
+  const source = ADMIN_PERMISSION_MATRIX[normalizedRole] || new Set();
+  return Array.from(source.values());
+}
+
+function hasAdminPermission(role, permission) {
+  const needed = String(permission || "").trim();
+  if (!needed) return true;
+  const permissions = ADMIN_PERMISSION_MATRIX[normalizeAdminRole(role || ADMIN_ROLE_SUPPORT)] || new Set();
+  return permissions.has("*") || permissions.has(needed);
+}
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -275,21 +389,27 @@ function shouldUseSecureCookies(req) {
   return String(req.headers["x-forwarded-proto"] || "").toLowerCase() === "https";
 }
 
-function createAdminSession(email) {
+function createAdminSession(email, role = ADMIN_ROLE_SUPER) {
   const token = crypto.randomBytes(24).toString("hex");
+  const normalizedRole = normalizeAdminRole(role || ADMIN_ROLE_SUPER);
   ADMIN_SESSION_STORE.set(token, {
     email,
+    role: normalizedRole,
+    permissions: getAdminPermissionsForRole(normalizedRole),
     expiresAt: ADMIN_SESSION_NO_EXPIRY ? Number.MAX_SAFE_INTEGER : Date.now() + ADMIN_SESSION_TTL_MS,
   });
   return token;
 }
 
-function verifyAdminPassword(password) {
+function verifyAdminPassword(password, account) {
   const candidate = String(password || "");
-  if (ADMIN_PASSWORD_HASH) {
-    return verifyScryptHash(candidate, ADMIN_PASSWORD_HASH);
+  const source = account && typeof account === "object" ? account : {};
+  const hash = String(source.passwordHash || "").trim();
+  const plain = String(source.password || "");
+  if (hash) {
+    return verifyScryptHash(candidate, hash);
   }
-  return ADMIN_PASSWORD ? candidate === ADMIN_PASSWORD : false;
+  return plain ? candidate === plain : false;
 }
 
 function createUserSession(email, remember = false) {
@@ -348,7 +468,13 @@ function getAdminSession(req) {
     ADMIN_SESSION_STORE.delete(token);
     return null;
   }
-  return { token, email: String(session.email || "").toLowerCase() };
+  const role = normalizeAdminRole(session.role || getAdminAccountByEmail(session.email)?.role || ADMIN_ROLE_SUPPORT);
+  return {
+    token,
+    email: String(session.email || "").toLowerCase(),
+    role,
+    permissions: getAdminPermissionsForRole(role),
+  };
 }
 
 function clearAdminSession(token) {
@@ -395,11 +521,20 @@ function isTrustedOrigin(req) {
 
 function requireAdminSession(req, res) {
   const session = getAdminSession(req);
-  if (!session || !isAdminEmailCandidate(session.email)) {
+  const account = getAdminAccountByEmail(session?.email || "");
+  if (!session || !account || !isAdminEmailCandidate(session.email)) {
     sendJson(res, 401, { ok: false, error: "Session administrateur requise." });
     return null;
   }
   return session;
+}
+
+function requireAdminPermission(req, res, permission) {
+  const session = requireAdminSession(req, res);
+  if (!session) return null;
+  if (hasAdminPermission(session.role, permission)) return session;
+  sendJson(res, 403, { ok: false, error: "Permission administrateur insuffisante." });
+  return null;
 }
 
 function cleanupUploadStatusStore() {
@@ -1014,6 +1149,112 @@ async function createContentBackupIfExists() {
   } catch (error) {
     // Ignore backup errors to avoid blocking main save flow.
   }
+}
+
+function createContentAuditId() {
+  return `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeContentAuditEntry(entry) {
+  const raw = entry && typeof entry === "object" ? entry : {};
+  return {
+    id: String(raw.id || "").trim(),
+    at: String(raw.at || ""),
+    action: String(raw.action || "save").trim().toLowerCase() || "save",
+    adminEmail: String(raw.adminEmail || "").trim().toLowerCase(),
+    snapshotFile: String(raw.snapshotFile || "").trim().replace(/\\/g, "/"),
+    restoredFromId: String(raw.restoredFromId || "").trim(),
+    previousUpdatedAt: Math.max(0, Number(raw.previousUpdatedAt || 0)),
+    nextUpdatedAt: Math.max(0, Number(raw.nextUpdatedAt || 0)),
+  };
+}
+
+async function readContentAuditEntries() {
+  try {
+    const raw = await fsp.readFile(CONTENT_AUDIT_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.entries)) return [];
+    return parsed.entries
+      .map((entry) => normalizeContentAuditEntry(entry))
+      .filter((entry) => entry.id && entry.snapshotFile);
+  } catch (error) {
+    return [];
+  }
+}
+
+async function writeContentAuditEntries(entries) {
+  const list = Array.isArray(entries) ? entries : [];
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await writeJsonAtomic(CONTENT_AUDIT_FILE, {
+    updatedAt: new Date().toISOString(),
+    entries: list,
+  });
+}
+
+function sanitizeContentHistoryEntryForClient(entry) {
+  return {
+    id: String(entry?.id || "").trim(),
+    at: String(entry?.at || ""),
+    action: String(entry?.action || "save"),
+    adminEmail: String(entry?.adminEmail || ""),
+    restoredFromId: String(entry?.restoredFromId || ""),
+    previousUpdatedAt: Math.max(0, Number(entry?.previousUpdatedAt || 0)),
+    nextUpdatedAt: Math.max(0, Number(entry?.nextUpdatedAt || 0)),
+  };
+}
+
+function resolveContentHistorySnapshotAbsolute(snapshotFile) {
+  const cleanRelative = String(snapshotFile || "").trim().replace(/^\/+/, "").replace(/\\/g, "/");
+  if (!cleanRelative) return "";
+  const absolute = path.resolve(ROOT_DIR, cleanRelative);
+  if (!absolute.startsWith(CONTENT_HISTORY_DIR) || !absolute.startsWith(ROOT_DIR)) return "";
+  return absolute;
+}
+
+async function writeContentHistorySnapshot(content, auditId) {
+  const safeId = sanitizeName(auditId || createContentAuditId(), createContentAuditId());
+  const fileName = `${safeId}.json`;
+  await fsp.mkdir(CONTENT_HISTORY_DIR, { recursive: true });
+  const absolute = path.join(CONTENT_HISTORY_DIR, fileName);
+  await writeJsonAtomic(absolute, content && typeof content === "object" ? content : {});
+  return `data/content-history/${fileName}`;
+}
+
+async function pruneContentAuditEntries(entries) {
+  const list = Array.isArray(entries) ? entries : [];
+  const keep = list.slice(0, CONTENT_AUDIT_LIMIT);
+  const remove = list.slice(CONTENT_AUDIT_LIMIT);
+  for (const entry of remove) {
+    const absolute = resolveContentHistorySnapshotAbsolute(entry?.snapshotFile);
+    if (!absolute) continue;
+    await fsp.rm(absolute, { force: true }).catch(() => {});
+  }
+  return keep;
+}
+
+async function recordContentAuditEntry(options = {}) {
+  const action = String(options.action || "save").trim().toLowerCase() || "save";
+  const adminEmail = String(options.adminEmail || "").trim().toLowerCase();
+  const previousUpdatedAt = Math.max(0, Number(options.previousUpdatedAt || 0));
+  const nextUpdatedAt = Math.max(0, Number(options.nextUpdatedAt || 0));
+  const restoredFromId = String(options.restoredFromId || "").trim();
+  const snapshotContent = options.snapshotContent && typeof options.snapshotContent === "object" ? options.snapshotContent : {};
+  const id = createContentAuditId();
+  const snapshotFile = await writeContentHistorySnapshot(snapshotContent, id);
+  const entry = normalizeContentAuditEntry({
+    id,
+    at: new Date().toISOString(),
+    action,
+    adminEmail,
+    snapshotFile,
+    restoredFromId,
+    previousUpdatedAt,
+    nextUpdatedAt,
+  });
+  const existing = await readContentAuditEntries();
+  const nextEntries = await pruneContentAuditEntries([entry, ...existing]);
+  await writeContentAuditEntries(nextEntries);
+  return entry;
 }
 
 function runSipsConvertToJpeg(inputAbsolute, outputAbsolute) {
@@ -1874,7 +2115,19 @@ async function handleSaveContent(req, res) {
     await syncPremiumConfiguratorVisualSources(nextContent.configurator);
   }
   await writeJsonAtomic(CONTENT_FILE, nextContent);
-  sendJson(res, 200, { ok: true, file: "data/site-content.json" });
+  const session = getAdminSession(req);
+  const auditEntry = await recordContentAuditEntry({
+    action: "save",
+    adminEmail: session?.email || "",
+    previousUpdatedAt: currentUpdatedAt,
+    nextUpdatedAt: Math.max(0, Number(nextContent?._updatedAt || 0)),
+    snapshotContent: nextContent,
+  });
+  sendJson(res, 200, {
+    ok: true,
+    file: "data/site-content.json",
+    auditEntry: sanitizeContentHistoryEntryForClient(auditEntry),
+  });
 }
 
 async function handleSubmitReview(req, res) {
@@ -2266,6 +2519,104 @@ async function handleGetContent(res) {
   }
 }
 
+async function handleGetContentHistory(res) {
+  const entries = await readContentAuditEntries();
+  sendJson(res, 200, {
+    ok: true,
+    entries: entries.map((entry) => sanitizeContentHistoryEntryForClient(entry)),
+  });
+}
+
+async function handleRollbackContentHistory(req, res) {
+  const body = await readJsonBody(req);
+  const entryId = String(body?.id || "").trim();
+  if (!entryId) {
+    sendJson(res, 400, { ok: false, error: "Identifiant historique manquant." });
+    return;
+  }
+  const entries = await readContentAuditEntries();
+  const target = entries.find((entry) => String(entry?.id || "") === entryId);
+  if (!target) {
+    sendJson(res, 404, { ok: false, error: "Version introuvable." });
+    return;
+  }
+  const snapshotAbsolute = resolveContentHistorySnapshotAbsolute(target.snapshotFile);
+  if (!snapshotAbsolute) {
+    sendJson(res, 400, { ok: false, error: "Snapshot historique invalide." });
+    return;
+  }
+  let snapshotContent;
+  try {
+    const raw = await fsp.readFile(snapshotAbsolute, "utf8");
+    const parsed = JSON.parse(raw);
+    snapshotContent = parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    sendJson(res, 404, { ok: false, error: "Snapshot historique introuvable." });
+    return;
+  }
+
+  const currentContent = await loadContentFileSafe();
+  const currentUpdatedAt = Math.max(0, Number(currentContent?._updatedAt || 0));
+  const restoredContent = {
+    ...snapshotContent,
+    _updatedAt: Date.now(),
+  };
+
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await createContentBackupIfExists();
+  await writeJsonAtomic(CONTENT_FILE, restoredContent);
+
+  const session = getAdminSession(req);
+  const auditEntry = await recordContentAuditEntry({
+    action: "rollback",
+    adminEmail: session?.email || "",
+    restoredFromId: entryId,
+    previousUpdatedAt: currentUpdatedAt,
+    nextUpdatedAt: Math.max(0, Number(restoredContent?._updatedAt || 0)),
+    snapshotContent: restoredContent,
+  });
+
+  sendJson(res, 200, {
+    ok: true,
+    restoredFromId: entryId,
+    entry: sanitizeContentHistoryEntryForClient(auditEntry),
+    file: "data/site-content.json",
+  });
+}
+
+async function handleDeleteContentHistoryEntry(req, res) {
+  const body = await readJsonBody(req);
+  const entryId = String(body?.id || "").trim();
+  if (!entryId) {
+    sendJson(res, 400, { ok: false, error: "Identifiant historique manquant." });
+    return;
+  }
+  const entries = await readContentAuditEntries();
+  const target = entries.find((entry) => String(entry?.id || "") === entryId);
+  if (!target) {
+    sendJson(res, 404, { ok: false, error: "Version introuvable." });
+    return;
+  }
+  const nextEntries = entries.filter((entry) => String(entry?.id || "") !== entryId);
+  await writeContentAuditEntries(nextEntries);
+  const snapshotAbsolute = resolveContentHistorySnapshotAbsolute(target.snapshotFile);
+  if (snapshotAbsolute) {
+    await fsp.rm(snapshotAbsolute, { force: true }).catch(() => {});
+  }
+  sendJson(res, 200, { ok: true, deleted: true, id: entryId });
+}
+
+async function handleClearContentHistory(res) {
+  const entries = await readContentAuditEntries();
+  await writeContentAuditEntries([]);
+  for (const entry of entries) {
+    const snapshotAbsolute = resolveContentHistorySnapshotAbsolute(entry?.snapshotFile);
+    if (!snapshotAbsolute) continue;
+    await fsp.rm(snapshotAbsolute, { force: true }).catch(() => {});
+  }
+  sendJson(res, 200, { ok: true, cleared: true });
+}
+
 function stripSensitiveFieldsDeep(value) {
   if (Array.isArray(value)) return value.map((item) => stripSensitiveFieldsDeep(item));
   if (!value || typeof value !== "object") return value;
@@ -2374,15 +2725,23 @@ async function handleAdminSessionLogin(req, res) {
     sendJson(res, 400, { ok: false, error: "Email et mot de passe requis." });
     return;
   }
-  if (!isAdminEmailCandidate(email) || !verifyAdminPassword(password)) {
+  const account = getAdminAccountByEmail(email);
+  if (!account || !isAdminEmailCandidate(email) || !verifyAdminPassword(password, account)) {
     sendJson(res, 401, { ok: false, error: "Identifiants administrateur invalides." });
     return;
   }
-  const token = createAdminSession(ADMIN_EMAIL);
+  const canonicalEmail = String(account.email || email).trim().toLowerCase();
+  const role = normalizeAdminRole(account.role || ADMIN_ROLE_SUPPORT);
+  const token = createAdminSession(canonicalEmail, role);
   sendJson(
     res,
     200,
-    { ok: true, email },
+    {
+      ok: true,
+      email: canonicalEmail,
+      role,
+      permissions: getAdminPermissionsForRole(role),
+    },
     {
       "Set-Cookie": buildAdminSessionCookie(req, token),
     }
@@ -2400,6 +2759,17 @@ function handleAdminSessionLogout(req, res) {
       "Set-Cookie": buildAdminSessionClearCookie(req),
     }
   );
+}
+
+function handleAdminSessionStatus(req, res) {
+  const session = requireAdminSession(req, res);
+  if (!session) return;
+  sendJson(res, 200, {
+    ok: true,
+    email: String(session.email || "").trim().toLowerCase(),
+    role: normalizeAdminRole(session.role || ADMIN_ROLE_SUPPORT),
+    permissions: getAdminPermissionsForRole(session.role || ADMIN_ROLE_SUPPORT),
+  });
 }
 
 async function handleSaveUserState(req, res) {
@@ -3094,7 +3464,7 @@ async function sendAuthCodeEmail(email, code, type) {
 }
 
 async function handleSendAuthCode(req, res) {
-  if (!requireAdminSession(req, res)) return;
+  if (!requireAdminPermission(req, res, "users:manage")) return;
   const body = await readJsonBody(req);
   const email = String(body.email || "").trim().toLowerCase();
   const code = String(body.code || "").trim();
@@ -3485,6 +3855,7 @@ const handleUploadRoute = createUploadRouteHandler({
   isRateLimited,
   sendJson,
   requireAdminSession,
+  requireAdminPermission,
   handleUpload,
   handleBinaryUpload,
   handleGetUploadProgress,
@@ -3499,6 +3870,7 @@ const handleContentRoute = createContentRouteHandler({
   isRateLimited,
   sendJson,
   requireAdminSession,
+  requireAdminPermission,
   handleSaveContent,
   handleSaveTechnicalSheetImage,
   handleSaveConfiguratorMedia,
@@ -3510,12 +3882,17 @@ const handleContentRoute = createContentRouteHandler({
   handleGetGamesCatalog,
   handleSaveUserState,
   handleGetUserState,
+  handleGetContentHistory,
+  handleRollbackContentHistory,
+  handleDeleteContentHistoryEntry,
+  handleClearContentHistory,
 });
 
 const handleAdminOpsRoute = createAdminOpsRouteHandler({
   isRateLimited,
   sendJson,
   requireAdminSession,
+  requireAdminPermission,
   handleAdminRailwayStatus,
   handleBackupSiteZip,
   handleRunRailwayUpdateTerminal,
@@ -3531,6 +3908,10 @@ async function requestListener(req, res) {
     }
     if (req.method === "GET" && url.pathname === "/api/ping") {
       sendJson(res, 200, { ok: true });
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/admin/session") {
+      handleAdminSessionStatus(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/admin/session") {
@@ -3602,7 +3983,7 @@ async function requestListener(req, res) {
         sendJson(res, 429, { ok: false, error: "Trop d'exports PDF. Réessayez dans 1 minute." });
         return;
       }
-      if (!requireAdminSession(req, res)) return;
+      if (!requireAdminPermission(req, res, "content:write")) return;
       await handleProcessInvoicePdf(req, res);
       return;
     }
@@ -3645,9 +4026,9 @@ async function requestListener(req, res) {
 }
 
 if (require.main === module) {
-  if (!ADMIN_PASSWORD && !ADMIN_PASSWORD_HASH) {
+  if (!ADMIN_ACCOUNTS.length) {
     console.warn(
-      "ADMIN_PASSWORD ou ADMIN_PASSWORD_HASH manquant. Le serveur démarre pour le healthcheck, mais la connexion admin restera indisponible."
+      "Aucun compte admin valide (ADMIN_PASSWORD/ADMIN_PASSWORD_HASH ou ADMIN_ACCOUNTS_JSON). Le serveur démarre pour le healthcheck, mais la connexion admin restera indisponible."
     );
   }
   const server = http.createServer(requestListener);
@@ -3656,8 +4037,8 @@ if (require.main === module) {
     if (!RESEND_API_KEY && (!MAIL_FROM || !SMTP_USER || !SMTP_PASS)) {
       console.log("Email auth non configure. Ajoutez RESEND_API_KEY ou MAIL_FROM+SMTP_USER+SMTP_PASS dans .env");
     }
-    if (!ADMIN_PASSWORD_HASH) {
-      console.log("Conseil sécurité: utilisez ADMIN_PASSWORD_HASH (format scrypt$<saltB64>$<hashB64>) au lieu d'un mot de passe en clair.");
+    if (ADMIN_ACCOUNTS.some((account) => account?.password && !account?.passwordHash)) {
+      console.log("Conseil sécurité: privilégiez passwordHash (scrypt$<saltB64>$<hashB64>) plutôt qu'un mot de passe en clair.");
     }
   });
 }

@@ -442,6 +442,8 @@ const STORAGE_KEY = "vortexbox-content";
 const AUTHORITATIVE_CONTENT_KEY = "vortexbox-content-authoritative";
 const UNSYNCED_CONTENT_KEY = "vortexbox-content-unsynced";
 const SESSION_KEY = "vortexbox-admin";
+const SESSION_ADMIN_ROLE_KEY = "vortexbox-admin-role";
+const SESSION_ADMIN_PERMISSIONS_KEY = "vortexbox-admin-permissions";
 const BG_MUSIC_KEY = "vortexbox-bg-music-enabled";
 const COOKIE_CONSENT_KEY = "vortexbox-cookie-consent";
 const ADMIN_TABS_ORDER_KEY = "vortexbox-admin-tabs-order";
@@ -459,7 +461,7 @@ const ADMIN_BACKUP_FILENAME_KEY = "vortexbox-admin-backup-filename";
 const VORTEXBOT_HISTORY_KEY = "vortexbox-vortexbot-history";
 const VORTEXBOT_MEMORY_KEY = "vortexbox-vortexbot-memory";
 const AI_ADVISOR_DEEP_LINK_KEY = "vortexbox-ai-advisor-start";
-const ADMIN_HISTORY_LIMIT = 5;
+const ADMIN_HISTORY_LIMIT = 120;
 const ADMIN_PROCESS_SUBTABS_ORDER_KEY = "vortexbox-admin-process-subtabs-order";
 const ADMIN_PROCESS_QUICKLINKS_ORDER_KEY = "vortexbox-admin-process-quicklinks-order";
 const ADMIN_PROCESS_UNLOCKED_KEY = "vortexbox-admin-process-unlocked";
@@ -3084,7 +3086,10 @@ function isAdminEmailAlias(email) {
 
 function isAdminEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
-  return isAdminEmailAlias(normalized);
+  if (isAdminEmailAlias(normalized)) return true;
+  const currentSessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
+  if (sessionStorage.getItem(SESSION_KEY) === "1" && normalized && currentSessionEmail === normalized) return true;
+  return false;
 }
 
 function getCurrentAuthEmail() {
@@ -3256,12 +3261,17 @@ async function requestUserSessionLogout() {
 }
 
 function isAdminSessionAuthorized() {
+  if (sessionStorage.getItem(SESSION_KEY) !== "1") return false;
+  const role = String(sessionStorage.getItem(SESSION_ADMIN_ROLE_KEY) || "").trim().toLowerCase();
+  if (role) return true;
   const email = getCurrentAuthEmail();
-  return isAdminEmail(email) && sessionStorage.getItem(SESSION_KEY) === "1";
+  return isAdminEmail(email);
 }
 
 function handleExpiredAdminSession(message = "Session administrateur expiree. Reconnectez-vous dans l'admin.") {
   sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+  sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
   sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "0");
   if (adminPanel) adminPanel.classList.add("hidden");
   refreshAdminLiveMode();
@@ -3273,7 +3283,7 @@ function handleExpiredAdminSession(message = "Session administrateur expiree. Re
 async function validateAdminSessionWithServer() {
   if (sessionStorage.getItem(SESSION_KEY) !== "1") return true;
   try {
-    const response = await fetch("/api/user-state", {
+    const response = await fetch("/api/admin/session", {
       method: "GET",
       credentials: "same-origin",
       cache: "no-store",
@@ -3285,10 +3295,18 @@ async function validateAdminSessionWithServer() {
       );
       return false;
     }
-    if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.ok) {
       lastDiskSyncError = `Vérification session impossible (HTTP ${response.status}).`;
+      return false;
     }
-    return response.ok;
+    const role = String(payload?.role || "").trim().toLowerCase();
+    const permissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
+    if (role) sessionStorage.setItem(SESSION_ADMIN_ROLE_KEY, role);
+    if (permissions.length) {
+      sessionStorage.setItem(SESSION_ADMIN_PERMISSIONS_KEY, JSON.stringify(permissions));
+    }
+    return true;
   } catch (error) {
     lastDiskSyncError = "Connexion serveur impossible.";
     return false;
@@ -4769,12 +4787,14 @@ async function initializeSiteAuth() {
     const activeEmail = String(serverSession.email || "").trim().toLowerCase();
     sessionStorage.setItem(AUTH_SESSION_KEY, activeEmail);
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
     syncRememberPreference(activeEmail);
     unlockSite();
     return;
   }
 
-  if (sessionEmail && isAdminEmail(sessionEmail) && sessionStorage.getItem(SESSION_KEY) === "1") {
+  if (sessionEmail && isAdminSessionAuthorized()) {
     sessionStorage.setItem(AUTH_SESSION_KEY, sessionEmail);
     unlockSite();
     return;
@@ -4782,6 +4802,8 @@ async function initializeSiteAuth() {
 
   sessionStorage.removeItem(AUTH_SESSION_KEY);
   sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+  sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
   lockSite();
   const pendingEmail = sessionStorage.getItem(PENDING_ACTIVATION_KEY) || "";
   if (isAllowedOutlookEmail(pendingEmail)) {
@@ -4817,7 +4839,6 @@ function exitConfiguratorOnlyMode(targetSelector) {
 
 function handleAdminDeepLink() {
   const params = new URLSearchParams(window.location.search);
-  const sessionEmail = String(sessionStorage.getItem(AUTH_SESSION_KEY) || "").trim().toLowerCase();
   let hasChange = false;
 
   if (params.get("openAdmin") === "1" && adminPanel && adminToggle) {
@@ -4825,7 +4846,7 @@ function handleAdminDeepLink() {
     setFeedback("");
     pendingAdminDeepLinkTab = String(params.get("adminTab") || "").trim();
     pendingAdminDeepLinkProcessSubtab = String(params.get("processSubtab") || "").trim();
-    const logged = sessionStorage.getItem(SESSION_KEY) === "1" && isAdminEmail(sessionEmail);
+    const logged = isAdminSessionAuthorized();
     setAdminState(logged);
     if (logged && pendingAdminDeepLinkTab) {
       showAdminEditor();
@@ -11369,6 +11390,7 @@ function fillAdminFields() {
   loadAdminBackupFilenamePreference();
   renderLastBackupState();
   renderAdminHistoryOptions();
+  refreshAdminHistoryFromServer().catch(() => {});
   if (adminAutosaveLastAt) {
     setAdminAutosaveStatus(`Dernier auto-save: ${new Date(adminAutosaveLastAt).toLocaleTimeString("fr-FR")}`, "info");
   } else {
@@ -11796,6 +11818,88 @@ function saveAdminHistory(history) {
   localStorage.setItem(ADMIN_HISTORY_KEY, JSON.stringify(compact));
 }
 
+function normalizeAdminHistoryEntries(entries) {
+  const list = Array.isArray(entries) ? entries : [];
+  return list
+    .map((entry) => ({
+      id: String(entry?.id || "").trim(),
+      at: String(entry?.at || ""),
+      action: String(entry?.action || "save").trim().toLowerCase() || "save",
+      adminEmail: String(entry?.adminEmail || "").trim().toLowerCase(),
+      restoredFromId: String(entry?.restoredFromId || "").trim(),
+      previousUpdatedAt: Math.max(0, Number(entry?.previousUpdatedAt || 0)),
+      nextUpdatedAt: Math.max(0, Number(entry?.nextUpdatedAt || 0)),
+    }))
+    .filter((entry) => entry.id);
+}
+
+async function fetchAdminHistoryFromServer() {
+  const response = await fetch("/api/admin/content-history", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(String(payload?.error || `HTTP ${response.status}`));
+  }
+  return normalizeAdminHistoryEntries(payload.entries);
+}
+
+async function refreshAdminHistoryFromServer() {
+  if (!isAdminSessionAuthorized()) return false;
+  try {
+    const entries = await fetchAdminHistoryFromServer();
+    saveAdminHistory(entries);
+    renderAdminHistoryOptions();
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function rollbackAdminHistoryEntryOnServer(entryId) {
+  const response = await fetch("/api/admin/content-rollback", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: String(entryId || "").trim() }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(String(payload?.error || `HTTP ${response.status}`));
+  }
+  return payload;
+}
+
+async function deleteAdminHistoryEntryOnServer(entryId) {
+  const response = await fetch("/api/admin/content-history-delete", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: String(entryId || "").trim() }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(String(payload?.error || `HTTP ${response.status}`));
+  }
+  return payload;
+}
+
+async function clearAdminHistoryOnServer() {
+  const response = await fetch("/api/admin/content-history-clear", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clear: true }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(String(payload?.error || `HTTP ${response.status}`));
+  }
+  return payload;
+}
+
 function clearAdminHistory() {
   localStorage.removeItem(ADMIN_HISTORY_KEY);
 }
@@ -11832,7 +11936,11 @@ function renderAdminHistoryOptions() {
     .map((entry) => {
       const date = new Date(entry.at || "");
       const label = Number.isNaN(date.getTime()) ? "Version" : date.toLocaleString("fr-FR");
-      return `<option value="${escapeHtml(entry.id || "")}">${escapeHtml(label)}</option>`;
+      const actionLabel =
+        entry.action === "rollback" ? "rollback" : entry.action === "save" ? "save" : String(entry.action || "action");
+      const actor = String(entry.adminEmail || "").trim();
+      const decorated = actor ? `${label} • ${actionLabel} • ${actor}` : `${label} • ${actionLabel}`;
+      return `<option value="${escapeHtml(entry.id || "")}">${escapeHtml(decorated)}</option>`;
     })
     .join("");
   if (previous && history.some((entry) => String(entry?.id || "") === previous)) {
@@ -11854,6 +11962,7 @@ function pushAdminHistorySnapshot(content) {
   history.unshift(entry);
   saveAdminHistory(history);
   renderAdminHistoryOptions();
+  refreshAdminHistoryFromServer().catch(() => {});
 }
 
 function scheduleAdminAutosave() {
@@ -16116,8 +16225,7 @@ function openAdminPanelFromToggle() {
 }
 
 adminToggle.addEventListener("click", () => {
-  const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
-  if (!isAdminEmail(sessionEmail) || sessionStorage.getItem(SESSION_KEY) !== "1") return;
+  if (!isAdminSessionAuthorized()) return;
   const panelHidden = adminPanel.classList.contains("hidden");
 
   if (panelHidden && !adminToggleAwaitingOpen) {
@@ -16139,8 +16247,7 @@ adminToggle.addEventListener("click", () => {
 });
 
 adminToggle.addEventListener("dblclick", () => {
-  const sessionEmail = sessionStorage.getItem(AUTH_SESSION_KEY) || "";
-  if (!isAdminEmail(sessionEmail) || sessionStorage.getItem(SESSION_KEY) !== "1") return;
+  if (!isAdminSessionAuthorized()) return;
   sessionStorage.setItem(ADMIN_LIVE_MODE_KEY, "1");
   refreshAdminLiveMode();
   openAdminPanelFromToggle();
@@ -16170,13 +16277,19 @@ if (siteLoginFormEl) {
     let adminLoginError = "";
     if (authMode !== "new") {
       try {
-        await requestAdminSessionLogin(email, password);
+        const adminSession = await requestAdminSessionLogin(email, password);
+        const adminEmail = String(adminSession?.email || email).trim().toLowerCase();
+        const adminRole = String(adminSession?.role || "").trim().toLowerCase();
+        const adminPermissions = Array.isArray(adminSession?.permissions) ? adminSession.permissions : [];
         setPendingActivation("");
         showActivationStep(false);
-        sessionStorage.setItem(AUTH_SESSION_KEY, email);
+        sessionStorage.setItem(AUTH_SESSION_KEY, adminEmail);
         sessionStorage.setItem(SESSION_KEY, "1");
-        syncRememberPreference(email);
-        recordUserLogin(email);
+        if (adminRole) sessionStorage.setItem(SESSION_ADMIN_ROLE_KEY, adminRole);
+        else sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+        sessionStorage.setItem(SESSION_ADMIN_PERMISSIONS_KEY, JSON.stringify(adminPermissions));
+        syncRememberPreference(adminEmail);
+        recordUserLogin(adminEmail);
         unlockSite();
         setAuthFeedback("");
         return;
@@ -16213,6 +16326,8 @@ if (siteLoginFormEl) {
         showActivationStep(false);
         sessionStorage.setItem(AUTH_SESSION_KEY, email);
         sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+        sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
         syncRememberPreference(email);
         recordUserLogin(email);
         unlockSite();
@@ -16257,6 +16372,8 @@ if (siteLoginFormEl) {
     showActivationStep(false);
     sessionStorage.setItem(AUTH_SESSION_KEY, email);
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
     syncRememberPreference(email);
     recordUserLogin(email);
     unlockSite();
@@ -16787,6 +16904,8 @@ if (siteActivateBtnEl) {
     showActivationStep(false);
     sessionStorage.setItem(AUTH_SESSION_KEY, email);
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
     syncRememberPreference(email);
     recordUserLogin(email);
     unlockSite();
@@ -16794,7 +16913,7 @@ if (siteActivateBtnEl) {
   });
 }
 
-if (userLogoutBtn) {
+  if (userLogoutBtn) {
   userLogoutBtn.addEventListener("click", async () => {
     if (sessionStorage.getItem(SESSION_KEY) === "1") {
       await requestAdminSessionLogout();
@@ -16803,6 +16922,8 @@ if (userLogoutBtn) {
     }
     sessionStorage.removeItem(AUTH_SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
     sessionStorage.removeItem(PENDING_ACTIVATION_KEY);
     clearRememberedAuthEmail();
     pendingActivationEmail = "";
@@ -16824,8 +16945,13 @@ adminLoginBtn.addEventListener("click", async () => {
   try {
     const adminSession = await requestAdminSessionLogin(email, password);
     const adminEmail = String(adminSession?.email || email).trim().toLowerCase();
+    const adminRole = String(adminSession?.role || "").trim().toLowerCase();
+    const adminPermissions = Array.isArray(adminSession?.permissions) ? adminSession.permissions : [];
     sessionStorage.setItem(AUTH_SESSION_KEY, adminEmail);
     sessionStorage.setItem(SESSION_KEY, "1");
+    if (adminRole) sessionStorage.setItem(SESSION_ADMIN_ROLE_KEY, adminRole);
+    else sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+    sessionStorage.setItem(SESSION_ADMIN_PERMISSIONS_KEY, JSON.stringify(adminPermissions));
     syncRememberPreference(adminEmail);
     recordUserLogin(adminEmail);
     setAdminState(true);
@@ -17578,7 +17704,11 @@ adminEditor.addEventListener("submit", async (event) => {
 
   if (!persistSiteContent()) return;
   const diskSaved = await saveContentSnapshotToDisk(siteContent);
-  pushAdminHistorySnapshot(siteContent);
+  if (diskSaved) {
+    await refreshAdminHistoryFromServer();
+  } else {
+    pushAdminHistorySnapshot(siteContent);
+  }
 
   applyContent();
   renderAdminOverviewKpis();
@@ -17667,6 +17797,8 @@ if (adminRepairCacheBtn) {
 adminLogout.addEventListener("click", () => {
   requestAdminSessionLogout().finally(() => {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+    sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
     refreshAdminLiveMode();
     setAdminState(false);
     setFeedback("Déconnecté du mode administrateur.");
@@ -17680,6 +17812,21 @@ if (adminRestoreHistoryBtn) {
       setFeedback("Sélectionnez une version à restaurer.", "error");
       return;
     }
+    try {
+      await rollbackAdminHistoryEntryOnServer(targetId);
+      const latestDisk = await getDiskContentSnapshotSafe();
+      if (!latestDisk || typeof latestDisk !== "object") {
+        throw new Error("Lecture du snapshot restauré impossible.");
+      }
+      siteContent = JSON.parse(JSON.stringify(latestDisk));
+      persistSiteContent();
+      applyContent();
+      fillAdminFields();
+      await refreshAdminHistoryFromServer();
+      setFeedback("Version restaurée avec succès.", "success");
+      return;
+    } catch (error) {}
+
     const history = loadAdminHistory();
     const selected = history.find((entry) => entry.id === targetId);
     if (!selected?.content) {
@@ -17707,27 +17854,39 @@ if (adminHistorySelectEl) {
 }
 
 if (adminDeleteHistoryEntryBtn) {
-  adminDeleteHistoryEntryBtn.addEventListener("click", () => {
+  adminDeleteHistoryEntryBtn.addEventListener("click", async () => {
     const targetId = String(adminHistorySelectEl?.value || "");
     if (!targetId) {
       setFeedback("Sélectionnez une version à supprimer.", "error");
       return;
     }
+    try {
+      await deleteAdminHistoryEntryOnServer(targetId);
+      await refreshAdminHistoryFromServer();
+      setFeedback("Version supprimée de l'historique.", "success");
+      return;
+    } catch (error) {}
     const removed = removeAdminHistoryEntryById(targetId);
     if (!removed) {
       setFeedback("Version introuvable.", "error");
       return;
     }
     renderAdminHistoryOptions();
-    setFeedback("Version supprimée de l'historique.", "success");
+    setFeedback("Version supprimée de l'historique local.", "success");
   });
 }
 
 if (adminClearHistoryBtn) {
-  adminClearHistoryBtn.addEventListener("click", () => {
+  adminClearHistoryBtn.addEventListener("click", async () => {
+    try {
+      await clearAdminHistoryOnServer();
+      await refreshAdminHistoryFromServer();
+      setFeedback("Historique des sauvegardes effacé.", "success");
+      return;
+    } catch (error) {}
     clearAdminHistory();
     renderAdminHistoryOptions();
-    setFeedback("Historique des sauvegardes effacé.", "success");
+    setFeedback("Historique local effacé.", "success");
   });
 }
 
