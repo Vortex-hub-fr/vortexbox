@@ -109,6 +109,10 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const HF_API_KEY = process.env.HF_API_KEY || "";
 const HF_MODEL = process.env.HF_MODEL || "mistralai/Mistral-7B-Instruct-v0.3";
+const TRUSTED_ORIGINS = String(process.env.TRUSTED_ORIGINS || "")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
 const AI_FREE_FIRST = String(process.env.AI_FREE_FIRST || "1") === "1";
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "vortexcore@outlook.fr").trim().toLowerCase();
 const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "");
@@ -506,20 +510,63 @@ function isTrustedOrigin(req) {
   const originRaw = String(req.headers.origin || "").trim();
   if (!originRaw) return true;
   let originUrl;
-  let hostUrl;
   try {
     originUrl = new URL(originRaw);
-    hostUrl = new URL(`http://${String(req.headers.host || "")}`);
   } catch (error) {
     return false;
   }
-  const normalizeHost = (value) => String(value || "").toLowerCase().replace(/^www\./, "");
+  const normalizeHost = (value) => String(value || "").toLowerCase().replace(/^www\./, "").replace(/:\d+$/, "").trim();
   const originHost = normalizeHost(originUrl.hostname);
-  const reqHost = normalizeHost(hostUrl.hostname);
-  if (!originHost || !reqHost) return false;
-  if (originHost === reqHost) return true;
-  if (["localhost", "127.0.0.1"].includes(originHost) && ["localhost", "127.0.0.1"].includes(reqHost)) return true;
-  if (originHost.endsWith(".onrender.com") && reqHost.endsWith(".onrender.com")) return true;
+  if (!originHost) return false;
+
+  const trustedHostsFromEnv = new Set();
+  for (const raw of TRUSTED_ORIGINS) {
+    try {
+      const withProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+      const parsed = new URL(withProtocol);
+      const normalized = normalizeHost(parsed.hostname);
+      if (normalized) trustedHostsFromEnv.add(normalized);
+    } catch (error) {
+      const normalized = normalizeHost(raw);
+      if (normalized) trustedHostsFromEnv.add(normalized);
+    }
+  }
+  if (trustedHostsFromEnv.has(originHost)) return true;
+
+  const reqHosts = new Set();
+  const hostHeader = String(req.headers.host || "").trim();
+  if (hostHeader) {
+    try {
+      const parsed = new URL(`http://${hostHeader}`);
+      const normalized = normalizeHost(parsed.hostname);
+      if (normalized) reqHosts.add(normalized);
+    } catch (error) {
+      const normalized = normalizeHost(hostHeader);
+      if (normalized) reqHosts.add(normalized);
+    }
+  }
+  const forwardedHostRaw = String(req.headers["x-forwarded-host"] || "");
+  if (forwardedHostRaw) {
+    forwardedHostRaw
+      .split(",")
+      .map((value) => normalizeHost(value))
+      .filter(Boolean)
+      .forEach((value) => reqHosts.add(value));
+  }
+  if (!reqHosts.size) return false;
+  if (reqHosts.has(originHost)) return true;
+
+  for (const reqHost of reqHosts) {
+    if (["localhost", "127.0.0.1"].includes(originHost) && ["localhost", "127.0.0.1"].includes(reqHost)) return true;
+    if (originHost.endsWith(".onrender.com") && reqHost.endsWith(".onrender.com")) return true;
+    if (
+      (originHost.endsWith(".railway.app") || originHost.endsWith(".up.railway.app")) &&
+      (reqHost.endsWith(".railway.app") || reqHost.endsWith(".up.railway.app"))
+    ) {
+      return true;
+    }
+    if (originHost.endsWith(".vercel.app") && reqHost.endsWith(".vercel.app")) return true;
+  }
   return false;
 }
 
