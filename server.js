@@ -7,6 +7,10 @@ const crypto = require("crypto");
 const { spawn } = require("child_process");
 const { URL } = require("url");
 const zlib = require("zlib");
+let nodemailer = null;
+try {
+  nodemailer = require("nodemailer");
+} catch (error) {}
 const { hashPasswordScrypt, verifyScryptHash } = require("./lib/password-hash");
 const { runStorageRetentionCleanup } = require("./lib/storage-retention");
 const { createUserAuthRouteHandler } = require("./lib/auth-user");
@@ -3392,68 +3396,61 @@ async function sendAuthCodeEmail(email, code, type) {
       error: "Envoi email non configure. Definissez MAIL_FROM + SMTP_USER + SMTP_PASS (ou RESEND_API_KEY).",
     };
   }
+  if (!nodemailer) {
+    return {
+      ok: false,
+      status: 503,
+      error: "Module SMTP indisponible (nodemailer manquant). Redeployez avec les dependances npm.",
+    };
+  }
 
-  const mime = [
-    `From: ${MAIL_FROM}`,
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="utf-8"',
-    "Content-Transfer-Encoding: 8bit",
-    "",
-    textBody,
-    "",
-  ].join("\r\n");
-
+  const envelopeFrom = MAIL_FROM.replace(/^.*<([^>]+)>.*$/, "$1").trim() || MAIL_FROM.trim();
   const hostsToTry = Array.from(new Set([SMTP_HOST, "smtp-mail.outlook.com", "smtp.office365.com"]));
-  const smtpEndpoints = [
-    { scheme: "smtp", port: 587, startTls: true },
-    { scheme: "smtps", port: 465, startTls: false },
-  ];
+  const smtpPort = Number(SMTP_PORT);
+  const smtpEndpoints = [];
+  const addEndpoint = (port, secure, requireTls) => {
+    if (!Number.isFinite(port) || port <= 0) return;
+    if (smtpEndpoints.some((item) => item.port === port && item.secure === secure)) return;
+    smtpEndpoints.push({ port, secure, requireTls });
+  };
+  addEndpoint(smtpPort, smtpPort === 465, smtpPort !== 465);
+  addEndpoint(587, false, true);
+  addEndpoint(465, true, false);
+
   let lastSmtpError = "";
   for (const host of hostsToTry) {
     for (const endpoint of smtpEndpoints) {
-      const smtpResult = await new Promise((resolve) => {
-        const curlArgs = [
-          "--silent",
-          "--show-error",
-          "--url",
-          `${endpoint.scheme}://${host}:${endpoint.port || SMTP_PORT}`,
-          "--user",
-          `${SMTP_USER}:${SMTP_PASS}`,
-          "--login-options",
-          "AUTH=LOGIN",
-          "--mail-from",
-          MAIL_FROM.replace(/^.*<([^>]+)>.*$/, "$1"),
-          "--mail-rcpt",
-          to,
-          "--upload-file",
-          "-",
-        ];
-        if (endpoint.startTls) curlArgs.splice(4, 0, "--ssl-reqd");
-        const child = spawn("curl", curlArgs, { stdio: ["pipe", "pipe", "pipe"] });
-        let stderr = "";
-        child.stderr.on("data", (chunk) => {
-          stderr += chunk.toString("utf8");
-        });
-        child.on("error", (error) => {
-          resolve({ ok: false, error: error.message || "Erreur curl SMTP." });
-        });
-        child.on("close", (code) => {
-          if (code === 0) {
-            resolve({ ok: true });
-            return;
-          }
-          resolve({
-            ok: false,
-            error: stderr || `Echec SMTP ${endpoint.scheme}://${host}:${endpoint.port} (code ${code}).`,
-          });
-        });
-        child.stdin.write(mime);
-        child.stdin.end();
+      const transporter = nodemailer.createTransport({
+        host,
+        port: endpoint.port,
+        secure: endpoint.secure,
+        requireTLS: endpoint.requireTls,
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASS,
+        },
+        tls: {
+          minVersion: "TLSv1.2",
+        },
       });
-      if (smtpResult.ok) return { ok: true };
-      lastSmtpError = smtpResult.error || lastSmtpError;
+      try {
+        await transporter.sendMail({
+          from: MAIL_FROM,
+          to,
+          subject,
+          text: textBody,
+          html,
+          envelope: {
+            from: envelopeFrom,
+            to: [to],
+          },
+        });
+        return { ok: true };
+      } catch (error) {
+        lastSmtpError = error?.message || `Echec SMTP ${host}:${endpoint.port}.`;
+      } finally {
+        if (typeof transporter.close === "function") transporter.close();
+      }
     }
   }
 

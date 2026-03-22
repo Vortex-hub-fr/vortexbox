@@ -19,5 +19,8 @@
     "video:uhd:about": "node tools/upscale-videos-local.js --active-about",
     "video:uhd:build": "node tools/upscale-videos-local.js --all-machine",
     "video:uhd:file": "node tools/upscale-videos-local.js"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
   }
 }
