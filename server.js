@@ -109,6 +109,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const HF_API_KEY = process.env.HF_API_KEY || "";
 const HF_MODEL = process.env.HF_MODEL || "mistralai/Mistral-7B-Instruct-v0.3";
+const EMAIL_SEND_TIMEOUT_MS = Math.max(3000, Number(process.env.EMAIL_SEND_TIMEOUT_MS || 12000));
 const TRUSTED_ORIGINS = String(process.env.TRUSTED_ORIGINS || "")
   .split(",")
   .map((item) => item.trim())
@@ -3417,19 +3418,29 @@ async function sendAuthCodeEmail(email, code, type) {
   const textBody = `${title}\n\n${help}\n\nCode: ${safeCode}\n\nSi vous n'etes pas a l'origine de cette demande, ignorez cet email.`;
 
   if (RESEND_API_KEY && MAIL_FROM) {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: MAIL_FROM,
-        to: [to],
-        subject,
-        html,
-      }),
-    });
+    let response;
+    try {
+      response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: MAIL_FROM,
+          to: [to],
+          subject,
+          html,
+        }),
+        signal: AbortSignal.timeout(EMAIL_SEND_TIMEOUT_MS),
+      });
+    } catch (error) {
+      return {
+        ok: false,
+        status: 504,
+        error: "Envoi email trop lent. Reessayez dans quelques secondes.",
+      };
+    }
 
     if (response.ok) return { ok: true };
     const text = await response.text();
@@ -3452,7 +3463,7 @@ async function sendAuthCodeEmail(email, code, type) {
   }
 
   const envelopeFrom = MAIL_FROM.replace(/^.*<([^>]+)>.*$/, "$1").trim() || MAIL_FROM.trim();
-  const hostsToTry = Array.from(new Set([SMTP_HOST, "smtp-mail.outlook.com", "smtp.office365.com"]));
+  const hostsToTry = Array.from(new Set([SMTP_HOST, "smtp.office365.com"]));
   const smtpPort = Number(SMTP_PORT);
   const smtpEndpoints = [];
   const addEndpoint = (port, secure, requireTls) => {
@@ -3461,9 +3472,9 @@ async function sendAuthCodeEmail(email, code, type) {
     smtpEndpoints.push({ port, secure, requireTls });
   };
   addEndpoint(smtpPort, smtpPort === 465, smtpPort !== 465);
-  addEndpoint(587, false, true);
-  addEndpoint(465, true, false);
+  if (smtpPort !== 587) addEndpoint(587, false, true);
 
+  const attemptTimeoutMs = Math.max(2500, Math.min(EMAIL_SEND_TIMEOUT_MS, 5000));
   let lastSmtpError = "";
   for (const host of hostsToTry) {
     for (const endpoint of smtpEndpoints) {
@@ -3472,6 +3483,9 @@ async function sendAuthCodeEmail(email, code, type) {
         port: endpoint.port,
         secure: endpoint.secure,
         requireTLS: endpoint.requireTls,
+        connectionTimeout: attemptTimeoutMs,
+        greetingTimeout: attemptTimeoutMs,
+        socketTimeout: attemptTimeoutMs,
         auth: {
           user: SMTP_USER,
           pass: SMTP_PASS,
@@ -3502,9 +3516,9 @@ async function sendAuthCodeEmail(email, code, type) {
   }
 
   if (lastSmtpError) {
-    return { ok: false, status: 502, error: lastSmtpError };
+    return { ok: false, status: 504, error: "Serveur email indisponible. Reessayez dans quelques minutes." };
   }
-  return { ok: false, status: 502, error: "Echec envoi SMTP." };
+  return { ok: false, status: 504, error: "Echec envoi SMTP." };
 }
 
 async function handleSendAuthCode(req, res) {

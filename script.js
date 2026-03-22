@@ -3107,6 +3107,13 @@ function refreshNavSessionButtons() {
   refreshNavAssignedFilesBadge();
 }
 
+function createTimeoutSignal(timeoutMs = 15000) {
+  if (typeof AbortController === "undefined") return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(1000, Number(timeoutMs) || 15000));
+  return { signal: controller.signal, cancel: () => clearTimeout(timer) };
+}
+
 function normalizeCredentialValue(value) {
   try {
     return String(value || "").trim().normalize("NFKC");
@@ -3167,15 +3174,25 @@ async function requestUserAuthLogin(email, password, remember) {
 }
 
 async function requestUserAuthActivation(email, password) {
-  const response = await fetch("/api/auth/request-activation", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: String(email || "").trim().toLowerCase(),
-      password: String(password || ""),
-    }),
-  });
+  const timeout = createTimeoutSignal(15000);
+  let response;
+  try {
+    response = await fetch("/api/auth/request-activation", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: String(email || "").trim().toLowerCase(),
+        password: String(password || ""),
+      }),
+      ...(timeout ? { signal: timeout.signal } : {}),
+    });
+  } catch (error) {
+    if (timeout) timeout.cancel();
+    const isAbort = String(error?.name || "").toLowerCase() === "aborterror";
+    throw new Error(isAbort ? "Serveur temporairement lent. Reessayez dans quelques secondes." : "Connexion impossible au serveur.");
+  }
+  if (timeout) timeout.cancel();
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload?.ok) {
     throw new Error(payload?.error || "Impossible d'initier l'activation.");
@@ -16335,6 +16352,7 @@ if (siteLoginFormEl) {
         return;
       }
 
+      setAuthFeedback("Envoi du code d'activation en cours...", "info");
       try {
         await requestUserAuthActivation(email, password);
       } catch (error) {
