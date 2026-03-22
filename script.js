@@ -16353,10 +16353,24 @@ if (siteLoginFormEl) {
       }
 
       setAuthFeedback("Envoi du code d'activation en cours...", "info");
+      let activationPayload;
       try {
-        await requestUserAuthActivation(email, password);
+        activationPayload = await requestUserAuthActivation(email, password);
       } catch (error) {
         setAuthFeedback(String(error?.message || "Impossible d'envoyer le code d'activation."), "error");
+        return;
+      }
+      if (activationPayload?.autoActivated) {
+        setPendingActivation("");
+        showActivationStep(false);
+        sessionStorage.setItem(AUTH_SESSION_KEY, email);
+        sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_ADMIN_ROLE_KEY);
+        sessionStorage.removeItem(SESSION_ADMIN_PERMISSIONS_KEY);
+        syncRememberPreference(email);
+        recordUserLogin(email);
+        unlockSite();
+        setAuthFeedback("Compte cree et active automatiquement. Bienvenue sur VortexBox.", "success");
         return;
       }
       setPendingActivation(email);
