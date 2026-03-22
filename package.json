@@ -21,6 +21,6 @@
     "video:uhd:file": "node tools/upscale-videos-local.js"
   },
   "dependencies": {
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.10.1"
   }
 }
