@@ -78,6 +78,10 @@
           Mot de passe
           <input id="site-login-password" type="password" placeholder="Votre mot de passe" required />
         </label>
+        <label class="hidden" id="site-signup-access-code-wrap">
+          Code de connexion VortexBox (6 chiffres)
+          <input id="site-signup-access-code" type="password" inputmode="numeric" maxlength="6" placeholder="Code transmis par VortexBox" autocomplete="one-time-code" />
+        </label>
         <div class="auth-password-strength hidden" id="auth-password-strength" aria-live="polite">
           <div class="auth-password-strength-bar"><span></span></div>
           <p id="auth-password-strength-label">Force du mot de passe</p>
@@ -851,6 +855,19 @@
 
           <section class="admin-content-panel hidden" id="admin-content-users" data-tab-content="users">
             <h4>Gestion des utilisateurs</h4>
+            <div class="admin-tech-card">
+              <h5 class="admin-subtitle">Code de connexion nouveau utilisateur</h5>
+              <label>
+                Code actuel (admin uniquement)
+                <input id="admin-signup-access-code" type="password" readonly />
+              </label>
+              <div class="auth-reset-actions">
+                <button class="admin-secondary" id="admin-signup-access-refresh-btn" type="button">Rafraîchir</button>
+                <button class="admin-secondary" id="admin-signup-access-visibility-btn" type="button">Afficher</button>
+                <button class="cta" id="admin-signup-access-rotate-btn" type="button">Régénérer le code</button>
+              </div>
+              <p class="auth-feedback" id="admin-signup-access-feedback"></p>
+            </div>
             <div class="admin-tech-card">
               <label>
                 Rechercher un utilisateur

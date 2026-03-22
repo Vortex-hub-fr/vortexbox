@@ -64,6 +64,8 @@ const authGateEl = document.getElementById("auth-gate");
 const siteLoginFormEl = document.getElementById("site-login-form");
 const siteLoginEmailEl = document.getElementById("site-login-email");
 const siteLoginPasswordEl = document.getElementById("site-login-password");
+const siteSignupAccessCodeWrapEl = document.getElementById("site-signup-access-code-wrap");
+const siteSignupAccessCodeEl = document.getElementById("site-signup-access-code");
 const siteActivationCodeEl = document.getElementById("site-activation-code");
 const activationStepEl = document.getElementById("activation-step");
 const siteActivateBtnEl = document.getElementById("site-activate-btn");
@@ -405,6 +407,11 @@ const adminRestoreHistoryBtn = document.getElementById("admin-restore-history");
 const adminDeleteHistoryEntryBtn = document.getElementById("admin-delete-history-entry");
 const adminClearHistoryBtn = document.getElementById("admin-clear-history");
 const adminUsersSearchInput = document.getElementById("admin-users-search");
+const adminSignupAccessCodeInput = document.getElementById("admin-signup-access-code");
+const adminSignupAccessRefreshBtn = document.getElementById("admin-signup-access-refresh-btn");
+const adminSignupAccessRotateBtn = document.getElementById("admin-signup-access-rotate-btn");
+const adminSignupAccessVisibilityBtn = document.getElementById("admin-signup-access-visibility-btn");
+const adminSignupAccessFeedbackEl = document.getElementById("admin-signup-access-feedback");
 const adminGlobalSearchInput = document.getElementById("admin-global-search");
 const adminSearchResultsEl = document.getElementById("admin-search-results");
 const adminDensityToggleEl = document.getElementById("admin-density-toggle");
@@ -884,6 +891,7 @@ let machineCompareSelection = [];
 let adminAboutVideoPreviewUrls = ["", "", "", "", "", ""];
 let authMode = "user";
 let pendingActivationEmail = "";
+let adminSignupAccessCode = "";
 let activeAdminComponentIndex = 0;
 let selectedConfiguratorState = { components: {}, services: {} };
 let diskApiAvailability = null;
@@ -927,6 +935,10 @@ let activeConnectionSessionStartAt = 0;
 let activeConnectionTick = null;
 let activeConnectionPersistStep = 0;
 let adminToggleAwaitingOpen = false;
+let adminSignupAccessCodeVisible = false;
+let adminUsersSyncInFlight = null;
+let adminUsersLastSyncAt = 0;
+let adminAuthUsersCache = [];
 let adminProcessConsoleEntries = [];
 let adminProcessConsoleCaptureBound = false;
 let technicalImageFallbackMapCache = null;
@@ -3128,20 +3140,166 @@ function isAdminCredential(email, password) {
 }
 
 async function requestAdminSessionLogin(email, password) {
-  const response = await fetch("/api/admin/session", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: String(email || "").trim().toLowerCase(),
-      password: String(password || ""),
-    }),
-  });
+  const timeout = createTimeoutSignal(12000);
+  let response;
+  try {
+    response = await fetch("/api/admin/session", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: String(email || "").trim().toLowerCase(),
+        password: String(password || ""),
+      }),
+      ...(timeout ? { signal: timeout.signal } : {}),
+    });
+  } catch (error) {
+    if (timeout) timeout.cancel();
+    const isAbort = String(error?.name || "").toLowerCase() === "aborterror";
+    throw new Error(
+      isAbort
+        ? "Serveur admin trop lent. Réessayez dans quelques secondes."
+        : "Connexion au serveur impossible. Vérifiez que VortexBox est démarré."
+    );
+  }
+  if (timeout) timeout.cancel();
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload?.ok) {
     throw new Error(payload?.error || "Accès admin refusé.");
   }
   return payload;
+}
+
+function setAdminSignupAccessFeedback(message, tone = "") {
+  if (!adminSignupAccessFeedbackEl) return;
+  const text = String(message || "");
+  adminSignupAccessFeedbackEl.textContent = text;
+  adminSignupAccessFeedbackEl.classList.remove("success", "error", "info");
+  if (!text) return;
+  adminSignupAccessFeedbackEl.classList.add(tone || inferAuthFeedbackTone(text));
+}
+
+function renderAdminSignupAccessCode() {
+  if (!adminSignupAccessCodeInput) return;
+  adminSignupAccessCodeInput.value = adminSignupAccessCode || "";
+  const nextType = adminSignupAccessCodeVisible ? "text" : "password";
+  adminSignupAccessCodeInput.type = nextType;
+  adminSignupAccessCodeInput.setAttribute("type", nextType);
+  if (adminSignupAccessVisibilityBtn) {
+    adminSignupAccessVisibilityBtn.textContent = adminSignupAccessCodeVisible ? "Masquer" : "Afficher";
+  }
+}
+
+async function requestAdminSignupAccessCode() {
+  const response = await fetch("/api/admin/signup-access-code", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Impossible de charger le code.");
+  return payload;
+}
+
+async function requestAdminRotateSignupAccessCode() {
+  const response = await fetch("/api/admin/signup-access-code/rotate", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Impossible de renouveler le code.");
+  return payload;
+}
+
+async function refreshAdminSignupAccessCode() {
+  if (!isAdminSessionAuthorized()) return;
+  try {
+    const payload = await requestAdminSignupAccessCode();
+    adminSignupAccessCode = String(payload?.code || "").trim();
+    renderAdminSignupAccessCode();
+    setAdminSignupAccessFeedback("Code de connexion chargé.", "info");
+  } catch (error) {
+    setAdminSignupAccessFeedback(String(error?.message || "Chargement du code impossible."), "error");
+  }
+}
+
+async function requestAdminAuthUsers() {
+  const response = await fetch("/api/admin/auth-users", {
+    method: "GET",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Impossible de charger les emails utilisateurs.");
+  }
+  return payload;
+}
+
+function mergeAuthUsersIntoLocalUsers(authUsers) {
+  const incoming = Array.isArray(authUsers) ? authUsers : [];
+  const currentUsers = loadSiteUsers();
+  const byEmail = new Map(currentUsers.map((item) => [String(item?.email || "").trim().toLowerCase(), item]));
+  let changed = false;
+
+  incoming.forEach((item) => {
+    const email = String(item?.email || "").trim().toLowerCase();
+    if (!email || isAdminEmail(email)) return;
+    const existing = byEmail.get(email);
+    const merged = {
+      email,
+      displayName: String(item?.displayName || existing?.displayName || "").trim(),
+      profilePhoto: String(item?.profilePhoto || existing?.profilePhoto || "").trim(),
+      password: "",
+      totalConnectionSeconds: Math.max(0, Math.floor(Number(item?.totalConnectionSeconds ?? existing?.totalConnectionSeconds) || 0)),
+      lastSeenAt: String(item?.lastSeenAt || existing?.lastSeenAt || ""),
+      isActive: Boolean(item?.isActive),
+      activationCode: String(existing?.activationCode || ""),
+      activationSentAt: String(item?.activationSentAt || existing?.activationSentAt || ""),
+      revoked: Boolean(item?.revoked),
+      blacklisted: Boolean(item?.blacklisted),
+    };
+    if (!existing) {
+      byEmail.set(email, merged);
+      changed = true;
+      return;
+    }
+    const before = JSON.stringify(existing);
+    const after = JSON.stringify(merged);
+    if (before !== after) {
+      byEmail.set(email, merged);
+      changed = true;
+    }
+  });
+
+  if (!changed) return false;
+  const nextUsers = Array.from(byEmail.values()).filter((item) => item?.email);
+  saveSiteUsers(nextUsers);
+  return true;
+}
+
+async function syncAdminUsersFromServer(force = false) {
+  if (!isAdminSessionAuthorized()) return false;
+  const now = Date.now();
+  if (!force && now - adminUsersLastSyncAt < 10000) return false;
+  if (adminUsersSyncInFlight) return adminUsersSyncInFlight;
+  adminUsersSyncInFlight = (async () => {
+    try {
+      const payload = await requestAdminAuthUsers();
+      adminAuthUsersCache = Array.isArray(payload?.users) ? payload.users : [];
+      const updated = mergeAuthUsersIntoLocalUsers(adminAuthUsersCache);
+      adminUsersLastSyncAt = Date.now();
+      renderAdminUsersManager();
+      return updated;
+    } catch (error) {
+      return false;
+    } finally {
+      adminUsersSyncInFlight = null;
+    }
+  })();
+  return adminUsersSyncInFlight;
 }
 
 async function requestAdminSessionLogout() {
@@ -3155,7 +3313,21 @@ async function requestAdminSessionLogout() {
   } catch (error) {}
 }
 
-async function requestUserAuthLogin(email, password, remember) {
+async function requestAdminDeleteUser(email) {
+  const response = await fetch("/api/admin/auth-users/delete", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: String(email || "").trim().toLowerCase() }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Suppression définitive impossible.");
+  }
+  return payload;
+}
+
+async function requestUserAuthLogin(email, password, remember, signupAccessCode) {
   const response = await fetch("/api/auth/login", {
     method: "POST",
     credentials: "same-origin",
@@ -3164,6 +3336,7 @@ async function requestUserAuthLogin(email, password, remember) {
       email: String(email || "").trim().toLowerCase(),
       password: String(password || ""),
       remember: Boolean(remember),
+      signupAccessCode: String(signupAccessCode || "").trim(),
     }),
   });
   const payload = await response.json().catch(() => ({}));
@@ -3173,7 +3346,7 @@ async function requestUserAuthLogin(email, password, remember) {
   return payload;
 }
 
-async function requestUserAuthActivation(email, password) {
+async function requestUserAuthActivation(email, password, signupAccessCode) {
   const timeout = createTimeoutSignal(15000);
   let response;
   try {
@@ -3184,6 +3357,7 @@ async function requestUserAuthActivation(email, password) {
       body: JSON.stringify({
         email: String(email || "").trim().toLowerCase(),
         password: String(password || ""),
+        signupAccessCode: String(signupAccessCode || "").trim(),
       }),
       ...(timeout ? { signal: timeout.signal } : {}),
     });
@@ -3200,7 +3374,7 @@ async function requestUserAuthActivation(email, password) {
   return payload;
 }
 
-async function requestUserAuthActivate(email, password, code, remember) {
+async function requestUserAuthActivate(email, password, code, remember, signupAccessCode) {
   const response = await fetch("/api/auth/activate", {
     method: "POST",
     credentials: "same-origin",
@@ -3210,6 +3384,7 @@ async function requestUserAuthActivate(email, password, code, remember) {
       password: String(password || ""),
       code: String(code || "").trim(),
       remember: Boolean(remember),
+      signupAccessCode: String(signupAccessCode || "").trim(),
     }),
   });
   const payload = await response.json().catch(() => ({}));
@@ -4406,6 +4581,7 @@ function setAuthMode(mode) {
   if (authModeUserBtn) authModeUserBtn.classList.toggle("active", authMode === "user");
   if (authModeNewBtn) authModeNewBtn.classList.toggle("active", authMode === "new");
   if (authPasswordStrengthEl) authPasswordStrengthEl.classList.toggle("hidden", authMode !== "new");
+  if (siteSignupAccessCodeWrapEl) siteSignupAccessCodeWrapEl.classList.remove("hidden");
   if (authMode === "user") {
     setPendingActivation("");
     showActivationStep(false);
@@ -4692,8 +4868,36 @@ function getUserAccessStatus(user) {
 
 function renderAdminUsersManager() {
   if (!adminUsersListEls.length) return;
+  if (isAdminSessionAuthorized()) {
+    syncAdminUsersFromServer().catch(() => {});
+  }
   const filterTerm = String(adminUsersSearchInput?.value || "").trim().toLowerCase();
-  const users = loadSiteUsers()
+  const mergedByEmail = new Map();
+  loadSiteUsers().forEach((user) => {
+    const email = String(user?.email || "").trim().toLowerCase();
+    if (!email || isAdminEmail(email)) return;
+    mergedByEmail.set(email, user);
+  });
+  (Array.isArray(adminAuthUsersCache) ? adminAuthUsersCache : []).forEach((user) => {
+    const email = String(user?.email || "").trim().toLowerCase();
+    if (!email || isAdminEmail(email)) return;
+    if (mergedByEmail.has(email)) return;
+    mergedByEmail.set(email, {
+      email,
+      displayName: String(user?.displayName || ""),
+      profilePhoto: String(user?.profilePhoto || ""),
+      password: "",
+      totalConnectionSeconds: Math.max(0, Math.floor(Number(user?.totalConnectionSeconds) || 0)),
+      lastSeenAt: String(user?.lastSeenAt || ""),
+      isActive: Boolean(user?.isActive),
+      activationCode: "",
+      activationSentAt: String(user?.activationSentAt || ""),
+      revoked: Boolean(user?.revoked),
+      blacklisted: Boolean(user?.blacklisted),
+    });
+  });
+
+  const users = Array.from(mergedByEmail.values())
     .filter((user) => user.email && !isAdminEmail(user.email))
     .filter((user) => {
       if (!filterTerm) return true;
@@ -11747,6 +11951,9 @@ function enableHoverScrollableTabs(container) {
 
 function setAdminState(isLoggedIn) {
   if (!isLoggedIn) {
+    adminSignupAccessCode = "";
+    adminSignupAccessCodeVisible = false;
+    renderAdminSignupAccessCode();
     sessionStorage.removeItem(ADMIN_PROCESS_UNLOCKED_KEY);
     if (adminLogin) adminLogin.classList.remove("hidden");
     if (adminKpiGateEl) adminKpiGateEl.classList.add("hidden");
@@ -11760,6 +11967,8 @@ function setAdminState(isLoggedIn) {
     return;
   }
   showAdminKpiGate();
+  refreshAdminSignupAccessCode();
+  syncAdminUsersFromServer(true).catch(() => {});
 }
 
 function setFeedback(message, tone = "") {
@@ -15531,7 +15740,7 @@ adminServicesList.addEventListener("click", (event) => {
   renderAdminConfiguratorEditor();
 });
 
-function handleAdminUserAction(event) {
+async function handleAdminUserAction(event) {
   const button = event.target.closest("button[data-action][data-user-email]");
   if (!button) return;
   const action = button.dataset.action;
@@ -15540,6 +15749,24 @@ function handleAdminUserAction(event) {
 
   const users = loadSiteUsers();
   const user = users.find((item) => item.email === email);
+
+  if (action === "delete-user") {
+    try {
+      await requestAdminDeleteUser(email);
+    } catch (error) {
+      setFeedback(String(error?.message || "Suppression définitive impossible."), "error");
+      return;
+    }
+    const nextUsers = users.filter((item) => item.email !== email);
+    saveSiteUsers(nextUsers);
+    adminAuthUsersCache = (Array.isArray(adminAuthUsersCache) ? adminAuthUsersCache : []).filter(
+      (item) => String(item?.email || "").trim().toLowerCase() !== email
+    );
+    renderAdminUsersManager();
+    setFeedback("Utilisateur supprimé définitivement: " + email);
+    return;
+  }
+
   if (!user) return;
 
   if (action === "toggle-revoke-user") {
@@ -15569,12 +15796,6 @@ function handleAdminUserAction(event) {
     return;
   }
 
-  if (action === "delete-user") {
-    const nextUsers = users.filter((item) => item.email !== email);
-    saveSiteUsers(nextUsers);
-    renderAdminUsersManager();
-    setFeedback(`Utilisateur supprimé: ${email}`);
-  }
 }
 
 adminUsersListEls.forEach((el) => {
@@ -16326,6 +16547,11 @@ if (siteLoginFormEl) {
     }
 
     const enteredActivationCode = String(siteActivationCodeEl?.value || "").trim();
+    const signupAccessCode = String(siteSignupAccessCodeEl?.value || "").trim();
+    if (!/^\d{6}$/.test(signupAccessCode)) {
+      setAuthFeedback("Entrez le code de connexion VortexBox à 6 chiffres.", "error");
+      return;
+    }
 
     if (authMode === "new") {
       if (enteredActivationCode) {
@@ -16334,7 +16560,7 @@ if (siteLoginFormEl) {
           return;
         }
         try {
-          await requestUserAuthActivate(email, password, enteredActivationCode, remember);
+          await requestUserAuthActivate(email, password, enteredActivationCode, remember, signupAccessCode);
         } catch (error) {
           setAuthFeedback(String(error?.message || "Code invalide. Vérifiez le code reçu."), "error");
           return;
@@ -16352,10 +16578,10 @@ if (siteLoginFormEl) {
         return;
       }
 
-      setAuthFeedback("Envoi du code d'activation en cours...", "info");
+      setAuthFeedback("Vérification du code de connexion...", "info");
       let activationPayload;
       try {
-        activationPayload = await requestUserAuthActivation(email, password);
+        activationPayload = await requestUserAuthActivation(email, password, signupAccessCode);
       } catch (error) {
         setAuthFeedback(String(error?.message || "Impossible d'envoyer le code d'activation."), "error");
         return;
@@ -16383,7 +16609,7 @@ if (siteLoginFormEl) {
       return;
     } else {
       try {
-        await requestUserAuthLogin(email, password, remember);
+        await requestUserAuthLogin(email, password, remember, signupAccessCode);
       } catch (error) {
         const message = String(error?.message || "Identifiants incorrects.");
         if (/non activ/i.test(message)) {
@@ -16925,9 +17151,15 @@ if (siteActivateBtnEl) {
       return;
     }
 
+    const signupAccessCode = String(siteSignupAccessCodeEl?.value || "").trim();
+    if (!/^\d{6}$/.test(signupAccessCode)) {
+      setAuthFeedback("Entrez le code de connexion VortexBox à 6 chiffres.", "error");
+      return;
+    }
+
     const remember = authRememberEl ? Boolean(authRememberEl.checked) : true;
     try {
-      await requestUserAuthActivate(email, password, code, remember);
+      await requestUserAuthActivate(email, password, code, remember, signupAccessCode);
     } catch (error) {
       setAuthFeedback(String(error?.message || "Code invalide. Vérifiez le code reçu."), "error");
       return;
@@ -18024,6 +18256,46 @@ if (adminEditor) {
     if (!(picker instanceof HTMLElement)) return;
     picker.classList.add("is-uploading");
     window.setTimeout(() => picker.classList.remove("is-uploading"), 850);
+  });
+}
+
+if (adminSignupAccessRefreshBtn) {
+  adminSignupAccessRefreshBtn.addEventListener("click", () => {
+    refreshAdminSignupAccessCode();
+  });
+}
+
+if (adminSignupAccessRotateBtn) {
+  adminSignupAccessRotateBtn.addEventListener("click", async () => {
+    if (!isAdminSessionAuthorized()) return;
+    adminSignupAccessRotateBtn.disabled = true;
+    const oldLabel = adminSignupAccessRotateBtn.textContent;
+    adminSignupAccessRotateBtn.textContent = "Régénération...";
+    try {
+      const payload = await requestAdminRotateSignupAccessCode();
+      adminSignupAccessCode = String(payload?.code || "").trim();
+      adminSignupAccessCodeVisible = true;
+      renderAdminSignupAccessCode();
+      setAdminSignupAccessFeedback("Nouveau code généré: " + adminSignupAccessCode, "success");
+    } catch (error) {
+      setAdminSignupAccessFeedback(String(error?.message || "Régénération impossible."), "error");
+    } finally {
+      adminSignupAccessRotateBtn.disabled = false;
+      adminSignupAccessRotateBtn.textContent = oldLabel || "Régénérer le code";
+    }
+  });
+}
+
+if (adminSignupAccessVisibilityBtn) {
+  adminSignupAccessVisibilityBtn.addEventListener("click", async () => {
+    if (!adminSignupAccessCode && !adminSignupAccessCodeVisible) {
+      await refreshAdminSignupAccessCode();
+    }
+    adminSignupAccessCodeVisible = !adminSignupAccessCodeVisible;
+    renderAdminSignupAccessCode();
+    if (adminSignupAccessCodeVisible && !adminSignupAccessCode) {
+      setAdminSignupAccessFeedback("Code indisponible. Cliquez sur Rafraîchir puis réessayez.", "error");
+    }
   });
 }
 

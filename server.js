@@ -32,6 +32,8 @@ const CONTENT_AUDIT_FILE = path.join(DATA_DIR, "admin-content-audit.json");
 const BACKUPS_DIR = path.join(ROOT_DIR, "backups");
 const USER_STATE_FILE = path.join(DATA_DIR, "user-state.json");
 const AUTH_USERS_FILE = path.join(DATA_DIR, "auth-users.json");
+const DELETED_AUTH_EMAILS_FILE = path.join(DATA_DIR, "deleted-auth-emails.json");
+const SIGNUP_ACCESS_CODE_FILE = path.join(DATA_DIR, "signup-access-code.json");
 const MAX_JSON_BYTES = 15 * 1024 * 1024;
 const MAX_BINARY_UPLOAD_BYTES = 1 * 1024 * 1024 * 1024;
 const ENV_FILE = path.join(ROOT_DIR, ".env");
@@ -133,9 +135,123 @@ const BACKUPS_KEEP_MIN_FILES = Math.max(1, Number(process.env.BACKUPS_KEEP_MIN_F
 const CONTENT_BACKUPS_KEEP_MIN_FILES = Math.max(1, Number(process.env.CONTENT_BACKUPS_KEEP_MIN_FILES || 30));
 const CONFIG_VISUAL_SLOT_COUNT = 4;
 const CONTENT_AUDIT_LIMIT = 120;
+const SIGNUP_ACCESS_CODE_DEFAULT = /^\d{6}$/.test(String(process.env.SIGNUP_ACCESS_CODE || "").trim())
+  ? String(process.env.SIGNUP_ACCESS_CODE || "").trim()
+  : "460460";
 
 function getConfigVisualSlotIndexes() {
   return Array.from({ length: CONFIG_VISUAL_SLOT_COUNT }, (_, index) => index);
+}
+
+function normalizeSignupAccessCode(value) {
+  const digits = String(value || "").replace(/\D+/g, "").slice(0, 6);
+  if (/^\d{6}$/.test(digits)) return digits;
+  return "";
+}
+
+function generateSignupAccessCode() {
+  return String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+}
+
+async function getSignupAccessCode() {
+  try {
+    const raw = await fsp.readFile(SIGNUP_ACCESS_CODE_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    const code = normalizeSignupAccessCode(parsed?.code);
+    if (code) return code;
+  } catch (error) {}
+
+  const fallback = SIGNUP_ACCESS_CODE_DEFAULT;
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await writeJsonAtomic(SIGNUP_ACCESS_CODE_FILE, {
+    code: fallback,
+    updatedAt: new Date().toISOString(),
+    generatedBy: "default",
+  });
+  return fallback;
+}
+
+async function rotateSignupAccessCode(source = "admin") {
+  const code = generateSignupAccessCode();
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await writeJsonAtomic(SIGNUP_ACCESS_CODE_FILE, {
+    code,
+    updatedAt: new Date().toISOString(),
+    generatedBy: String(source || "admin"),
+  });
+  return code;
+}
+
+async function readDeletedAuthEmailsFromDisk() {
+  try {
+    const raw = await fsp.readFile(DELETED_AUTH_EMAILS_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    const emails = Array.isArray(parsed?.emails) ? parsed.emails : [];
+    return new Set(
+      emails
+        .map((item) => String(item || "").trim().toLowerCase())
+        .filter(Boolean)
+    );
+  } catch (error) {
+    return new Set();
+  }
+}
+
+async function writeDeletedAuthEmailsToDisk(emailsSet, source = "admin") {
+  const emails = Array.from(emailsSet || []).map((item) => String(item || "").trim().toLowerCase()).filter(Boolean).sort();
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await writeJsonAtomic(DELETED_AUTH_EMAILS_FILE, {
+    updatedAt: new Date().toISOString(),
+    source: String(source || "admin"),
+    emails,
+  });
+}
+
+async function isDeletedAuthEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized) return false;
+  const set = await readDeletedAuthEmailsFromDisk();
+  return set.has(normalized);
+}
+
+function clearUserSessionsByEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized) return;
+  for (const [token, session] of USER_SESSION_STORE.entries()) {
+    if (String(session?.email || "").trim().toLowerCase() === normalized) {
+      USER_SESSION_STORE.delete(token);
+    }
+  }
+}
+
+async function deleteAuthUserAndBlockEmail(email, source = "admin") {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized) return { removedUser: false, blocked: false };
+
+  const deletedSet = await readDeletedAuthEmailsFromDisk();
+  const alreadyBlocked = deletedSet.has(normalized);
+  deletedSet.add(normalized);
+  await writeDeletedAuthEmailsToDisk(deletedSet, source);
+
+  let removedUser = false;
+  try {
+    const raw = await fsp.readFile(AUTH_USERS_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    const users = Array.isArray(parsed?.users) ? parsed.users : [];
+    const nextUsers = users.filter((item) => String(item?.email || "").trim().toLowerCase() !== normalized);
+    removedUser = nextUsers.length !== users.length;
+    if (removedUser) {
+      await writeJsonAtomic(AUTH_USERS_FILE, {
+        updatedAt: new Date().toISOString(),
+        users: nextUsers,
+      });
+    }
+  } catch (error) {
+    if (!(error && error.code === "ENOENT")) throw error;
+  }
+
+  clearUserSessionsByEmail(normalized);
+  return { removedUser, blocked: !alreadyBlocked || removedUser };
 }
 
 function buildAdminEmailCandidates(email) {
@@ -2824,6 +2940,56 @@ function handleAdminSessionStatus(req, res) {
   });
 }
 
+async function handleGetAdminAuthUsers(req, res) {
+  if (!requireAdminPermission(req, res, "users:manage")) return;
+  try {
+    const raw = await fsp.readFile(AUTH_USERS_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    const users = (Array.isArray(parsed?.users) ? parsed.users : [])
+      .filter((item) => item && typeof item.email === "string")
+      .map((item) => ({
+        email: String(item.email || "").trim().toLowerCase(),
+        displayName: String(item.displayName || ""),
+        profilePhoto: String(item.profilePhoto || ""),
+        totalConnectionSeconds: Math.max(0, Math.floor(Number(item.totalConnectionSeconds) || 0)),
+        lastSeenAt: String(item.lastSeenAt || ""),
+        isActive: Boolean(item.isActive),
+        revoked: Boolean(item.revoked),
+        blacklisted: Boolean(item.blacklisted),
+        activationSentAt: String(item.activationSentAt || ""),
+      }))
+      .filter((item) => item.email)
+      .sort((a, b) => a.email.localeCompare(b.email, "fr"));
+    sendJson(res, 200, { ok: true, users });
+  } catch (error) {
+    if (error && error.code === "ENOENT") {
+      sendJson(res, 200, { ok: true, users: [] });
+      return;
+    }
+    sendJson(res, 500, { ok: false, error: "Impossible de lire les utilisateurs auth." });
+  }
+}
+
+async function handleAdminDeleteAuthUser(req, res) {
+  if (!requireAdminPermission(req, res, "users:manage")) return;
+  const body = await readJsonBody(req).catch(() => ({}));
+  const email = String(body?.email || "").trim().toLowerCase();
+  if (!isValidOutlookEmail(email)) {
+    sendJson(res, 400, { ok: false, error: "Email Outlook invalide." });
+    return;
+  }
+  if (isAdminEmailCandidate(email)) {
+    sendJson(res, 403, { ok: false, error: "Suppression admin interdite." });
+    return;
+  }
+  try {
+    await deleteAuthUserAndBlockEmail(email, "admin-delete");
+    sendJson(res, 200, { ok: true, email, deleted: true, blocked: true });
+  } catch (error) {
+    sendJson(res, 500, { ok: false, error: "Suppression définitive impossible." });
+  }
+}
+
 async function handleSaveUserState(req, res) {
   const body = await readJsonBody(req);
   const state = body && typeof body.state === "object" ? body.state : null;
@@ -2856,6 +3022,32 @@ async function writeJsonAtomic(filePath, data) {
   const serialized = JSON.stringify(data, null, 2);
   await fsp.writeFile(tmpPath, serialized, "utf8");
   await fsp.rename(tmpPath, filePath);
+}
+
+async function handleGetSignupAccessCode(req, res) {
+  if (!requireAdminPermission(req, res, "users:manage")) return;
+  const code = await getSignupAccessCode();
+  sendJson(res, 200, { ok: true, code });
+}
+
+async function handleRotateSignupAccessCode(req, res) {
+  if (!requireAdminPermission(req, res, "users:manage")) return;
+  const body = await readJsonBody(req).catch(() => ({}));
+  const forcedCode = normalizeSignupAccessCode(body?.code);
+  if (String(body?.code || "").trim() && !forcedCode) {
+    sendJson(res, 400, { ok: false, error: "Le code doit contenir 6 chiffres." });
+    return;
+  }
+  const code = forcedCode || (await rotateSignupAccessCode("admin"));
+  if (forcedCode) {
+    await fsp.mkdir(DATA_DIR, { recursive: true });
+    await writeJsonAtomic(SIGNUP_ACCESS_CODE_FILE, {
+      code,
+      updatedAt: new Date().toISOString(),
+      generatedBy: "admin-manuel",
+    });
+  }
+  sendJson(res, 200, { ok: true, code });
 }
 
 async function handleGetUserState(res) {
@@ -3905,6 +4097,8 @@ const handleUserAuthRoute = createUserAuthRouteHandler({
   getUserSession,
   clearUserSession,
   buildUserSessionClearCookie,
+  getSignupAccessCode,
+  isDeletedAuthEmail,
 });
 
 const handleUploadRoute = createUploadRouteHandler({
@@ -3972,6 +4166,30 @@ async function requestListener(req, res) {
       handleAdminSessionStatus(req, res);
       return;
     }
+    if (req.method === "GET" && url.pathname === "/api/admin/auth-users") {
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      await handleGetAdminAuthUsers(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/admin/auth-users/delete") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "admin-auth-user-delete", 20, 10 * 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de tentatives. Réessayez plus tard." });
+        return;
+      }
+      await handleAdminDeleteAuthUser(req, res);
+      return;
+    }
     if (req.method === "POST" && url.pathname === "/api/admin/session") {
       if (!hasJsonContentType(req)) {
         sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
@@ -3990,6 +4208,30 @@ async function requestListener(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/admin/logout") {
       handleAdminSessionLogout(req, res);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/admin/signup-access-code") {
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      await handleGetSignupAccessCode(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/admin/signup-access-code/rotate") {
+      if (!hasJsonContentType(req)) {
+        sendJson(res, 415, { ok: false, error: "Content-Type JSON requis." });
+        return;
+      }
+      if (!isTrustedOrigin(req)) {
+        sendJson(res, 403, { ok: false, error: "Origine non autorisée." });
+        return;
+      }
+      if (isRateLimited(req, "admin-signup-code-rotate", 20, 10 * 60 * 1000)) {
+        sendJson(res, 429, { ok: false, error: "Trop de tentatives. Réessayez plus tard." });
+        return;
+      }
+      await handleRotateSignupAccessCode(req, res);
       return;
     }
     if (await handleUserAuthRoute(req, res, url)) return;
