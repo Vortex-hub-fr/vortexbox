@@ -2462,7 +2462,7 @@ function mountPremiumPreloader() {
   preloader.className = "vb-preloader";
   preloader.innerHTML = `
     <div class="vb-preloader-core">
-      <div class="vb-preloader-logo"><img src="favicon-vb.svg" alt="VB" /></div>
+      <div class="vb-preloader-logo"><img src="brand/vortexbox-v-symbol.png?v=20260327ap" alt="VB" /></div>
       <div class="vb-preloader-text">VortexBox Premium</div>
     </div>
   `;

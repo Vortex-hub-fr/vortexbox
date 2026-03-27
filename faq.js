@@ -152,7 +152,7 @@ function bindProgressiveMedia(root = document) {
     image.addEventListener(
       "error",
       () => {
-        image.src = "/favicon-vb.svg";
+        image.src = "/brand/vortexbox-logo-header.png?v=20260327ap";
         window.setTimeout(markLoaded, 60);
       },
       { once: true }
@@ -501,7 +501,7 @@ function openGameInfoModal(title, infoText) {
     <article class="game-info-modal-card">
       <div class="game-info-modal-head">
         <span class="game-info-modal-logo-wrap">
-          <img src="favicon-vb.svg" alt="Logo VortexBox" />
+          <img src="brand/vortexbox-logo-header.png?v=20260327ap" alt="Logo VortexBox" />
         </span>
         <div class="game-info-modal-head-copy">
           <h3>INFO JEU</h3>
@@ -796,7 +796,7 @@ async function ensureRenderableGameCovers(games) {
       }
     }
 
-    if (!ok) finalSrc = "/favicon-vb.svg";
+    if (!ok) finalSrc = "/brand/vortexbox-logo-header.png?v=20260327ap";
     output.push({
       title: String(item?.title || `Jeu ${index + 1}`),
       image: finalSrc,
@@ -2803,7 +2803,7 @@ async function renderGamesCatalog(options = {}) {
               : ""
           }
           <div class="game-cover-topbar">
-            <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
+            <img class="game-cover-topbar-logo" src="/brand/vortexbox-logo-header.png?v=20260327ap" alt="VB" loading="lazy" decoding="async" />
             <span>VortexBox Premium</span>
           </div>
           <button class="game-cover-info-btn ${infoStateClass}" type="button" data-game-index="${index}" data-game-title="${escapeHtml(titleValue)}" data-game-info="${escapeHtml(infoEncoded)}" aria-label="Information jeu">i</button>
@@ -2837,9 +2837,9 @@ async function renderGamesCatalog(options = {}) {
     `
       : "";
     const catalogCoverRaw = toPublicImageUrl(
-      pagedSource?.[0]?.item?.image || source?.[0]?.image || "/favicon-vb.svg"
+      pagedSource?.[0]?.item?.image || source?.[0]?.image || "/brand/vortexbox-logo-header.png?v=20260327ap"
     );
-    const catalogCoverUrl = withImageCacheBuster(catalogCoverRaw || "/favicon-vb.svg");
+    const catalogCoverUrl = withImageCacheBuster(catalogCoverRaw || "/brand/vortexbox-logo-header.png?v=20260327ap");
     const progressToolsPlaceholder = adminEditable
       ? `<div class="games-admin-card-tools games-admin-card-tools-placeholder" aria-hidden="true"></div>`
       : "";
@@ -2847,7 +2847,7 @@ async function renderGamesCatalog(options = {}) {
       <article class="game-cover-card game-cover-card-progress" data-game-index="-1" style="--game-stagger:0">
         ${progressToolsPlaceholder}
         <div class="game-cover-topbar">
-          <img class="game-cover-topbar-logo" src="/favicon-vb.svg" alt="VB" loading="lazy" decoding="async" />
+          <img class="game-cover-topbar-logo" src="/brand/vortexbox-logo-header.png?v=20260327ap" alt="VB" loading="lazy" decoding="async" />
           <span>VortexBox Premium</span>
         </div>
         <div class="game-cover-media-wrap game-cover-progress-wrap" data-game-title="Focus Catalogue" style="--catalog-cover-url:url('${escapeHtml(catalogCoverUrl).replace(/'/g, "%27")}');--catalog-site-cover-url:url('/uploads/Collage%20catalogue.png')">
@@ -3208,7 +3208,7 @@ function mountPremiumPreloader() {
   preloader.className = "vb-preloader";
   preloader.innerHTML = `
     <div class="vb-preloader-core">
-      <div class="vb-preloader-logo"><img src="favicon-vb.svg" alt="VB" /></div>
+      <div class="vb-preloader-logo"><img src="brand/vortexbox-v-symbol.png?v=20260327ap" alt="VB" /></div>
       <div class="vb-preloader-text">VortexBox Premium</div>
     </div>
   `;
