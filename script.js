@@ -4416,7 +4416,7 @@ function renderAdminLivePreview() {
   const previewImage =
     siteContent?.showcase?.[0]?.image ||
     siteContent?.configurator?.visualImages?.[0] ||
-    "favicon-vb.svg";
+    "brand/vortexbox-logo-header.png?v=20260327ap";
   adminLivePreviewImageEl.src = String(previewImage);
 }
 
@@ -6954,7 +6954,7 @@ function renderTechnicalSheets() {
         <article class="technical-card" data-tech-index="${index}" role="button" tabindex="0" aria-label="Agrandir la fiche technique ${escapeHtml(sheet.title)}">
           <div class="technical-jacket-shell">
             <div class="technical-premium-head">
-              <img class="technical-premium-logo" src="/favicon-vb.svg?v=2" alt="VB" />
+              <img class="technical-premium-logo" src="/brand/vortexbox-logo-header.png?v=20260327ap" alt="VB" />
               <span class="technical-premium-label">${escapeHtml(String(sheet.title || `Fiche technique ${index + 1}`).trim())}</span>
               <span class="technical-premium-badge">OFFICIEL</span>
             </div>
@@ -7015,7 +7015,7 @@ function bindProgressiveMedia(root = document) {
     image.addEventListener(
       "error",
       () => {
-        image.src = "/favicon-vb.svg";
+        image.src = "/brand/vortexbox-logo-header.png?v=20260327ap";
         window.setTimeout(markLoaded, 60);
       },
       { once: true }
@@ -7899,7 +7899,7 @@ function renderConfigurator() {
               </button>
               <div class="config-option-info-panel">
                 <div class="config-option-info-head">
-                  <img class="config-option-info-logo" src="favicon-vb.svg" alt="Logo VortexBox" />
+                  <img class="config-option-info-logo" src="brand/vortexbox-logo-header.png?v=20260327ap" alt="Logo VortexBox" />
                   <span>INFO PRODUIT</span>
                 </div>
                 <button type="button" class="config-option-info-close" aria-label="Fermer les informations">×</button>
@@ -8013,7 +8013,7 @@ function renderConfigurator() {
         </button>
         <div class="config-option-info-panel">
           <div class="config-option-info-head">
-            <img class="config-option-info-logo" src="favicon-vb.svg" alt="Logo VortexBox" />
+            <img class="config-option-info-logo" src="brand/vortexbox-logo-header.png?v=20260327ap" alt="Logo VortexBox" />
             <span>INFO PRODUIT</span>
           </div>
           <button type="button" class="config-option-info-close" aria-label="Fermer les informations">×</button>
@@ -8644,7 +8644,7 @@ function openMachineModal(machine) {
       </div>
       <aside class="machine-modal-side">
         <div class="machine-modal-brand-title">
-          <img src="/favicon-vb.svg?v=2" alt="Logo VortexBox" />
+          <img src="/brand/vortexbox-logo-header.png?v=20260327ap" alt="Logo VortexBox" />
           <span>VortexBox</span>
         </div>
         <div class="machine-modal-media-wrap">
@@ -18581,7 +18581,7 @@ function mountPremiumPreloader() {
   preloader.innerHTML = `
     <div class="vb-preloader-core">
       <div class="vb-preloader-orbit"></div>
-      <div class="vb-preloader-logo"><img src="favicon-vb.svg" alt="VB" /></div>
+      <div class="vb-preloader-logo"><img src="brand/vortexbox-v-symbol.png?v=20260327ap" alt="VB" /></div>
       <div class="vb-preloader-text">VortexBox Premium</div>
       <div class="vb-preloader-subtext" id="vb-preloader-subtext">Initialisation atelier...</div>
       <div class="vb-preloader-progress"><span id="vb-preloader-progress-fill"></span></div>

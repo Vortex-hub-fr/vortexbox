@@ -1,0 +1,25 @@
+{
+  "updatedAt": "2026-03-22T00:01:58.244Z",
+  "entries": [
+    {
+      "id": "audit-1774137718236-15qp99",
+      "at": "2026-03-22T00:01:58.243Z",
+      "action": "save",
+      "adminEmail": "vortexcore@outlook.fr",
+      "snapshotFile": "data/content-history/audit-1774137718236-15qp99.json",
+      "restoredFromId": "",
+      "previousUpdatedAt": 1774118061240,
+      "nextUpdatedAt": 1774118061240
+    },
+    {
+      "id": "audit-1774118061308-8p0v0a",
+      "at": "2026-03-21T18:34:21.315Z",
+      "action": "save",
+      "adminEmail": "vortexcore@outlook.fr",
+      "snapshotFile": "data/content-history/audit-1774118061308-8p0v0a.json",
+      "restoredFromId": "",
+      "previousUpdatedAt": 1773997944607,
+      "nextUpdatedAt": 1774118061240
+    }
+  ]
+}

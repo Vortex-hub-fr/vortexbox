@@ -639,7 +639,7 @@ textarea:focus-visible,
   content: "";
   position: absolute;
   inset: 0;
-  background: url("vortexbox-pro-logo-impact.svg") calc(72% + 7cm) 50% / min(48vw, 520px) auto no-repeat;
+  background: url("brand/vortexbox-v-symbol.png?v=20260327ap") calc(72% + 7cm) 50% / min(48vw, 520px) auto no-repeat;
   opacity: 0.16;
   filter: drop-shadow(0 0 16px rgba(111, 228, 255, 0.28));
   will-change: transform, opacity;
@@ -15863,4 +15863,569 @@ body.admin-live-edit #machines .machine-admin-sort-controls {
   align-items: flex-start !important;
   flex-wrap: wrap !important;
   row-gap: 0.6rem !important;
+}
+
+/* VortexBox logo refresh (PNG square logo) */
+.logo img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 12px;
+  filter: drop-shadow(0 12px 24px rgba(1, 10, 24, 0.32));
+}
+
+.nav.nav-compact .logo img {
+  width: 44px;
+  height: 44px;
+}
+
+@media (max-width: 1220px) {
+  .logo img {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* Brand system v1 - premium logo stack */
+.auth-title-logo.brand-hero-logo {
+  width: min(34vw, 140px);
+  height: auto;
+}
+
+.logo .brand-header-logo {
+  width: 186px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 0;
+  filter: drop-shadow(0 12px 24px rgba(1, 10, 24, 0.28));
+  animation: vb-logo-float 7.2s ease-in-out infinite;
+}
+
+.logo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(112deg, transparent 32%, rgba(158, 237, 255, 0.24) 46%, transparent 60%);
+  transform: translateX(-132%);
+  animation: vb-logo-sweep 3.8s ease-in-out infinite;
+}
+
+@keyframes vb-logo-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes vb-logo-sweep {
+  0%,
+  16% {
+    transform: translateX(-132%);
+    opacity: 0;
+  }
+  28% {
+    opacity: 1;
+  }
+  52% {
+    transform: translateX(132%);
+    opacity: 0.74;
+  }
+  100% {
+    transform: translateX(132%);
+    opacity: 0;
+  }
+}
+
+.nav.nav-compact .logo .brand-header-logo {
+  width: 160px;
+  height: 46px;
+}
+
+@media (max-width: 1220px) {
+  .logo .brand-header-logo {
+    width: 152px;
+    height: 44px;
+  }
+
+  .nav.nav-compact .logo .brand-header-logo {
+    width: 144px;
+    height: 42px;
+  }
+}
+
+@media (max-width: 760px) {
+  .logo .brand-header-logo {
+    width: 132px;
+    height: 38px;
+  }
+
+  .auth-title-logo.brand-hero-logo {
+    width: min(44vw, 124px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo::before,
+  .logo .brand-header-logo {
+    animation: none;
+  }
+}
+
+/* Brand system v1.1 - V only logo */
+.logo {
+  min-width: auto;
+  padding-right: 0.36rem;
+}
+
+.logo .brand-header-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+}
+
+.nav.nav-compact .logo .brand-header-logo {
+  width: 48px;
+  height: 48px;
+}
+
+@media (max-width: 1220px) {
+  .logo .brand-header-logo {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 760px) {
+  .logo .brand-header-logo {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Brand system v1.2 - fix empty logo rail */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  grid-template-columns: none;
+  column-gap: 0;
+  gap: 0;
+  min-width: 0;
+  width: auto;
+  padding: 0.22rem;
+}
+
+.logo::after {
+  display: none;
+}
+
+.logo .brand-header-logo {
+  width: 56px;
+  height: 56px;
+  max-width: none;
+  flex: 0 0 auto;
+  display: block;
+}
+
+.nav.nav-compact .logo .brand-header-logo {
+  width: 48px;
+  height: 48px;
+}
+
+@media (max-width: 1220px) {
+  .logo .brand-header-logo {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 760px) {
+  .logo .brand-header-logo {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Remove text under auth logo */
+.auth-title h2 {
+  display: none;
+}
+
+/* Brand system v1.3 - V logo + legacy text block */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.72rem;
+  padding: 0.22rem 0.5rem 0.22rem 0.24rem;
+  min-width: 290px;
+}
+
+.logo .brand-header-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  flex: 0 0 auto;
+  display: block;
+}
+
+.logo .logo-text {
+  display: inline-grid;
+  align-items: end;
+  gap: 0.16rem;
+  min-width: 0;
+  font-size: 1.02rem;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  color: #eef8ff;
+  text-shadow: 0 8px 18px rgba(1, 10, 24, 0.42);
+}
+
+.logo .logo-text::after {
+  content: "Build Gaming Premium";
+  display: block;
+  color: rgba(188, 238, 255, 0.82);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.logo .logo-text strong {
+  font-size: 0.74rem;
+  letter-spacing: 0.27em;
+  color: #a6ebff;
+}
+
+.nav.nav-compact .logo {
+  min-width: 252px;
+  gap: 0.62rem;
+}
+
+.nav.nav-compact .logo .brand-header-logo {
+  width: 48px;
+  height: 48px;
+}
+
+@media (max-width: 1220px) {
+  .logo {
+    min-width: 236px;
+    gap: 0.56rem;
+  }
+
+  .logo .brand-header-logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .logo .logo-text {
+    font-size: 0.94rem;
+  }
+
+  .logo .logo-text::after {
+    font-size: 0.48rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .logo {
+    min-width: 0;
+    padding-right: 0.36rem;
+  }
+
+  .logo .brand-header-logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .logo .logo-text {
+    font-size: 0.88rem;
+  }
+
+  .logo .logo-text::after {
+    display: none;
+  }
+}
+
+/* Preloader logo hardening: always show V */
+.vb-preloader-logo img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  image-rendering: auto;
+  filter: drop-shadow(0 2px 8px rgba(96, 218, 255, 0.28));
+}
+
+/* Preloader fail-safe: always paint V in the logo slot */
+.vb-preloader-logo {
+  background-image: url("brand/vortexbox-v-symbol.png?v=20260327ap");
+  background-size: 72% 72%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Auth title uniform: V + VortexBox */
+.auth-title {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.78rem;
+  margin: 0 auto 0.78rem;
+}
+
+.auth-title h2 {
+  display: block !important;
+  margin: 0;
+  font-family: "Sora", sans-serif;
+  font-size: clamp(1.22rem, 2.4vw, 1.72rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: #eef8ff;
+  text-shadow: 0 10px 20px rgba(1, 10, 24, 0.38);
+}
+
+.auth-title-logo,
+.auth-title-logo.brand-hero-logo {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 760px) {
+  .auth-title {
+    gap: 0.56rem;
+    margin-bottom: 0.62rem;
+  }
+
+  .auth-title h2 {
+    font-size: 1.14rem;
+  }
+
+  .auth-title-logo,
+  .auth-title-logo.brand-hero-logo {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* VortexBot icon clarity boost */
+.vortexbot-icon img {
+  filter: drop-shadow(0 0 6px rgba(132, 224, 255, 0.28));
+}
+
+/* Premium rotating header logo (V icon) */
+.logo .brand-header-logo,
+.logo > img {
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+  will-change: transform, filter;
+  animation: vb-premium-logo-spin 6.8s ease-in-out infinite, vb-premium-logo-glow 3.8s ease-in-out infinite;
+}
+
+.logo:hover .brand-header-logo,
+.logo:hover > img {
+  animation-duration: 4.8s, 2.2s;
+}
+
+@keyframes vb-premium-logo-spin {
+  0%,
+  100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(7deg) scale(1.02); }
+  50% { transform: rotate(0deg) scale(1.01); }
+  75% { transform: rotate(-7deg) scale(1.02); }
+}
+
+@keyframes vb-premium-logo-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 0 rgba(120, 223, 255, 0)) drop-shadow(0 8px 20px rgba(1, 10, 24, 0.34));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(120, 223, 255, 0.4)) drop-shadow(0 10px 24px rgba(1, 10, 24, 0.42));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo .brand-header-logo,
+  .logo > img {
+    animation: none !important;
+  }
+}
+
+/* Premium rotation for VortexBot circular logo */
+.vortexbot-icon img {
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+  will-change: transform, filter;
+  animation: vb-vortexbot-spin-premium 5.2s ease-in-out infinite, vb-vortexbot-glow-premium 3.2s ease-in-out infinite;
+}
+
+.vortexbot-toggle:hover .vortexbot-icon img {
+  animation-duration: 3.8s, 1.9s;
+}
+
+@keyframes vb-vortexbot-spin-premium {
+  0%,
+  100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(10deg) scale(1.035); }
+  50% { transform: rotate(0deg) scale(1.015); }
+  75% { transform: rotate(-10deg) scale(1.035); }
+}
+
+@keyframes vb-vortexbot-glow-premium {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px rgba(132, 224, 255, 0.28));
+  }
+  50% {
+    filter: drop-shadow(0 0 11px rgba(146, 236, 255, 0.46));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vortexbot-icon img {
+    animation: none !important;
+  }
+}
+
+/* Hero right-side V accent (clean final) */
+.hero-v-accent {
+  position: absolute;
+  right: clamp(1.2rem, 4.2vw, 3.4rem);
+  top: 52%;
+  transform: translateY(-50%);
+  width: clamp(120px, 14vw, 190px);
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.24;
+  filter: drop-shadow(0 12px 24px rgba(1, 10, 24, 0.36));
+  mix-blend-mode: screen;
+}
+
+.hero-v-accent img {
+  width: 100%;
+  height: auto;
+  display: block;
+  animation: vb-hero-v-accent-float 8.8s ease-in-out infinite;
+}
+
+@keyframes vb-hero-v-accent-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-7px) scale(1.02);
+    opacity: 0.28;
+  }
+}
+
+/* Hero background V (kept inside frame, no clipping) */
+.hero-video-wrap::after {
+  background: url("brand/vortexbox-v-symbol.png?v=20260327ap") 74% 54% / clamp(112px, 13vw, 176px) auto no-repeat !important;
+  opacity: 0.18 !important;
+  filter:
+    drop-shadow(0 0 12px rgba(122, 231, 255, 0.24))
+    drop-shadow(0 10px 24px rgba(1, 10, 24, 0.32)) !important;
+  animation: hero-logo-float 10s ease-in-out infinite !important;
+}
+
+@media (max-width: 1100px) {
+  .hero-v-accent {
+    right: 1rem;
+    width: clamp(88px, 11vw, 136px);
+    opacity: 0.18;
+  }
+
+  .hero-video-wrap::after {
+    background-position: 70% 56% !important;
+    background-size: clamp(88px, 11vw, 136px) auto !important;
+    opacity: 0.14 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero-v-accent {
+    display: none;
+  }
+}
+
+body.config-only .hero-video-wrap::after,
+body.config-only .hero-v-accent {
+  display: none !important;
+}
+
+/* Technical sheet zoom modal: tighten frame for portrait visuals */
+.technical-modal-card.technical-modal-image-only {
+  width: min(740px, 90vw) !important;
+  margin-inline: auto;
+}
+
+.technical-modal-card.technical-modal-image-only .technical-modal-cover-full {
+  width: auto;
+  max-width: 100%;
+  height: min(88vh, 900px);
+  margin-inline: auto;
+  display: block;
+}
+
+@media (max-width: 760px) {
+  .technical-modal-card.technical-modal-image-only {
+    width: min(96vw, 620px) !important;
+  }
+
+  .technical-modal-card.technical-modal-image-only .technical-modal-cover-full {
+    height: min(82vh, 760px);
+  }
+}
+
+/* Technical sheet frame ultra-discreet */
+.technical-modal-card.technical-modal-image-only {
+  border-color: rgba(127, 231, 255, 0.10) !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22) !important;
+  background: linear-gradient(180deg, rgba(10, 31, 54, 0.82), rgba(7, 22, 42, 0.84)) !important;
+}
+
+.technical-modal-card.technical-modal-image-only.technical-modal-image-wrap {
+  border-color: rgba(127, 231, 255, 0.08) !important;
+}
+
+.technical-modal-card.technical-modal-image-only .technical-modal-cover-full {
+  background: transparent !important;
+}
+
+/* Technical sheet modal: fit frame tightly to portrait image */
+.technical-modal-card.technical-modal-image-only.technical-modal-image-wrap {
+  width: fit-content !important;
+  max-width: min(90vw, 760px) !important;
+  margin-inline: auto;
+  padding: 0 !important;
+  background: rgba(6, 22, 41, 0.35) !important;
+  border-color: rgba(127, 231, 255, 0.06) !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+.technical-modal-card.technical-modal-image-only .technical-modal-cover-full {
+  width: auto !important;
+  max-width: min(90vw, 760px) !important;
+  height: min(88vh, 900px) !important;
+}
+
+@media (max-width: 760px) {
+  .technical-modal-card.technical-modal-image-only.technical-modal-image-wrap {
+    max-width: 96vw !important;
+  }
+
+  .technical-modal-card.technical-modal-image-only .technical-modal-cover-full {
+    max-width: 96vw !important;
+    height: min(82vh, 760px) !important;
+  }
 }

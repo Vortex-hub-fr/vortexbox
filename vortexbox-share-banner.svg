@@ -14,7 +14,7 @@
   <rect width="1200" height="630" fill="url(#glow)"/>
   <rect x="64" y="56" width="1072" height="518" rx="30" fill="#071A31" fill-opacity="0.72" stroke="#8ADFFF" stroke-opacity="0.35"/>
 
-  <image href="vortexbox-pro-logo-impact.svg" x="112" y="188" width="560" height="110"/>
+  <image href="brand/vortexbox-v-symbol.png" x="260" y="120" width="260" height="260" preserveAspectRatio="xMidYMid meet"/>
 
   <text x="116" y="355" fill="#DDF4FF" font-family="Sora, Arial" font-size="42" font-weight="700">La puissance au coeur du jeu</text>
   <text x="116" y="412" fill="#AED5F5" font-family="Sora, Arial" font-size="28" font-weight="500">Machines gaming premium • Configurateur sur-mesure • Support expert</text>
